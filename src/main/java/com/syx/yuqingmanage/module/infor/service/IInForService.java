@@ -21,6 +21,6 @@ public interface IInForService {
 
     public ExecResult manualPost(String infoId, String customerId);
 
-    public JSONArray exportData(String searchTagId, String searchInfoData, String customerName);
+    public String exportData(String searchTagId, String searchInfoData, String customerName, String exportType);
 
 }

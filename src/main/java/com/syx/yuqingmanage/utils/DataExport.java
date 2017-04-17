@@ -15,7 +15,7 @@ import java.util.Map;
  * Created by Msater Zg on 2017/4/12.
  */
 public class DataExport {
-    public void exportWord(JSONArray jsonArray, String exportType) {
+    public String exportInforData(JSONArray jsonArray, String exportType) {
         List list = new ArrayList();
         DocumentHandler documentHandler = new DocumentHandler();
         int jsonArrayLen = jsonArray.size();
@@ -33,11 +33,21 @@ public class DataExport {
         }
         Map maps = new HashMap();
         maps.put("inforList", list);
-        /*try {
-            documentHandler.createDoc(maps, "D:/测试文档.doc");
+        String longTime = String.valueOf(System.currentTimeMillis());
+        String fileName = "";
+        String fileFtl = "";
+        if ("word".equals(exportType)) {
+            fileName = longTime + ".doc";
+            fileFtl = "inforword.ftl";
+        } else {
+            fileName = longTime + ".xls";
+            fileFtl = "inforexcel.ftl";
+        }
+        try {
+            documentHandler.createDoc(maps, "C:/dummyPath/" + fileName, fileFtl);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
-        }*/
+        }
+        return fileName;
     }
-
 }

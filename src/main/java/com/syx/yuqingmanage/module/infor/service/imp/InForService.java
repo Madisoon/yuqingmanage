@@ -29,6 +29,8 @@ public class InForService implements IInForService {
     private FailData failData;
     @Autowired
     private QqAsyncMessagePost qqAsyncMessagePost;
+    /*@Autowired*/
+    private DataExport dataExport = new DataExport();
 
     @Override
     public ExecResult insertInFor(String infoData, String infoTag) {
@@ -490,7 +492,7 @@ public class InForService implements IInForService {
                 } else {
 
                     // 定时发qq消息
-                    int timeNumber = 3 + (int) Math.random() * 4;
+                    int timeNumber = 5 + (int) Math.random() * 4;
                     try {
                         TimeUnit.SECONDS.sleep(timeNumber);
                     } catch (InterruptedException e) {
@@ -508,7 +510,7 @@ public class InForService implements IInForService {
     }
 
     @Override
-    public JSONArray exportData(String searchTagId, String searchInfoData, String customerName) {
+    public String exportData(String searchTagId, String searchInfoData, String customerName, String exportType) {
         // 获取到需要导出的所有的数据
         JSONObject jsonObject = getAllInfoChoose(
                 "1",
@@ -517,7 +519,8 @@ public class InForService implements IInForService {
                 searchInfoData,
                 customerName);
         JSONArray jsonArray = jsonObject.getJSONArray("data");
-        return jsonArray;
+        String returnResult = dataExport.exportInforData(jsonArray, exportType);
+        return returnResult;
     }
 }
 

@@ -1,4 +1,4 @@
-package com.syx.yuqingmanage.utils;
+package com.syx.yuqingmanage.springredis;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

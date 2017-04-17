@@ -1,41 +1,28 @@
 package com.syx.yuqingmanage.module.infor.web;
 
-import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alienlab.db.ExecResult;
-import com.alienlab.response.JSONResponse;
 import com.syx.yuqingmanage.module.infor.service.IInForService;
-import com.syx.yuqingmanage.utils.DocumentHandler;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.*;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by Master  Zg on 2016/11/9.
  */
 @RequestMapping(value = "/manage")
-@Controller
+@RestController
 @Api(value = "信息", description = "管理信息的API")
 public class inForController {
     @Autowired
     private IInForService iInForService;
 
     @RequestMapping(value = "/insertInFor", method = RequestMethod.POST)
-    @ResponseBody
     @ApiOperation(value = "插入信息", notes = "信息的对象，信息所属标签")
     public String insertInFor(@RequestParam("infoData") String infoData,
                               @RequestParam("infoTag") String infoTag) {
@@ -44,7 +31,6 @@ public class inForController {
     }
 
     @RequestMapping(value = "/getAllInfor", method = RequestMethod.POST)
-    @ResponseBody
     @ApiOperation(value = "获取信息", notes = "无")
     public String getAllInfor(HttpServletRequest request) {
         try {
@@ -69,7 +55,6 @@ public class inForController {
     }
 
     @RequestMapping(value = "/updateInfoData", method = RequestMethod.POST)
-    @ResponseBody
     @ApiOperation(value = "修改信息", notes = "信息对象，信息标签，信息id")
     public String updateInfoData(@RequestParam("infoData") String infoData,
                                  @RequestParam("infoTagId") String infoTagId,
@@ -79,7 +64,6 @@ public class inForController {
     }
 
     @RequestMapping(value = "/deleteInfoData", method = RequestMethod.POST)
-    @ResponseBody
     @ApiOperation(value = "修改信息", notes = "信息id(多个用 , 隔开)")
     public String deleteInfoData(@RequestParam("infoId") String infoId) {
         String result = iInForService.deleteInfoData(infoId).toString();
@@ -87,7 +71,6 @@ public class inForController {
     }
 
     @RequestMapping(value = "/manualPost", method = RequestMethod.POST)
-    @ResponseBody
     @ApiOperation(value = "手工发送", notes = "信息的id，客户id")
     public String manualPost(@RequestParam("infoId") String infoId,
                              @RequestParam("customerId") String customerId) {
@@ -95,13 +78,13 @@ public class inForController {
         return result;
     }
 
-    @RequestMapping(value = "/exportData", method = RequestMethod.GET)
-    public void exportData(@RequestParam("searchTagId") String searchTagId,
-                           @RequestParam("searchInfoData") String searchInfoData,
-                           @RequestParam("customerName") String customerName,
-                           HttpServletRequest request,
-                           HttpServletResponse response) {
-        File file = null;
+    @RequestMapping(value = "/exportData", method = RequestMethod.POST)
+    @ApiOperation(value = "导出文档", notes = "标签id,搜索信息对象,客户名称,导出类型")
+    public String exportData(@RequestParam("searchTagId") String searchTagId,
+                             @RequestParam("searchInfoData") String searchInfoData,
+                             @RequestParam("customerName") String customerName,
+                             @RequestParam("exportType") String exportType) {
+        /*File file = null;
         InputStream inputStream = null;
         ServletOutputStream out = null;
         try {
@@ -147,8 +130,12 @@ public class inForController {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            /*if (file != null)
-                file.delete(); // 删除临时文件*/
-        }
+            *//*if (file != null)
+                file.delete(); // 删除临时文件*//*
+        }*/
+        String result = iInForService.exportData(searchTagId, searchInfoData, customerName, exportType);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("result", result);
+        return jsonObject.toString();
     }
 }

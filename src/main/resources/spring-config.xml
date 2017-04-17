@@ -135,20 +135,20 @@
 
     <bean id="messageTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">
         <property name="jobDetail" ref="messageJobDetail"/>
-        <property name="startDelay" value="1000"/>
+        <property name="startDelay" value="300000"/>
         <property name="repeatInterval" value="300000"/>
     </bean>
 
     <!--每隔五分钟发送一次信息-->
     <bean id="failTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">
         <property name="jobDetail" ref="failJobDetail"/>
-        <property name="startDelay" value="1000"/>
+        <property name="startDelay" value="300000"/>
         <property name="repeatInterval" value="300000"/>
     </bean>
 
     <bean id="judgeQqTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">
         <property name="jobDetail" ref="judgeQqDetail"/>
-        <property name="startDelay" value="1000"/>
+        <property name="startDelay" value="300000"/>
         <property name="repeatInterval" value="1200000"/>
     </bean>
 
