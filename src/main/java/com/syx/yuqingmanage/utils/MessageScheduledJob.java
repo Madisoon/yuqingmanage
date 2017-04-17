@@ -71,7 +71,7 @@ public class MessageScheduledJob extends QuartzJobBean {
                     } else if ("qq".equals(infoPostType) || "qqGroup".equals(infoPostType)) {
                         System.out.println("开始发送");
                         // 定时发qq消息
-                        int timeNumber = 2 + (int) Math.random() * 4;
+                        int timeNumber = 4 + (int) Math.random() * 4;
                         try {
                             TimeUnit.SECONDS.sleep(timeNumber);
                         } catch (InterruptedException e) {
