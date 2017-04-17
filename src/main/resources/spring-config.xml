@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="
+	   http://www.springframework.org/schema/util
+	   http://www.springframework.org/schema/util/spring-util-4.1.xsd
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-4.1.xsd 
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-4.1.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop-4.1.xsd
+      http://www.springframework.org/schema/task
+      http://www.springframework.org/schema/task/spring-task-4.1.xsd"
+       default-lazy-init="false">
+
+    <!-- 加载配置 -->
+    <context:property-placeholder ignore-unresolvable="true" location="classpath:app.properties"/>
+    <!-- 加载应用属性实例，可通过  @Value("#{APP_PROP['jdbc.driver']}") String jdbcDriver 方式引用 -->
+    <util:properties id="APP_PROP" location="classpath:app.properties" local-override="true"/>
+    <!--扫描redis配置-->
+    <context:component-scan base-package="com.syx.yuqingmanage.springredis"/>
+    <context:component-scan base-package="com.syx.yuqingmanage.utils">
+    </context:component-scan>
+    <!-- 扫描的包路径 去掉mvc的注解 -->
+    <context:component-scan base-package="com.syx">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+
+    <task:annotation-driven></task:annotation-driven>
+
+
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer">
+        <property name="location">
+            <value>classpath:app.properties</value>
+        </property>
+    </bean>
+
+    <bean id="jsonResponse" class="com.alienlab.response.JSONResponse"/>
+    <bean id="numberInfoPost" class="com.syx.yuqingmanage.utils.NumberInfoPost"/>
+    <bean id="qqMessagePost" class="com.syx.yuqingmanage.utils.QqMessagePost"/>
+    <bean id="appJsonPost" class="com.syx.yuqingmanage.utils.AppJsonPost"/>
+    <bean id="jwtUtils" class="com.syx.yuqingmanage.utils.JwtUtils"/>
+    <bean id="failData" class="com.syx.yuqingmanage.utils.FailData"/>
+    <bean id="qqAsyncMessagePost" class="com.syx.yuqingmanage.utils.QqAsyncMessagePost"/>
+
+
+    <bean id="captchaProducer" class="com.google.code.kaptcha.impl.DefaultKaptcha">
+        <property name="config">
+            <bean class="com.google.code.kaptcha.util.Config">
+                <constructor-arg>
+                    <props>
+                        <!--<prop key="kaptcha.border">no</prop>-->
+                        <!--<prop key="kaptcha.border.color">105,179,90</prop>-->
+                        <!--<prop key="kaptcha.textproducer.font.color">green</prop>-->
+                        <prop key="kaptcha.image.width">150</prop>
+                        <prop key="kaptcha.image.height">34</prop>
+                        <!--<prop key="kaptcha.textproducer.font.size">40</prop>-->
+                        <prop key="kaptcha.session.key">code</prop>
+                        <prop key="kaptcha.textproducer.char.length">4</prop>
+                        <!--<prop key="kaptcha.textproducer.font.names">宋体,楷体,微软雅黑</prop>-->
+                    </props>
+                </constructor-arg>
+            </bean>
+        </property>
+    </bean>
+
+    <!-- For times when you just need to invoke a method on a specific object -->
+    <bean id="simpleJobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <property name="targetObject" ref="myBean"/>
+        <property name="targetMethod" value="printMessage"/>
+    </bean>
+
+
+    <!-- For times when you need more complex processing, passing data to the scheduled job -->
+    <bean name="firstComplexJobDetail" class="org.springframework.scheduling.quartz.JobDetailFactoryBean">
+        <property name="jobClass" value="com.syx.yuqingmanage.utils.FirstScheduledJob"/>
+        <property name="jobDataMap">
+            <map>
+                <entry key="anotherBean" value-ref="anotherBean"/>
+            </map>
+        </property>
+        <property name="durability" value="true"/>
+    </bean>
+
+    <!-- Always run at 20:00 everyday -->
+    <bean name="customerJudgeJobDetail" class="org.springframework.scheduling.quartz.JobDetailFactoryBean">
+        <property name="jobClass" value="com.syx.yuqingmanage.utils.CustomerScheduledJob"/>
+        <property name="durability" value="true"/>
+    </bean>
+
+    <!-- Always run at 20:00 everyday -->
+    <bean name="messageJobDetail" class="org.springframework.scheduling.quartz.JobDetailFactoryBean">
+        <property name="jobClass" value="com.syx.yuqingmanage.utils.MessageScheduledJob"/>
+        <property name="durability" value="true"/>
+    </bean>
+
+    <bean name="failJobDetail" class="org.springframework.scheduling.quartz.JobDetailFactoryBean">
+        <property name="jobClass" value="com.syx.yuqingmanage.utils.FailMessagePost"/>
+        <property name="durability" value="true"/>
+    </bean>
+
+    <bean name="judgeQqDetail" class="org.springframework.scheduling.quartz.JobDetailFactoryBean">
+        <property name="jobClass" value="com.syx.yuqingmanage.utils.judgeQqOnlineScheduledJob"/>
+        <property name="durability" value="true"/>
+    </bean>
+
+
+    <!-- Run the job every 2 seconds with initial delay of 1 second -->
+    <bean id="simpleTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">
+        <property name="jobDetail" ref="simpleJobDetail"/>
+        <property name="startDelay" value="1000"/>
+        <property name="repeatInterval" value="2000"/>
+    </bean>
+
+
+    <!-- Run the job every 5 seconds -->
+    <bean id="cronTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+        <property name="jobDetail" ref="firstComplexJobDetail"/>
+        <!--<property name="cronExpression" value="0/5 * * ? * SAT-SUN" />-->
+        <property name="cronExpression" value="0/5 * * ? * *"/>
+
+    </bean>
+
+    <!-- Always run at 20:00 everyday -->
+    <bean id="customerJudgeCroTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+        <property name="jobDetail" ref="customerJudgeJobDetail"/>
+        <property name="cronExpression" value="0 0 5 * * ?"/>
+    </bean>
+
+    <bean id="messageTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">
+        <property name="jobDetail" ref="messageJobDetail"/>
+        <property name="startDelay" value="1000"/>
+        <property name="repeatInterval" value="300000"/>
+    </bean>
+
+    <!--每隔五分钟发送一次信息-->
+    <bean id="failTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">
+        <property name="jobDetail" ref="failJobDetail"/>
+        <property name="startDelay" value="1000"/>
+        <property name="repeatInterval" value="300000"/>
+    </bean>
+
+    <bean id="judgeQqTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">
+        <property name="jobDetail" ref="judgeQqDetail"/>
+        <property name="startDelay" value="1000"/>
+        <property name="repeatInterval" value="1200000"/>
+    </bean>
+
+
+    <!-- Scheduler factory bean to glue together jobDetails and     triggers to Configure Quartz Scheduler -->
+    <bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+        <property name="jobDetails">
+            <list>
+                <ref bean="simpleJobDetail"/>
+                <ref bean="firstComplexJobDetail"/>
+                <ref bean="customerJudgeJobDetail"/>
+                <ref bean="messageJobDetail"/>
+                <ref bean="failJobDetail"/>
+                <ref bean="judgeQqDetail"/>
+            </list>
+        </property>
+
+        <property name="triggers">
+            <list>
+                <ref bean="simpleTrigger"/>
+                <ref bean="cronTrigger"/>
+                <ref bean="customerJudgeCroTrigger"/>
+                <ref bean="messageTrigger"/>
+                <ref bean="failTrigger"/>
+                <ref bean="judgeQqTrigger"/>
+            </list>
+        </property>
+    </bean>
+    <!-- 启用aop注解 -->
+    <aop:aspectj-autoproxy expose-proxy="true"/>
+    <import resource="classpath*:spring-config-datasource.xml"/>
+</beans>
