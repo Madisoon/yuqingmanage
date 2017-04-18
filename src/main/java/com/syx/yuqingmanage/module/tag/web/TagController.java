@@ -3,6 +3,7 @@ package com.syx.yuqingmanage.module.tag.web;
 import com.syx.yuqingmanage.module.tag.service.ITagService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -19,9 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class TagController {
     @Autowired
     private ITagService iTagService;
+
     @RequestMapping(value = "/insertTag", method = RequestMethod.POST)
     @ApiOperation(value = "插入标签", notes = "标签对象")
-    public String insertTag(@RequestParam("tagData") String tagData) {
+    public String insertTag(@ApiParam(required = true, name = "tagData", value = "标签的数据") @RequestParam("tagData") String tagData) {
         String result = iTagService.insertTag(tagData).toString();
         return result;
     }

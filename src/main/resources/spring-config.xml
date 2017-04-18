@@ -40,14 +40,13 @@
             <value>classpath:app.properties</value>
         </property>
     </bean>
-
-    <bean id="jsonResponse" class="com.alienlab.response.JSONResponse"/>
-    <bean id="numberInfoPost" class="com.syx.yuqingmanage.utils.NumberInfoPost"/>
-    <bean id="qqMessagePost" class="com.syx.yuqingmanage.utils.QqMessagePost"/>
-    <bean id="appJsonPost" class="com.syx.yuqingmanage.utils.AppJsonPost"/>
-    <bean id="jwtUtils" class="com.syx.yuqingmanage.utils.JwtUtils"/>
-    <bean id="failData" class="com.syx.yuqingmanage.utils.FailData"/>
-    <bean id="qqAsyncMessagePost" class="com.syx.yuqingmanage.utils.QqAsyncMessagePost"/>
+    <!--    <bean id="jsonResponse" class="com.alienlab.response.JSONResponse"/>
+        <bean id="numberInfoPost" class="com.syx.yuqingmanage.utils.NumberInfoPost"/>
+        <bean id="qqMessagePost" class="com.syx.yuqingmanage.utils.QqMessagePost"/>
+        <bean id="appJsonPost" class="com.syx.yuqingmanage.utils.AppJsonPost"/>
+        <bean id="jwtUtils" class="com.syx.yuqingmanage.utils.JwtUtils"/>
+        <bean id="failData" class="com.syx.yuqingmanage.utils.FailData"/>
+        <bean id="qqAsyncMessagePost" class="com.syx.yuqingmanage.utils.QqAsyncMessagePost"/>-->
 
 
     <bean id="captchaProducer" class="com.google.code.kaptcha.impl.DefaultKaptcha">
