@@ -48,14 +48,15 @@ public class AppController {
     @ApiOperation(value = "插入自定义标签的id", notes = "客户信息的id")
     @RequestMapping(value = "/appGetCustomerById", method = RequestMethod.POST)
     public String appGetCustomerById(@RequestParam("id") String id) {
-        String result = iAppService.getCustomerById(id).toString();
+        String result = iAppService.insertCutomerId(id).toString();
         return result;
     }
 
     @ApiOperation(value = "删除自定义标签的id", notes = "客户信息id")
     @RequestMapping(value = "/deleteCustomerInfo", method = RequestMethod.POST)
-    public String deleteCustomerInfo(@RequestParam("id") String id) {
-        String result = iAppService.deleteCustomerInfo(id).toString();
+    public String deleteCustomerInfo(@RequestParam("ids") String ids) {
+        System.out.println(ids);
+        String result = iAppService.deleteCustomerInfo(ids).toString();
         return result;
     }
 

@@ -94,4 +94,45 @@ public class ConfigureService implements IConfigureService {
         ExecResult execResult = jsonResponse.getExecResult(sql, null);
         return execResult;
     }
+
+    @Override
+    public ExecResult addWx(String wxDate) {
+        String addWx = SqlEasy.insertObject(wxDate, "sys_weixin");
+        ExecResult execResult = jsonResponse.getExecResult(addWx, null);
+        return execResult;
+    }
+
+    @Override
+    public JSONObject getAllWx() {
+        String getAllWxSql = "SELECT * FROM sys_weixin";
+        ExecResult execResult = jsonResponse.getSelectResult(getAllWxSql, null, "");
+        JSONArray jsonArray = (JSONArray) execResult.getData();
+        JSONObject jsonObject = new JSONObject();
+        if (jsonArray == null) {
+            jsonObject.put("total", 0);
+        } else {
+            jsonObject.put("total", jsonArray.size());
+        }
+        jsonObject.put("data", jsonArray);
+        return jsonObject;
+    }
+
+    @Override
+    public ExecResult deleteWx(String idData) {
+        String[] idDatas = idData.split(",");
+        int idDatasLen = idDatas.length;
+        List list = new ArrayList();
+        for (int i = 0; i < idDatasLen; i++) {
+            list.add("DELETE FROM sys_weixin WHERE id = " + idDatas[i]);
+        }
+        ExecResult execResult = jsonResponse.getExecResult(list, "", "");
+        return execResult;
+    }
+
+    @Override
+    public ExecResult updateWx(String wxData, String id) {
+        String updateSql = SqlEasy.updateObject(wxData, "sys_weixin", "id = " + id);
+        ExecResult execResult = jsonResponse.getExecResult(updateSql, null);
+        return execResult;
+    }
 }

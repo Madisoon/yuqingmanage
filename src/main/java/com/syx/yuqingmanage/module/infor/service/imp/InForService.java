@@ -9,6 +9,7 @@ import com.syx.yuqingmanage.module.infor.service.IInForService;
 import com.syx.yuqingmanage.utils.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -154,13 +155,11 @@ public class InForService implements IInForService {
     @Override
     public JSONObject getAllInfor(String pageNumber, String pageSize) {
         JSONObject returnData = new JSONObject();
-        int pageNumberInt = Integer.parseInt(pageNumber);
-        int pageSizeInt = Integer.parseInt(pageSize);
+        int pageNumberInt = Integer.parseInt(pageNumber, 10);
+        int pageSizeInt = Integer.parseInt(pageSize, 10);
         String sqlLen = "SELECT * FROM sys_infor";
         ExecResult execResult = jsonResponse.getSelectResult(sqlLen, null, "");
         JSONArray jsonArray = (JSONArray) execResult.getData();
-        /*DataExport dataExport = new DataExport();
-        dataExport.exportWord(jsonArray, "");*/
         int len = 0;
         if (jsonArray != null) {
             len = jsonArray.size();

@@ -33,12 +33,10 @@ public class MessageScheduledJob extends QuartzJobBean {
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
         postMessage();
-        System.out.println("执行");
     }
 
     public String postMessage() {
         String sql = " SELECT * FROM detention_post_info ";
-        System.out.println("执行");
         ExecResult execResult = jsonResponse.getSelectResult(sql, null, "");
         JSONArray jsonArray = (JSONArray) execResult.getData();
         if (jsonArray == null) {
@@ -55,6 +53,7 @@ public class MessageScheduledJob extends QuartzJobBean {
                 String infoPostQq = jsonObject.getString("info_post_qq");
                 String infoPostType = jsonObject.getString("info_post_type");
                 String infoNumber = jsonObject.getString("info_number");
+                String infoPriority = jsonObject.getString("info_priority");
                 String id = jsonObject.getString("id");
                 long timeMillis = System.currentTimeMillis();
                 timeMillis += 30 * 60 * 1000;
@@ -68,7 +67,7 @@ public class MessageScheduledJob extends QuartzJobBean {
                         String content = "链接:" + infoLink;
                         numberInfoPost.sendMsgByYunPian(content, infoNumber);
                         jsonResponse.getExecResult(sqlDelete, null);
-                    } else if ("qq".equals(infoPostType) || "qqGroup".equals(infoPostType)) {
+                    } /*else if ("qq".equals(infoPostType) || "qqGroup".equals(infoPostType)) {
                         System.out.println("开始发送");
                         // 定时发qq消息
                         int timeNumber = 5 + (int) Math.random() * 4;
@@ -82,10 +81,23 @@ public class MessageScheduledJob extends QuartzJobBean {
                             // 如果发送失败，就直接放入到数据库中等待下一次发送
                             failData.qqResend(infoNumber, infoPostQq, infoPostType, infoTitle, infoContent, infoLink, infoSource);
                         }
-                        /*qq调用一遍直接把信息删除*/
+                        *//*qq调用一遍直接把信息删除*//*
                         jsonResponse.getExecResult(sqlDelete, null);
-                    } else {
+                    } */ else {
                         System.out.println("调用发送微信的接口");
+                        List<String> listMsg = new ArrayList<>();
+                        listMsg.add("标题 : " + infoTitle);
+                        listMsg.add("内容 : " + infoContent);
+                        listMsg.add("链接 : ");
+                        listMsg.add(infoLink);
+                        listMsg.add("来源 : " + infoSource);
+                        String messAgeWord = StringUtils.join(listMsg, "\n");
+                        String insertSql = "INSERT INTO sys_manual_post (infor_context,infor_post_type,infor_post_people," +
+                                "infor_get_people,infor_priority) VALUES('" + messAgeWord + "','" + infoPostType + "','" + infoPostQq + "','" + infoNumber + "'," + infoPriority + ") ";
+                        List list = new ArrayList();
+                        list.add(insertSql);
+                        list.add(sqlDelete);
+                        jsonResponse.getExecResult(list, "", "");
                     }
                 } else {
                     System.out.println("这条信息现在不发送！");

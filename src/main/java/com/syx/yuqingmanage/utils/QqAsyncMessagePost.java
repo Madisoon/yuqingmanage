@@ -21,8 +21,8 @@ public class QqAsyncMessagePost {
     private QqMessagePost qqMessagePost;
     @Autowired
     private FailData failData;
-    @Autowired
-    private JSONResponse jsonResponse;
+    /* @Autowired*/
+    private JSONResponse jsonResponse = new JSONResponse();
 
     @Async
     public void postCustomerMessage(JSONArray jsonArray, String infoContext, String infoTitle, String infoLink, String source) {
@@ -33,15 +33,26 @@ public class QqAsyncMessagePost {
         List<String> numberList = new ArrayList<>();
         for (int i = 0; i < allCustomerLen; i++) {
             JSONObject allCustomerSingle = jsonArray.getJSONObject(i);
+            System.out.println("allCustomerSingle");
             //发送的类型
             String postType = allCustomerSingle.getString("get_type");
             //接收号码（qq号，qq群，手机号）
             String getNumber = allCustomerSingle.getString("get_number");
             //发送
             String postNumber = allCustomerSingle.getString("qq_number");
+            String weixinPostNumber = allCustomerSingle.getString("customer_post_weixin");
+            String customerPriority = allCustomerSingle.getString("customer_priority");
+            List<String> listMsg = new ArrayList<>();
+            listMsg.add("标题 : " + infoTitle);
+            listMsg.add("内容 : " + infoContext);
+            listMsg.add("链接 : ");
+            listMsg.add(infoLink);
+            listMsg.add("来源 : " + source);
+            String messAgeWord = StringUtils.join(listMsg, "\n");
             if ("number".equals(postType)) {
                 numberList.add(getNumber);
             } else {
+                /* 发送信息给qq
                 int timeNumber = 2 + (int) Math.random() * 4;
                 try {
                     TimeUnit.SECONDS.sleep(timeNumber);
@@ -54,7 +65,16 @@ public class QqAsyncMessagePost {
                     failData.qqResend(getNumber, postNumber, postType, infoTitle, infoContext, infoLink, source);
                 } else {
 
+                }*/
+                String insertSql = "";
+                if ("qq".equals(postType) || "qqGroup".equals(postType)) {
+                    insertSql = "INSERT INTO sys_manual_post (infor_context,infor_post_type,infor_post_people," +
+                            "infor_get_people,infor_priority) VALUES('" + messAgeWord + "','" + postType + "','" + postNumber + "','" + getNumber + "'," + customerPriority + ") ";
+                } else {
+                    insertSql = "INSERT INTO sys_manual_post (infor_context,infor_post_type,infor_post_people," +
+                            "infor_get_people,infor_priority) VALUES('" + messAgeWord + "','" + postType + "','" + weixinPostNumber + "','" + getNumber + "'," + customerPriority + ") ";
                 }
+                jsonResponse.getExecResult(insertSql, null);
             }
         }
         numberInfoPost.sendMsgByYunPian(StringUtils.join(list, ""), StringUtils.join(numberList, ","));
@@ -74,11 +94,16 @@ public class QqAsyncMessagePost {
             //接收号码（qq号，qq群，手机号）
             String postNumber = allCustomerSingle.getString("get_number");
             //发送
-            String qqNumber = allCustomerSingle.getString("qq_number");
-            //计划
+            String qqNumber = "";
+            if ("qq".equals(postType) || "qqGroup".equals(postType)) {
+                qqNumber = allCustomerSingle.getString("qq_number");
+            } else {
+                qqNumber = allCustomerSingle.getString("customer_post_weixin");
+            }
+            String customerPriority = allCustomerSingle.getString("customer_priority");
             String qqPlan = allCustomerSingle.getString("scheme_plan_id");
-            String sql = " INSERT INTO detention_post_info (info_title,info_content,info_link,info_source,info_post_type,info_number,info_post_qq,info_plan_id) " +
-                    " VALUES ('" + infoTitle + "','" + infoContext + "','" + infoLink + "','" + infoSource + "','" + postType + "'," +
+            String sql = " INSERT INTO detention_post_info (info_title,info_content,info_link,info_source,info_priority,info_post_type,info_number,info_post_qq,info_plan_id) " +
+                    " VALUES ('" + infoTitle + "','" + infoContext + "','" + infoLink + "','" + infoSource + "'," + customerPriority + ",'" + postType + "'," +
                     "'" + postNumber + "','" + qqNumber + "','" + qqPlan + "') ";
             sqlList.add(sql);
         }
@@ -109,6 +134,27 @@ public class QqAsyncMessagePost {
             } catch (Exception e) {
                 /*numberInfoPost.sendMsgByYunPian(allModule.getString("terrace_link") + "信息发送出错!", "18752002129");*/
             }
+        }
+    }
+
+    @Async
+    public void insertData(JSONObject jsonObject, JSONArray jsonArray) {
+        String id = jsonObject.getString("id");
+        int jsonArray1Len = jsonArray.size();
+        int j;
+        for (j = 0; j < jsonArray1Len; j++) {
+            JSONObject jsonObject2 = jsonArray.getJSONObject(j);
+            String ids = jsonObject2.getString("base_id");
+            if (id.equals(ids)) {
+                break;
+            }
+        }
+        if (j == jsonArray1Len) {
+            List list = new ArrayList();
+            list.add("INSERT INTO base_yuqing_user  (base_id,base_user_name,base_start_time,base_end_time) ");
+            list.add("VALUES ('" + jsonObject.getString("id") + "','" + jsonObject.getString("name") + "' ");
+            list.add(",'" + jsonObject.getString("add_time") + "','" + jsonObject.getString("end_date") + "') ");
+            jsonResponse.getExecResult(StringUtils.join(list, ""), null);
         }
     }
 }

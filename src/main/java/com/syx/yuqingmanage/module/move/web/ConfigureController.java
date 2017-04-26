@@ -74,4 +74,34 @@ public class ConfigureController {
         String result = iConfigureService.updatePlan(planData, id).toString();
         return result;
     }
+
+    @RequestMapping(value = "/addWx", method = RequestMethod.POST)
+    @ApiOperation(value = "addWx", notes = "添加配置qq")
+    public String addWx(@RequestParam("wxDate") String wxDate) {
+        String result = iConfigureService.addWx(wxDate).toString();
+        return result;
+    }
+
+    @RequestMapping(value = "/getAllWx", method = RequestMethod.POST)
+    @ApiOperation(value = "getAllWx", notes = "获取所有的配置qq")
+    public String getAllWx() {
+        String result = iConfigureService.getAllWx().toString();
+        return result;
+    }
+
+    @RequestMapping(value = "/deleteWx", method = RequestMethod.POST)
+    @ApiOperation(value = "deleteWx", notes = "根据id删除QQ")
+    public String deleteWx(@RequestParam("idData") String idData) {
+        String result = iConfigureService.deleteWx(idData).toString();
+        return result;
+    }
+
+    @RequestMapping(value = "/updateWx", method = RequestMethod.POST)
+    @ApiOperation(value = "updateWx", notes = "根据id修改配置qq信息")
+    public String updateWx(@RequestParam("wxData") String wxData, @RequestParam("id") String id) {
+        String result = iConfigureService.updateWx(wxData, id).toString();
+        return result;
+    }
+
+
 }

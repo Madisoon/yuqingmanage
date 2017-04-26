@@ -396,6 +396,13 @@
             <version>2.3.23</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.springframework.integration/spring-integration-kafka -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+            <version>1.1.0.RELEASE</version>
+        </dependency>
+
 
     </dependencies>
 

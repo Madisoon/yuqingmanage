@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alienlab.db.ExecResult;
 import com.alienlab.response.JSONResponse;
+import com.syx.yuqingmanage.module.app.service.imp.AppService;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.scheduling.quartz.QuartzJobBean;
@@ -18,14 +19,17 @@ import java.util.Date;
 public class CustomerScheduledJob extends QuartzJobBean {
     private JSONResponse jsonResponse = new JSONResponse();
 
+    private AppService appService = new AppService();
+
     @Override
     protected void executeInternal(JobExecutionContext arg0)
             throws JobExecutionException {
         /*System.out.println("I am CustomerScheduledJob");*/
         judgeCustomer();
+        getDataUser();
     }
 
-    public String judgeCustomer() {
+    public void judgeCustomer() {
         String sqlCustomer = "SELECT * FROM  sys_post_customer ";
         ExecResult execResult = jsonResponse.getSelectResult(sqlCustomer, null, "");
         JSONArray jsonArray = (JSONArray) execResult.getData();
@@ -52,6 +56,9 @@ public class CustomerScheduledJob extends QuartzJobBean {
                 }
             }
         }
-        return "";
+    }
+
+    public void getDataUser() {
+        appService.refreshData();
     }
 }

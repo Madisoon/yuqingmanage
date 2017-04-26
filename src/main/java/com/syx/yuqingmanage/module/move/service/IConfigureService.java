@@ -22,4 +22,12 @@ public interface IConfigureService {
     public ExecResult deletePlan(String idData);
 
     public ExecResult updatePlan(String planData, String id);
+
+    public ExecResult addWx(String wxDate);
+
+    public JSONObject getAllWx();
+
+    public ExecResult deleteWx(String idData);
+
+    public ExecResult updateWx(String wxData, String id);
 }

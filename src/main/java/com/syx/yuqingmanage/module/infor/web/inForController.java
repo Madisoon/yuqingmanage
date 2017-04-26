@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Created by Master  Zg on 2016/11/9.
@@ -83,7 +84,7 @@ public class inForController {
     public String exportData(@RequestParam("searchTagId") String searchTagId,
                              @RequestParam("searchInfoData") String searchInfoData,
                              @RequestParam("customerName") String customerName,
-                             @RequestParam("exportType") String exportType) {
+                             @RequestParam("exportType") String exportType, HttpServletRequest request, HttpServletResponse response) {
         /*File file = null;
         InputStream inputStream = null;
         ServletOutputStream out = null;

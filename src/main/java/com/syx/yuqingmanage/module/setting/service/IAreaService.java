@@ -25,4 +25,12 @@ public interface IAreaService {
     public ExecResult postAreaData(String areaId, String areaValue, String areaGade);
 
     public ExecResult getAllArea();
+
+    public ExecResult updateArea(String areaId, String areaName);
+
+    public ExecResult deleteArea(String areaId);
+
+    public ExecResult getAreaMaxId();
+
+    public ExecResult insertArea(String areaData);
 }

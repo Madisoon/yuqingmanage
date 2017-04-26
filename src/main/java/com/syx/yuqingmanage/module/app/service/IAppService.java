@@ -1,5 +1,6 @@
 package com.syx.yuqingmanage.module.app.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.alienlab.db.ExecResult;
 
 /**
@@ -17,9 +18,9 @@ public interface IAppService {
 
     public ExecResult getCustomerById(String id);
 
-    public ExecResult deleteCustomerInfo(String id);
+    public JSONObject deleteCustomerInfo(String id);
 
-    public ExecResult insertCutomerId(String id);
+    public JSONObject insertCutomerId(String id);
 
     public void refreshData();
 }
