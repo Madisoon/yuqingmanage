@@ -22,8 +22,8 @@ public class InForPostController {
 
     @RequestMapping(value = "/getInforPost", method = RequestMethod.POST)
     @ApiOperation(value = "得到需要发送的信息", notes = "无")
-    public String getInforPost() {
-        String result = iInForPostService.getInforPost().toString();
+    public String getInforPost(@RequestParam("userLoginName") String userLoginName) {
+        String result = iInForPostService.getInforPost(userLoginName).toString();
         return result;
     }
 
@@ -32,6 +32,13 @@ public class InForPostController {
     public String updateInforPost(@RequestParam("inforId") String inforId,
                                   @RequestParam("userLoginName") String userLoginName) {
         String result = iInForPostService.updateInforPost(inforId, userLoginName).toString();
+        return result;
+    }
+
+    @RequestMapping(value = "/deleteInforPost", method = RequestMethod.POST)
+    @ApiOperation(value = "删除信息", notes = "信息的id")
+    public String deleteInforPost(@RequestParam("inforId") String inforId) {
+        String result = iInForPostService.deleteInforPost(inforId).toString();
         return result;
     }
 }

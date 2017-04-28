@@ -48,6 +48,8 @@ public class InForService implements IInForService {
         // 信息的等级
         String infoGrade = jsonObject.getString("infor_grade");
 
+        String inforCreater = jsonObject.getString("infor_creater");
+
         String tagId = infoTag;
         String inFoData = String.valueOf(jsonObject);
         String sqlInsert = SqlEasy.insertObject(inFoData, "sys_infor");
@@ -131,7 +133,7 @@ public class InForService implements IInForService {
                         System.out.println("客户为空");
                     } else {
                         System.out.println(allCustomer);
-                        qqAsyncMessagePost.postCustomerMessage(allCustomer, infoContext, infoTitle, infoLink, infoSource);
+                        qqAsyncMessagePost.postCustomerMessage(allCustomer, infoContext, infoTitle, infoLink, infoSource, inforCreater);
                     }
 
                 }
@@ -142,7 +144,7 @@ public class InForService implements IInForService {
                         //没有需要延迟发送的人
                         System.out.println("客户为空");
                     } else {
-                        qqAsyncMessagePost.postCustomerLate(allCustomerLate, infoContext, infoTitle, infoLink, infoSource);
+                        qqAsyncMessagePost.postCustomerLate(allCustomerLate, infoContext, infoTitle, infoLink, infoSource, inforCreater);
                     }
                 }
             }

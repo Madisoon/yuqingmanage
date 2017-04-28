@@ -8,4 +8,6 @@ import com.alienlab.db.ExecResult;
  */
 public interface IInForHistoryService {
     public JSONObject getAllHistory(String pageNumber, String pageSize);
+
+    public JSONObject getChoiceHistory(String pageNumber, String pageSize, String tableChoiceData);
 }

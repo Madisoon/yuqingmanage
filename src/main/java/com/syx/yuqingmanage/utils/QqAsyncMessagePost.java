@@ -25,7 +25,7 @@ public class QqAsyncMessagePost {
     private JSONResponse jsonResponse = new JSONResponse();
 
     @Async
-    public void postCustomerMessage(JSONArray jsonArray, String infoContext, String infoTitle, String infoLink, String source) {
+    public void postCustomerMessage(JSONArray jsonArray, String infoContext, String infoTitle, String infoLink, String source, String inforCreater) {
         long beginTime = System.currentTimeMillis(); // 这段代码放在程序执行前
         int allCustomerLen = jsonArray.size();
         List<String> list = new ArrayList<>();
@@ -69,10 +69,10 @@ public class QqAsyncMessagePost {
                 String insertSql = "";
                 if ("qq".equals(postType) || "qqGroup".equals(postType)) {
                     insertSql = "INSERT INTO sys_manual_post (infor_context,infor_post_type,infor_post_people," +
-                            "infor_get_people,infor_priority) VALUES('" + messAgeWord + "','" + postType + "','" + postNumber + "','" + getNumber + "'," + customerPriority + ") ";
+                            "infor_get_people,infor_priority,infor_create_people) VALUES('" + messAgeWord + "','" + postType + "','" + postNumber + "','" + getNumber + "'," + customerPriority + ",'" + inforCreater + "') ";
                 } else {
                     insertSql = "INSERT INTO sys_manual_post (infor_context,infor_post_type,infor_post_people," +
-                            "infor_get_people,infor_priority) VALUES('" + messAgeWord + "','" + postType + "','" + weixinPostNumber + "','" + getNumber + "'," + customerPriority + ") ";
+                            "infor_get_people,infor_priority,infor_create_people) VALUES('" + messAgeWord + "','" + postType + "','" + weixinPostNumber + "','" + getNumber + "'," + customerPriority + ",'" + inforCreater + "') ";
                 }
                 jsonResponse.getExecResult(insertSql, null);
             }
@@ -84,7 +84,7 @@ public class QqAsyncMessagePost {
         System.out.println("耗时：" + seconds + "秒");
     }
 
-    public void postCustomerLate(JSONArray jsonArray, String infoContext, String infoTitle, String infoLink, String infoSource) {
+    public void postCustomerLate(JSONArray jsonArray, String infoContext, String infoTitle, String infoLink, String infoSource, String inforCreater) {
         int allCustomerLen = jsonArray.size();
         List<String> sqlList = new ArrayList<>();
         for (int i = 0; i < allCustomerLen; i++) {
@@ -102,9 +102,9 @@ public class QqAsyncMessagePost {
             }
             String customerPriority = allCustomerSingle.getString("customer_priority");
             String qqPlan = allCustomerSingle.getString("scheme_plan_id");
-            String sql = " INSERT INTO detention_post_info (info_title,info_content,info_link,info_source,info_priority,info_post_type,info_number,info_post_qq,info_plan_id) " +
+            String sql = " INSERT INTO detention_post_info (info_title,info_content,info_link,info_source,info_priority,info_post_type,info_number,info_post_qq,info_plan_id,info_creater_people) " +
                     " VALUES ('" + infoTitle + "','" + infoContext + "','" + infoLink + "','" + infoSource + "'," + customerPriority + ",'" + postType + "'," +
-                    "'" + postNumber + "','" + qqNumber + "','" + qqPlan + "') ";
+                    "'" + postNumber + "','" + qqNumber + "','" + qqPlan + "','" + inforCreater + "') ";
             sqlList.add(sql);
         }
         jsonResponse.getExecResult(sqlList, "", "");

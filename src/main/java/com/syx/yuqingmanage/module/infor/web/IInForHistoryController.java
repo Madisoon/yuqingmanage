@@ -32,8 +32,14 @@ public class IInForHistoryController {
             JSONObject params = JSONObject.parseObject(param);
             String pageNumber = params.getString("pageNumber");
             String pageSize = params.getString("pageSize");
+            String tableChoiceData = params.getString("tableChoiceData");
             String result = "";
-            result = iInForHistoryService.getAllHistory(pageNumber, pageSize).toString();
+            if ("{}".equals(tableChoiceData)) {
+                result = iInForHistoryService.getAllHistory(pageNumber, pageSize).toString();
+            } else {
+                result = iInForHistoryService.getChoiceHistory(pageNumber, pageSize, tableChoiceData).toString();
+
+            }
             return result;
         } catch (Exception ex) {
             ex.printStackTrace();

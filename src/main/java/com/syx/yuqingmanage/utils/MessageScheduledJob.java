@@ -54,6 +54,7 @@ public class MessageScheduledJob extends QuartzJobBean {
                 String infoPostType = jsonObject.getString("info_post_type");
                 String infoNumber = jsonObject.getString("info_number");
                 String infoPriority = jsonObject.getString("info_priority");
+                String infoCreater = jsonObject.getString("info_creater_people");
                 String id = jsonObject.getString("id");
                 long timeMillis = System.currentTimeMillis();
                 timeMillis += 30 * 60 * 1000;
@@ -93,7 +94,7 @@ public class MessageScheduledJob extends QuartzJobBean {
                         listMsg.add("来源 : " + infoSource);
                         String messAgeWord = StringUtils.join(listMsg, "\n");
                         String insertSql = "INSERT INTO sys_manual_post (infor_context,infor_post_type,infor_post_people," +
-                                "infor_get_people,infor_priority) VALUES('" + messAgeWord + "','" + infoPostType + "','" + infoPostQq + "','" + infoNumber + "'," + infoPriority + ") ";
+                                "infor_get_people,infor_priority,infor_create_people) VALUES('" + messAgeWord + "','" + infoPostType + "','" + infoPostQq + "','" + infoNumber + "'," + infoPriority + ",'" + infoCreater + "') ";
                         List list = new ArrayList();
                         list.add(insertSql);
                         list.add(sqlDelete);
