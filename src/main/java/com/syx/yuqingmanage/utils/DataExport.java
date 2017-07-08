@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alienlab.db.ExecResult;
 import com.alienlab.response.JSONResponse;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -23,11 +24,11 @@ public class DataExport {
             JSONObject jsonObject = jsonArray.getJSONObject(i);
             System.out.println(jsonObject);
             Map map = new HashMap();
+            String inforContext = jsonObject.getString("infor_context").replaceAll("<系统提示：因该条信息内容过长，为节省您的存储空间，本软件只存储并显示其部分内容，详细内容请到原网站浏览>", " ");
             map.put("index", i + 1);
             map.put("title", jsonObject.getString("infor_title"));
             map.put("source", jsonObject.getString("infor_source"));
             map.put("time", jsonObject.getString("infor_createtime"));
-            map.put("context", jsonObject.getString("infor_context"));
             map.put("link", jsonObject.getString("infor_link").replaceAll("&", "&amp;"));
             list.add(map);
         }
@@ -42,6 +43,100 @@ public class DataExport {
         } else {
             fileName = longTime + ".xls";
             fileFtl = "inforexcel.ftl";
+        }
+        try {
+            documentHandler.createDoc(maps, "C:/dummyPath/" + fileName, fileFtl);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return fileName;
+    }
+
+    public String exeportHistoryInfor(JSONArray jsonArray, String exportType) {
+        List list = new ArrayList();
+        DocumentHandler documentHandler = new DocumentHandler();
+        int jsonArrayLen = jsonArray.size();
+        for (int i = 0; i < jsonArrayLen; i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+            Map map = new HashMap();
+            list.add(map);
+        }
+        Map maps = new HashMap();
+        maps.put("inforList", list);
+        String longTime = String.valueOf(System.currentTimeMillis());
+        String fileName = "";
+        String fileFtl = "";
+        if ("word".equals(exportType)) {
+            fileName = longTime + ".doc";
+            /*fileFtl = "inforword.ftl";*/
+        } else {
+            fileName = longTime + ".xls";
+            /*fileFtl = "inforexcel.ftl";*/
+        }
+        try {
+            documentHandler.createDoc(maps, "C:/dummyPath/" + fileName, fileFtl);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return fileName;
+    }
+
+    public String exportCustomerData(JSONArray jsonArray, String exportType) {
+        List list = new ArrayList();
+        DocumentHandler documentHandler = new DocumentHandler();
+        int jsonArrayLen = jsonArray.size();
+        for (int i = 0; i < jsonArrayLen; i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+            String[] getNumbers = jsonObject.getString("get_numbers").split(",");
+            String[] getTypes = jsonObject.getString("get_types").split(",");
+            int getTypesLen = getTypes.length;
+            List listQqNumber = new ArrayList();
+            List listWeiNumber = new ArrayList();
+            List listPhone = new ArrayList();
+            for (int n = 0; n < getTypesLen; n++) {
+                switch (getTypes[n]) {
+                    case "weixinGroup":
+                        listWeiNumber.add(getNumbers[n]);
+                        break;
+                    case "weixin":
+                        listWeiNumber.add(getNumbers[n]);
+                        break;
+                    case "qq":
+                        listQqNumber.add(getNumbers[n]);
+                        break;
+                    case "qqGroup":
+                        listQqNumber.add(getNumbers[n]);
+                        break;
+                    case "number":
+                        listPhone.add(getNumbers[n]);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            Map map = new HashMap();
+            map.put("index", i + 1);
+            map.put("customerName", jsonObject.getString("customer_name"));
+            map.put("postScheme", jsonObject.getString("scheme_name"));
+            map.put("qqNumber", StringUtils.join(listQqNumber, "&"));
+            map.put("phoneNumber", StringUtils.join(listPhone, "&"));
+            map.put("weixinNumber", StringUtils.join(listWeiNumber, "&"));
+            map.put("createPeople", jsonObject.getString("user_name"));
+            map.put("expirationTime", jsonObject.getString("customer_end_time"));
+            map.put("cutomerStatus", jsonObject.getString("customer_status").equals("1") ? "启用" : "停用");
+            list.add(map);
+        }
+        Map maps = new HashMap();
+        maps.put("customerList", list);
+        String longTime = String.valueOf(System.currentTimeMillis());
+        String fileName = "";
+        String fileFtl = "";
+        if ("word".equals(exportType)) {
+            fileName = longTime + ".doc";
+            fileFtl = "inforword.ftl";
+        } else {
+            fileName = longTime + ".xls";
+            fileFtl = "exportcustomer.ftl";
         }
         try {
             documentHandler.createDoc(maps, "C:/dummyPath/" + fileName, fileFtl);

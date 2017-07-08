@@ -19,7 +19,7 @@ public class InForPostService implements IInForPostService {
     private JSONResponse jsonResponse;
 
     @Override
-    public ExecResult getInforPost(String userLoginName) {
+    public ExecResult getInforPost(String userLoginName, String sortType) {
         List list = new ArrayList();
         list.add("SELECT * FROM (SELECT a.*,b.qq_name AS number_name,c.get_remark FROM  sys_manual_post a ,sys_qq b ");
         list.add(",sys_customer_get c WHERE a.infor_status = 0  AND a.infor_post_people = b.qq_number AND ");
@@ -35,7 +35,11 @@ public class InForPostService implements IInForPostService {
             list.add("a.infor_create_people = '" + userLoginName + "' AND ");
         }
         list.add("a.infor_get_people = c.get_number AND (a.infor_post_type = 'weixin' OR a.infor_post_type = 'weixinGroup') ");
-        list.add("GROUP BY a.id ) a  ORDER BY a.infor_get_people, a.infor_priority DESC ,a.infor_post_time");
+        if (sortType.equals("1")) {
+            list.add("GROUP BY a.id ) a  ORDER BY a.infor_get_people, a.infor_priority DESC ,a.infor_post_time");
+        } else {
+            list.add("GROUP BY a.id ) a  ORDER BY a.infor_post_people, a.infor_priority DESC ,a.infor_post_time");
+        }
         String getInforPost = StringUtils.join(list, "");
         ExecResult execResult = jsonResponse.getSelectResult(getInforPost, null, "");
         return execResult;

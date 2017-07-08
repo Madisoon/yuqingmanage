@@ -13,7 +13,7 @@ public interface ITagService {
      * @param tagData
      * @return
      */
-    public ExecResult insertTag(String tagData);
+    public ExecResult insertTag(String tagData, String allParent);
 
     /**
      * 修改标签的名称

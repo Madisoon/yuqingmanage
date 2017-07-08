@@ -7,14 +7,6 @@ public class Md5Azdg {
 	static{
 		key = "pop";//ConfigManager.getInstance().getConfigMap().get("password_key");
 	}
-	/*public Azdg(){
-	   key = ConfigManager.getInstance().getConfigMap().get("password_key");
-	}*/
-	/**
-	 * 密钥，可自定�?
-	 */
-	//private static final String key = "pop";
-
 	/**
 	 * 加密算法
 	 * 
@@ -32,33 +24,8 @@ public class Md5Azdg {
 					+ (char) (txt.charAt(i) ^ encrypt_key.charAt(ctr));
 			ctr++;
 		}
-		//String key = ConfigManager.getInstance().getConfigMap().get("password_key");
 		return base64_encode(key(tmp, key));
 	}
-
-	/**
-	 * 解密算法
-	 * 
-	 * @param cipherText
-	 * @return
-	 */
-	public static String decrypt(String cipherText) {
-		cipherText = base64_decode(cipherText);
-		//从配置文件中读取密钥
-		//String key = ConfigManager.getInstance().getConfigMap().get("password_key");
-		cipherText = key(cipherText, key);
-		String tmp = "";
-
-		for (int i = 0; i < cipherText.length(); i++) {
-			int c = cipherText.charAt(i) ^ cipherText.charAt(i + 1);
-			String x = "" + (char) c;
-			tmp += x;
-			i++;
-		}
-
-		return tmp;
-	}
-
 	private static String key(String txt, String encrypt_key) {
 		encrypt_key = strMD5(encrypt_key);
 		int ctr = 0;
@@ -140,26 +107,10 @@ public class Md5Azdg {
 		    	buf.append(Integer.toHexString(i));
 		    }
 		    str = buf.toString();
-		    //System.out.println("result: " + buf.toString());// 32位的加密
-		    //System.out.println("result: " + buf.toString().substring(8, 24));// 16位的加密
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
 		return str;
-	}
-	public static void main(String[] args) {
-
-		String clearText = "123456";// 明文
-		//String cipherText = "C21ePAk0WmIJNV1oC25aZA==";// 密文
-		//String cleanText = "C21ePAk0WmIJNV1oC25aZA==";// 解密后的
-
-		System.out.println("明文为：" + clearText);
-		//cipherText = Md5Azdg.encrypt(clearText);
-		System.out.println("加密后为" + Md5Azdg.encrypt(clearText));
-		//cleanText = Md5Azdg.decrypt(cleanText);
-		//System.out.println("解密后为�?" + cleanText);
-		//25f9e794323b453885f5181f1b624d0b
-		System.out.println(Md5Azdg.md5s("Kh800811866"));
 	}
     
 }

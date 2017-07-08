@@ -1,6 +1,5 @@
 package com.syx.yuqingmanage.module.infor.web;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alienlab.db.ExecResult;
 import com.syx.yuqingmanage.module.infor.service.IInForService;

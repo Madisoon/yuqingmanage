@@ -19,10 +19,12 @@
        default-lazy-init="false">
 
     <!-- 加载配置 -->
+
     <context:property-placeholder ignore-unresolvable="true" location="classpath:app.properties"/>
     <!-- 加载应用属性实例，可通过  @Value("#{APP_PROP['jdbc.driver']}") String jdbcDriver 方式引用 -->
     <util:properties id="APP_PROP" location="classpath:app.properties" local-override="true"/>
     <!--扫描redis配置-->
+    <context:component-scan base-package="com.syx.yuqingmanage"/>
     <context:component-scan base-package="com.syx.yuqingmanage.springredis"/>
     <context:component-scan base-package="com.syx.yuqingmanage.utils">
     </context:component-scan>
@@ -81,7 +83,7 @@
 
     <bean id="messageTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">
         <property name="jobDetail" ref="messageJobDetail"/>
-        <property name="startDelay" value="300000"/>
+        <property name="startDelay" value="60000"/>
         <property name="repeatInterval" value="300000"/>
     </bean>
 
@@ -119,7 +121,4 @@
             </list>
         </property>
     </bean>
-    <!-- 启用aop注解 -->
-    <aop:aspectj-autoproxy expose-proxy="true"/>
-    <import resource="classpath*:spring-config-datasource.xml"/>
 </beans>

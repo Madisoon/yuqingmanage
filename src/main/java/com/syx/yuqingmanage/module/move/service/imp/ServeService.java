@@ -7,6 +7,7 @@ import com.alienlab.db.ExecResult;
 import com.alienlab.response.JSONResponse;
 import com.sun.xml.internal.xsom.impl.ListSimpleTypeImpl;
 import com.syx.yuqingmanage.module.move.service.IServeService;
+import com.syx.yuqingmanage.utils.DataExport;
 import com.syx.yuqingmanage.utils.SqlEasy;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import java.util.Set;
 public class ServeService implements IServeService {
     @Autowired
     private JSONResponse jsonResponse;
+    private DataExport dataExport = new DataExport();
 
     @Override
     public ExecResult insertServeCustomer(String customerData, String getData, String areaId) {
@@ -154,7 +156,6 @@ public class ServeService implements IServeService {
         list.add(" AND b.customer_scheme = f.id) a ");
         list.add(" GROUP BY a.id) b  WHERE a.id = b.id ");
         String sql = StringUtils.join(list, "");
-        System.out.println(sql);
         ExecResult execResult = jsonResponse.getSelectResult(sql, null, "");
         JSONObject object = new JSONObject();
         JSONArray jsonArray = (JSONArray) execResult.getData();
@@ -165,5 +166,28 @@ public class ServeService implements IServeService {
             object.put("total", jsonArray.size());
         }
         return object;
+    }
+
+    @Override
+    public JSONObject exportCustomerData(String areaId, String searchData, String exportType) {
+        JSONObject data = new JSONObject();
+        if (searchData == null || "{}".equals(searchData)) {
+            data = getAllServeCustomer(areaId);
+            System.out.println("没搜索条件");
+        } else {
+            data = getAllServeCustomerChoose(areaId, searchData);
+            System.out.println("有搜索条件");
+        }
+        JSONArray jsonArray = data.getJSONArray("data");
+
+        JSONObject returnData = new JSONObject();
+        if (jsonArray == null) {
+            returnData.put("result", 0);
+        } else {
+            String fileUrl = dataExport.exportCustomerData(jsonArray, exportType);
+            returnData.put("result", 1);
+            returnData.put("url", fileUrl);
+        }
+        return returnData;
     }
 }

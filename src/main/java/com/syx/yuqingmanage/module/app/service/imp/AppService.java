@@ -101,7 +101,7 @@ public class AppService implements IAppService {
         int idSLen = idS.length;
         for (int i = 0; i < idSLen; i++) {
             list.add("DELETE FROM yuqing_user WHERE id = " + idS[i]);
-            list.add("DELETE FROM base_yuqing_user WHERE id = " + idS[i]);
+            list.add("DELETE FROM base_yuqing_user WHERE base_id = " + idS[i]);
         }
         ExecResult execResult = jsonResponse.getExecResult(list, "", "");
         JSONObject jsonObject = new JSONObject();

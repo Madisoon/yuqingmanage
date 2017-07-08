@@ -46,4 +46,11 @@ public class IInForHistoryController {
             return new ExecResult(false, "获取数据异常。").toString();
         }
     }
+
+    @RequestMapping(value = "/exportHistoryInfor", method = RequestMethod.POST)
+    @ApiOperation(value = "插入信息", notes = "信息的对象，信息所属标签")
+    public String exportHistoryInfor(@RequestParam("searchData") String searchData) {
+        String result = iInForHistoryService.exportHistoryInfor(searchData).toString();
+        return result;
+    }
 }

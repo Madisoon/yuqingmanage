@@ -138,19 +138,11 @@ public class HttpClientUtil {
     }
 
 
-    /*public static void main(String[] args) {
-        JSONObject jsonObject = new
-                JSONObject();
-        jsonObject.put("custom_name", "7");
-        jsonObject.put("user_name", "7");
-        jsonObject.put("user_start_time", "7");
-        jsonObject.put("user_finish_time", "7");
-        jsonObject.put("user_status",
-                "7");
+    public static void main(String[] args) {
         Map<String, String> param = new HashMap<String, String>();
-        param.put("userInfo", jsonObject.toString());
+        param.put("ids", "6882,66");
 
         System.out.println(HttpClientUtil.sendPost(
-                "http://10.0.0.58:8080/manage/appAddUser", param));
-    }*/
+                "http://118.178.237.219:8080/yuqingmanage/manage/deleteCustomerInfo", param));
+    }
 }

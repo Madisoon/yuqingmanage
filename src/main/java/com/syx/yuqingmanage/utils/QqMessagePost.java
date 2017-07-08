@@ -25,13 +25,14 @@ import java.util.Map;
 public class QqMessagePost {
     private AppJsonPost appJsonPost = new AppJsonPost();
 
-    public static final String ADD_URL = "http://180.96.63.186:53234/api/send";
+    public static final String ADD_URL = "http://39.108.178.160:53234/api/send";
 
     public static String[] randomCharacter = {" ", "'", "`", ".", ","};
     int randomCharacterLen = randomCharacter.length;
 
     public boolean postMessage(String getNumber, String postNumber, String type, String title, String context, String link, String source) {
         JSONObject jsonObjectData = new JSONObject();
+        System.out.println("执行这个方法了");
         JSONObject jsonObjectMessage = new JSONObject();
         boolean flag;
         if ("qq".equals(type)) {

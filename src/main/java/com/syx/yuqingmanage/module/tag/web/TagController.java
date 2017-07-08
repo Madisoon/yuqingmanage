@@ -23,8 +23,9 @@ public class TagController {
 
     @RequestMapping(value = "/insertTag", method = RequestMethod.POST)
     @ApiOperation(value = "插入标签", notes = "标签对象")
-    public String insertTag(@ApiParam(required = true, name = "tagData", value = "标签的数据") @RequestParam("tagData") String tagData) {
-        String result = iTagService.insertTag(tagData).toString();
+    public String insertTag(@ApiParam(required = true, name = "tagData", value = "标签的数据") @RequestParam("tagData") String tagData,
+                            @ApiParam(required = true, name = "allParent", value = "标签的数据") @RequestParam("allParent") String allParent) {
+        String result = iTagService.insertTag(tagData, allParent).toString();
         return result;
     }
 

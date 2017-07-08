@@ -25,7 +25,7 @@ public class QqAsyncMessagePost {
     private JSONResponse jsonResponse = new JSONResponse();
 
     @Async
-    public void postCustomerMessage(JSONArray jsonArray, String infoContext, String infoTitle, String infoLink, String source, String inforCreater) {
+    public void postCustomerMessage(JSONArray jsonArray, String infoContext, String infoTitle, String infoLink, String source, String inforCreater, String infoSite) {
         long beginTime = System.currentTimeMillis(); // 这段代码放在程序执行前
         int allCustomerLen = jsonArray.size();
         List<String> list = new ArrayList<>();
@@ -33,7 +33,6 @@ public class QqAsyncMessagePost {
         List<String> numberList = new ArrayList<>();
         for (int i = 0; i < allCustomerLen; i++) {
             JSONObject allCustomerSingle = jsonArray.getJSONObject(i);
-            System.out.println("allCustomerSingle");
             //发送的类型
             String postType = allCustomerSingle.getString("get_type");
             //接收号码（qq号，qq群，手机号）
@@ -44,16 +43,21 @@ public class QqAsyncMessagePost {
             String customerPriority = allCustomerSingle.getString("customer_priority");
             List<String> listMsg = new ArrayList<>();
             listMsg.add("标题 : " + infoTitle);
-            listMsg.add("内容 : " + infoContext);
+            if (infoContext.length() > 130) {
+                listMsg.add("内容 : " + infoContext.substring(0, 130) + "……");
+            } else {
+                listMsg.add("内容 : " + infoContext);
+            }
             listMsg.add("链接 : ");
             listMsg.add(infoLink);
             listMsg.add("来源 : " + source);
+            // 添加站点
+            listMsg.add("站点 : " + infoSite);
             String messAgeWord = StringUtils.join(listMsg, "\n");
             if ("number".equals(postType)) {
                 numberList.add(getNumber);
             } else {
-                /* 发送信息给qq
-                int timeNumber = 2 + (int) Math.random() * 4;
+                /*int timeNumber = 2 + (int) Math.random() * 4;
                 try {
                     TimeUnit.SECONDS.sleep(timeNumber);
                 } catch (InterruptedException e) {
@@ -63,8 +67,6 @@ public class QqAsyncMessagePost {
                 if (!flag) {
                     numberInfoPost.sendMsgByYunPian(postNumber + "消息发送失败了!", "18752002129");
                     failData.qqResend(getNumber, postNumber, postType, infoTitle, infoContext, infoLink, source);
-                } else {
-
                 }*/
                 String insertSql = "";
                 if ("qq".equals(postType) || "qqGroup".equals(postType)) {
@@ -77,14 +79,15 @@ public class QqAsyncMessagePost {
                 jsonResponse.getExecResult(insertSql, null);
             }
         }
-        numberInfoPost.sendMsgByYunPian(StringUtils.join(list, ""), StringUtils.join(numberList, ","));
+        System.out.println(numberInfoPost.sendMsgByYunPian(StringUtils.join(list, ""), StringUtils.join(numberList, ",")));
+        /*numberInfoPost.sendMsgByYunPian(StringUtils.join(list, ""), StringUtils.join(numberList, ","));*/
         long endTime = System.currentTimeMillis(); // 这段代码放在程序执行后
         long wasteTime = endTime - beginTime;
         double seconds = wasteTime / 1000;
         System.out.println("耗时：" + seconds + "秒");
     }
 
-    public void postCustomerLate(JSONArray jsonArray, String infoContext, String infoTitle, String infoLink, String infoSource, String inforCreater) {
+    public void postCustomerLate(JSONArray jsonArray, String infoContext, String infoTitle, String infoLink, String infoSource, String inforCreater, String infoSite) {
         int allCustomerLen = jsonArray.size();
         List<String> sqlList = new ArrayList<>();
         for (int i = 0; i < allCustomerLen; i++) {
@@ -102,15 +105,15 @@ public class QqAsyncMessagePost {
             }
             String customerPriority = allCustomerSingle.getString("customer_priority");
             String qqPlan = allCustomerSingle.getString("scheme_plan_id");
-            String sql = " INSERT INTO detention_post_info (info_title,info_content,info_link,info_source,info_priority,info_post_type,info_number,info_post_qq,info_plan_id,info_creater_people) " +
-                    " VALUES ('" + infoTitle + "','" + infoContext + "','" + infoLink + "','" + infoSource + "'," + customerPriority + ",'" + postType + "'," +
+            String sql = " INSERT INTO detention_post_info (info_title,info_content,info_link,info_source,info_site,info_priority,info_post_type,info_number,info_post_qq,info_plan_id,info_creater_people) " +
+                    " VALUES ('" + infoTitle + "','" + infoContext + "','" + infoLink + "','" + infoSource + "','" + infoSite + "'," + customerPriority + ",'" + postType + "'," +
                     "'" + postNumber + "','" + qqNumber + "','" + qqPlan + "','" + inforCreater + "') ";
             sqlList.add(sql);
         }
         jsonResponse.getExecResult(sqlList, "", "");
     }
 
-    public void postMessAgeTerrace(JSONArray jsonArray, String infoContext, String infoTitle, String infoLink, String infoSource) {
+    public void postMessAgeTerrace(JSONArray jsonArray, String infoContext, String infoTitle, String infoLink, String infoSource, String infoType, String infoSite) {
         int allModuleLen = jsonArray.size();
         Date nowTime = new Date();
         SimpleDateFormat time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -123,16 +126,21 @@ public class QqAsyncMessagePost {
             jsonObject.put("infoTime", nowTimeDate);
             jsonObject.put("infoSource", infoSource);
             jsonObject.put("infoLink", infoLink);
+            jsonObject.put("pubTime", nowTimeDate);
+            jsonObject.put("levelId", ("1".equals(infoType)) ? infoType : "-1");
             jsonObject.put("infoTitle", infoTitle);
+            jsonObject.put("infoSite", infoSite);
             jsonObject.put("infoContext", infoContext);
             jsonObject.put("tagId", allModule.getString("module_id"));
             jsonObject.put("tagName", allModule.getString("terrace_module_name"));
             Map<String, String> param = new HashMap<>();
             param.put("data", jsonObject.toString());
             try {
+                System.out.println("开始发送");
                 HttpClientUtil.sendPost(allModule.getString("terrace_link"), param).toString();
             } catch (Exception e) {
-                /*numberInfoPost.sendMsgByYunPian(allModule.getString("terrace_link") + "信息发送出错!", "18752002129");*/
+                System.out.println("发送失败");
+                numberInfoPost.sendMsgByYunPian(allModule.getString("terrace_link") + "信息发送出错!", "18752002129");
             }
         }
     }

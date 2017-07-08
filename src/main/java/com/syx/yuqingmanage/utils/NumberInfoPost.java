@@ -21,9 +21,15 @@ import java.util.Map;
 public class NumberInfoPost {
     public String sendMsgByYunPian(String content, String mobiles) {
         String URI_SEND_SMS = "http://sms.yunpian.com/v2/sms/batch_send.json";
+        // 国际短信
+        /*String URI_SEND_SMS = "http://sms.yunpian.com/v2/sms/batch_send.json";*/
+        // 公司的云片账号
         String apikey = "149b85f2319da3c78e25b49d748c6e2d";
         String text = "【舆情平台】提醒:" + content;
-        Map<String, String> params = new HashMap<String, String>();
+        // 自己的云片账号
+        /*String apikey = "b7788163efb1d1d9368b179da116bafe";
+        String text = "【舆情服务通知】舆情通知:" + content + "。请注意查收！";*/
+        Map<String, String> params = new HashMap<>();
         params.put("apikey", apikey);
         params.put("text", text);
         params.put("mobile", mobiles);

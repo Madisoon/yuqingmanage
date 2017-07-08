@@ -45,7 +45,8 @@ public class ConfigureService implements IConfigureService {
         int idSLen = idS.length;
         List<String> list = new ArrayList<>();
         for (int i = 0; i < idSLen; i++) {
-            list.add("DELETE FROM sys_qq WHERE id=" + idS[i] + "");
+            list.add("DELETE FROM sys_qq WHERE id=" + idS[i] + " ");
+            list.add("UPDATE sys_post_customer a SET a.customer_post_qq = '0' WHERE a.id = " + idS[i]);
         }
         ExecResult execResult = jsonResponse.getExecResult(list, "", "");
         return execResult;

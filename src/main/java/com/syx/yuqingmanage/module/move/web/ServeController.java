@@ -76,4 +76,13 @@ public class ServeController {
         String result = iServeService.getAllServeCustomer(areaId).toString();
         return result;
     }
+
+    @RequestMapping(value = "/exportCustomerData", method = RequestMethod.POST)
+    @ApiOperation(value = "导出服务客户的excel表格", notes = "标签，筛选的条件，导出的类型")
+    public String exportCustomerData(@RequestParam("areaId") String areaId,
+                                     @RequestParam("searchData") String searchData,
+                                     @RequestParam("exportType") String exportType) {
+        String result = iServeService.exportCustomerData(areaId, searchData, exportType).toString();
+        return result;
+    }
 }

@@ -375,7 +375,6 @@
         <!--<加密方式>-->
 
         <!--redis缓存-->
-        <!--redis -->
         <dependency>
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>

@@ -181,4 +181,26 @@ public class TerraceModuleService implements ITerraceModuleService {
         jsonObject.put("total", jsonArray.size());
         return jsonObject;
     }
+
+    @Override
+    public JSONArray getAppModule() {
+        String sql = "SELECT id AS tag_id,terrace_module_name AS tag_name FROM sys_terrace_module ";
+        ExecResult execResult = jsonResponse.getSelectResult(sql, null, "");
+        JSONArray jsonArray = (JSONArray) execResult.getData();
+        return jsonArray;
+    }
+
+    @Override
+    public JSONArray getAppModuleById(String idS) {
+        String[] tagIds = idS.split(",");
+        int tagIdLen = tagIds.length;
+        List<String> list = new ArrayList<>();
+        list.add("SELECT id AS tag_id,terrace_module_name AS tag_name FROM sys_terrace_module a WHERE a.id = " + tagIds[0] + " ");
+        for (int i = 1; i < tagIdLen; i++) {
+            list.add(" OR a.id = " + tagIds[i] + " ");
+        }
+        ExecResult execResult = jsonResponse.getSelectResult(StringUtils.join(list, ""), null, "");
+        JSONArray jsonArray = (JSONArray) execResult.getData();
+        return jsonArray;
+    }
 }

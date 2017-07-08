@@ -25,13 +25,35 @@ public class TagService implements ITagService {
     private JSONResponse jsonResponse;
 
     @Override
-    public ExecResult insertTag(String tagData) {
+    public ExecResult insertTag(String tagData, String allParent) {
         JSONObject jsonObject = JSON.parseObject(tagData);
         String tagName = jsonObject.getString("name");
         String tagId = jsonObject.getString("id");
         String tagParentId = jsonObject.getString("tag_parent");
         String sqlTagInsert = "INSERT INTO sys_tag (id,name,tag_parent) VALUES('" + tagId + "','" + tagName + "','" + tagParentId + "')";
-        ExecResult execResult = jsonResponse.getExecResult(sqlTagInsert, null);
+        List allInsertSql = new ArrayList();
+        if (!"[]".equals(allParent)) {
+            JSONArray jsonArray = JSON.parseArray(allParent);
+            int jsonArrayLen = jsonArray.size();
+            List list = new ArrayList();
+            list.add("SELECT scheme_id FROM  sys_scheme_tag_dep a WHERE a.tag_id = '" + jsonArray.get(0) + "' ");
+            for (int i = 1; i < jsonArrayLen; i++) {
+                list.add(" OR a.tag_id = '" + jsonArray.get(i) + "' ");
+            }
+            list.add(" ORDER BY a.scheme_id ");
+            ExecResult execResult = jsonResponse.getSelectResult(StringUtils.join(list, ""), null, "");
+            JSONArray jsonArraySchemeData = (JSONArray) execResult.getData();
+            if (jsonArraySchemeData != null) {
+                int jsonArraySchemeDataLen = jsonArraySchemeData.size();
+                for (int j = 0; j < jsonArraySchemeDataLen; j++) {
+                    JSONObject jsonObjectScheme = jsonArraySchemeData.getJSONObject(0);
+                    allInsertSql.add("INSERT INTO sys_scheme_tag_base (scheme_id,tag_id) VALUES (" + jsonObjectScheme.getString("scheme_id") + "," + tagId + ") ");
+                }
+                allInsertSql.add("DELETE FROM sys_scheme_tag_base WHERE tag_id = " + jsonArray.get(jsonArrayLen - 1));
+            }
+        }
+        allInsertSql.add(sqlTagInsert);
+        ExecResult execResult = jsonResponse.getExecResult(allInsertSql, null, "");
         return execResult;
     }
 

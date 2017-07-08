@@ -21,6 +21,8 @@ public class AppJsonPost {
     FailData failData;
 
     public boolean appadd(String postUrl, JSONObject jsonObject) {
+        System.out.println(postUrl);
+        System.out.println(jsonObject);
         boolean flag = true;
         StringBuffer sb = new StringBuffer("");
         try {
@@ -66,6 +68,7 @@ public class AppJsonPost {
                 }
             } catch (Exception e) {
                 flag = false;
+                System.out.println("异常");
             }
             // 断开连接
             connection.disconnect();

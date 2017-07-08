@@ -1,7 +1,6 @@
 package com.syx.yuqingmanage.module.infor.web;
 
 import com.syx.yuqingmanage.module.infor.service.IInForPostService;
-import com.syx.yuqingmanage.module.infor.service.imp.InForPostService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +21,8 @@ public class InForPostController {
 
     @RequestMapping(value = "/getInforPost", method = RequestMethod.POST)
     @ApiOperation(value = "得到需要发送的信息", notes = "无")
-    public String getInforPost(@RequestParam("userLoginName") String userLoginName) {
-        String result = iInForPostService.getInforPost(userLoginName).toString();
+    public String getInforPost(@RequestParam("userLoginName") String userLoginName,@RequestParam("sortType") String sortType) {
+        String result = iInForPostService.getInforPost(userLoginName, sortType).toString();
         return result;
     }
 

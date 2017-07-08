@@ -18,4 +18,6 @@ public interface IServeService {
     public ExecResult deleteServeCustomer(String serveCustomerId);
 
     public JSONObject getAllServeCustomerChoose(String areaId, String chooseData);
+
+    public JSONObject exportCustomerData(String areaId, String searchData, String exportType);
 }

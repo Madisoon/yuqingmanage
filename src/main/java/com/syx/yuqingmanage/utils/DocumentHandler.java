@@ -40,7 +40,7 @@ public class DocumentHandler {
         //dataMap 要填入模本的数据文件
         //设置模本装置方法和路径,FreeMarker支持多种模板装载方法。可以重servlet，classpath，数据库装载，
         //这里我们的模板是放在template包下面
-        System.out.println(this.getClass().getPackage());
+        /*System.out.println(this.getClass().getPackage());*/
         configuration.setClassForTemplateLoading(this.getClass(), "/");
         /*try {
             configuration.setDirectoryForTemplateLoading(new File("D:/"));

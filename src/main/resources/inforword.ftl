@@ -145,30 +145,6 @@
                     <w:p w:rsidR="00E868B2" w:rsidRDefault="00E868B2" w:rsidP="00E868B2">
                         <w:pPr>
                             <w:rPr>
-                                <w:color w:val="000000"/>
-                                <w:sz w:val="26"/>
-                            </w:rPr>
-                        </w:pPr>
-                        <w:r>
-                            <w:rPr>
-                                <w:rFonts w:hint="eastAsia"/>
-                                <w:color w:val="000000"/>
-                                <w:sz w:val="26"/>
-                            </w:rPr>
-                            <w:t xml:space="preserve">    </w:t>
-                        </w:r>
-                        <w:r>
-                            <w:rPr>
-                                <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:hint="eastAsia"/>
-                                <w:sz w:val="28"/>
-                                <w:szCs w:val="21"/>
-                            </w:rPr>
-                            <w:t>${infor.context}</w:t>
-                        </w:r>
-                    </w:p>
-                    <w:p w:rsidR="00E868B2" w:rsidRDefault="00E868B2" w:rsidP="00E868B2">
-                        <w:pPr>
-                            <w:rPr>
                                 <w:b/>
                                 <w:color w:val="000000"/>
                                 <w:sz w:val="26"/>

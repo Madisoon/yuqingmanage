@@ -86,4 +86,18 @@ public class TerraceModuleController {
             return new ExecResult(false, "获取数据异常。").toString();
         }
     }
+
+    @RequestMapping(value = "/getAppModule", method = RequestMethod.POST)
+    @ApiOperation(value = "获取所有的平台模块", notes = "无")
+    public String getAppModule() {
+        String result = iTerraceModuleService.getAppModule().toString();
+        return result;
+    }
+
+    @RequestMapping(value = "/getAppModuleById", method = RequestMethod.POST)
+    @ApiOperation(value = "根据id获取平台模块", notes = "平台模块id")
+    public String getAppModuleById(@RequestParam("tagIds") String tagIds) {
+        String result = iTerraceModuleService.getAppModuleById(tagIds).toString();
+        return result;
+    }
 }

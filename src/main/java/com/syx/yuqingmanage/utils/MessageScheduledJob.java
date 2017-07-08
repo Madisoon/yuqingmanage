@@ -25,10 +25,9 @@ import java.util.concurrent.TimeUnit;
 public class MessageScheduledJob extends QuartzJobBean {
     private JSONResponse jsonResponse = new JSONResponse();
     private NumberInfoPost numberInfoPost = new NumberInfoPost();
+/*    private QqMessagePost qqMessagePost = new QqMessagePost();
 
-    private QqMessagePost qqMessagePost = new QqMessagePost();
-
-    FailData failData = new FailData();
+    FailData failData = new FailData();*/
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
@@ -50,13 +49,14 @@ public class MessageScheduledJob extends QuartzJobBean {
                 String infoContent = jsonObject.getString("info_content");
                 String infoLink = jsonObject.getString("info_link");
                 String infoSource = jsonObject.getString("info_source");
+                String infoSite = jsonObject.getString("info_site");
                 String infoPostQq = jsonObject.getString("info_post_qq");
                 String infoPostType = jsonObject.getString("info_post_type");
                 String infoNumber = jsonObject.getString("info_number");
                 String infoPriority = jsonObject.getString("info_priority");
                 String infoCreater = jsonObject.getString("info_creater_people");
                 String id = jsonObject.getString("id");
-                long timeMillis = System.currentTimeMillis();
+                long timeMillis = System.currentTimeMillis();  //当前时间累加半小时
                 timeMillis += 30 * 60 * 1000;
                 Date timeAdvance = new Date(timeMillis);
                 // 提前半个小时发送
@@ -85,13 +85,17 @@ public class MessageScheduledJob extends QuartzJobBean {
                         *//*qq调用一遍直接把信息删除*//*
                         jsonResponse.getExecResult(sqlDelete, null);
                     } */ else {
-                        System.out.println("调用发送微信的接口");
                         List<String> listMsg = new ArrayList<>();
                         listMsg.add("标题 : " + infoTitle);
-                        listMsg.add("内容 : " + infoContent);
+                        if (infoContent.length() > 130) {
+                            listMsg.add("内容 : " + infoContent.substring(0, 130) + "……");
+                        } else {
+                            listMsg.add("内容 : " + infoContent);
+                        }
                         listMsg.add("链接 : ");
                         listMsg.add(infoLink);
                         listMsg.add("来源 : " + infoSource);
+                        listMsg.add("站点 : " + infoSite);
                         String messAgeWord = StringUtils.join(listMsg, "\n");
                         String insertSql = "INSERT INTO sys_manual_post (infor_context,infor_post_type,infor_post_people," +
                                 "infor_get_people,infor_priority,infor_create_people) VALUES('" + messAgeWord + "','" + infoPostType + "','" + infoPostQq + "','" + infoNumber + "'," + infoPriority + ",'" + infoCreater + "') ";

@@ -1,5 +1,6 @@
 package com.syx.yuqingmanage.module.move.service;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alienlab.db.ExecResult;
 
@@ -16,4 +17,8 @@ public interface ITerraceModuleService {
     public ExecResult updateTerraceModule(String terraceId, String tagId, String terraceData, String baseTag);
 
     public JSONObject getAllTerraceModuleChoose(String areaId, String tagId, String chooseTerraceData);
+
+    public JSONArray getAppModule();
+
+    public JSONArray getAppModuleById(String idS);
 }
