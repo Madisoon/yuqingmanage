@@ -32,6 +32,16 @@
         <property name="prefix" value="/WEB-INF/jsp/"/>
         <property name="suffix" value=".jsp"/>
     </bean>
+    <mvc:default-servlet-handler/>
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/manage/**"/>
+            <!-- 剔除所有的静态资源访问拦截器 -->
+            <mvc:exclude-mapping path="/ueditor/**"/>
+            <bean class="com.syx.yuqingmanage.interceptor.SystemAuthInterceptor"/>
+        </mvc:interceptor>
+
+    </mvc:interceptors>
     <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
         <property name="maxUploadSize" value="40000000"/>
 
