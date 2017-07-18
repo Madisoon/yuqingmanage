@@ -255,6 +255,7 @@ public class InForService implements IInForService {
 
 
         String[] searchTagIds = searchTagId.split(",");
+        System.out.println("打印"+searchTagId);
         int searchTagIdsLen = searchTagIds.length;
         String[] customerNames = customerName.split("\\|");
         int customerNamesLen = customerNames.length;

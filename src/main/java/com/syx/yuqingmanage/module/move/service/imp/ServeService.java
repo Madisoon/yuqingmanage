@@ -59,8 +59,6 @@ public class ServeService implements IServeService {
             }
         }
         List<String> listSql = new ArrayList<>();
-
-
         listSql.add(" SELECT a.*,GROUP_CONCAT(a.get_number) AS get_numbers, ");
         listSql.add(" GROUP_CONCAT(a.get_remark) AS get_remarks,GROUP_CONCAT(a.get_type) AS get_types ");
         listSql.add(" FROM (SELECT a.*,b.scheme_name FROM (SELECT b.*,d.user_loginname,d.user_name,e.get_number,e.get_remark,e.get_type ");

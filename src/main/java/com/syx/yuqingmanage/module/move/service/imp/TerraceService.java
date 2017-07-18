@@ -50,20 +50,28 @@ public class TerraceService implements ITerraceService {
         List<String> sqlArea = new ArrayList<>();
         for (int i = 0; i < areaIdsLen; i++) {
             if (i == 0) {
-                sqlArea.add(" a.area_id =  " + areaIds[i]);
+                sqlArea.add(" b.area_id =  " + areaIds[i]);
             } else {
-                sqlArea.add(" OR a.area_id =  " + areaIds[i]);
+                sqlArea.add(" OR b.area_id =  " + areaIds[i]);
             }
-
         }
         List<String> listSql = new ArrayList<>();
-        listSql.add(" SELECT a.*,GROUP_CONCAT(a.module_id) AS module_ids,GROUP_CONCAT(a.terrace_module_name) ");
+/*        listSql.add(" SELECT a.*,GROUP_CONCAT(a.module_id) AS module_ids,GROUP_CONCAT(a.terrace_module_name) ");
         listSql.add(" AS terrace_module_names ");
         listSql.add(" FROM (SELECT b.*,c.module_id,d.terrace_module_name,e.user_name ");
         listSql.add(" FROM sys_terrace_area a , sys_terrace b,terrace_module c,sys_terrace_module d,sys_user e ");
         listSql.add(" WHERE ( " + StringUtils.join(sqlArea, "") + " ) AND a.terrace_id=b.id AND b.id = c.terrace_id AND c.module_id = d.id ");
-        listSql.add(" AND b.terrace_create = e.user_loginname) a GROUP BY a.id ORDER BY a.terrace_time DESC ");
+        listSql.add(" AND b.terrace_create = e.user_loginname) a GROUP BY a.id ORDER BY a.terrace_time DESC ");*/
+        listSql.add("SELECT a.*,GROUP_CONCAT(a.module_id) AS module_ids,GROUP_CONCAT(a.terrace_module_name) ");
+        listSql.add("AS terrace_module_names FROM  (SELECT a.*,b.terrace_module_name  ");
+        listSql.add("FROM (SELECT a.*,b.area_id,c.user_name,d.module_id FROM sys_terrace a  ");
+        listSql.add("LEFT JOIN sys_terrace_area b ON a.id = b.terrace_id ");
+        listSql.add("LEFT JOIN sys_user c ON a.terrace_create = c.user_loginname ");
+        listSql.add("LEFT JOIN terrace_module d ON a.id = d.terrace_id WHERE ( " + StringUtils.join(sqlArea, "") + " )) a  ");
+        listSql.add("LEFT JOIN sys_terrace_module b ON a.module_id = b.id) a  ");
+        listSql.add("GROUP BY a.id ORDER BY a.terrace_time DESC  ");
         sql = StringUtils.join(listSql, "");
+        System.out.println("sql" + sql);
         ExecResult execResult = jsonResponse.getSelectResult(sql, null, "");
         JSONObject jsonObject = new JSONObject();
         JSONArray jsonArray = (JSONArray) execResult.getData();
