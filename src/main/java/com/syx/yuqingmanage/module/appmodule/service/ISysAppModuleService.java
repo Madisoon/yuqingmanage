@@ -1,5 +1,6 @@
 package com.syx.yuqingmanage.module.appmodule.service;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alienlab.db.ExecResult;
 
 /**
@@ -7,11 +8,11 @@ import com.alienlab.db.ExecResult;
  */
 public interface ISysAppModuleService {
 
-    public ExecResult insertAppModule(String appModuleInfo, String appModuleTag, String areaId);
+    public ExecResult insertAppModule(String appModuleInfo, String appModuleTag, String appModuleBaseTag, String areaId);
 
     public ExecResult deleteAppModule(String appModuleId);
 
-    public ExecResult updateAppModule(String appModule, String appModuleId);
+    public ExecResult updateAppModule(String appModuleId, String appModuleInfo, String appModuleTag, String appModuleBaseTag);
 
-    public ExecResult getAllAppModule(String areaId, String pageSize, String pageNumber);
+    public JSONArray getAllAppModule(String areaId);
 }
