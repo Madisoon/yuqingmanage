@@ -65,4 +65,14 @@ public class SysAppModuleController {
             return new ExecResult(false, "获取数据异常。").toString();
         }
     }
+
+    @RequestMapping(value = "/getAllAppModuleByAreaId", method = RequestMethod.POST)
+    @ApiOperation(value = "getAllAppModuleByAreaId", notes = "获取所有的app模块")
+    public String getAllAppModuleByAreaId(@RequestParam("areaId") String areaId) {
+        String result = "";
+        if (iSysAppModuleService.getAllAppModule(areaId) != null) {
+            result = iSysAppModuleService.getAllAppModule(areaId).toString();
+        }
+        return result;
+    }
 }
