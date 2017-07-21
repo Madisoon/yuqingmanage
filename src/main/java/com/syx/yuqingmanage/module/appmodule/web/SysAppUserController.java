@@ -63,4 +63,11 @@ public class SysAppUserController {
             return new ExecResult(false, "获取数据异常。").toString();
         }
     }
+
+    @RequestMapping(value = "/getSingleAppUser", method = RequestMethod.POST)
+    @ApiOperation(value = "getSingleAppUser", notes = "获取到单人的用户信息")
+    public String getSingleAppUser(@RequestParam("appUserLoginName") String appUserLoginName) {
+        String result = iSysAppUserService.getSingleAppUser(appUserLoginName).toString();
+        return result;
+    }
 }

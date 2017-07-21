@@ -15,4 +15,6 @@ public interface ISysAppUserService {
     public ExecResult updateAppUser(String appUserLoginName, String appUserInfo, String appUserProgram);
 
     public JSONArray getAllAppUserModule(String areaId);
+
+    public ExecResult getSingleAppUser(String userLoginName);
 }
