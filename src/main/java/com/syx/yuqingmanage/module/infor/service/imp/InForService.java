@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -166,10 +167,12 @@ public class InForService implements IInForService {
         ExecResult execResult = jsonResponse.getSelectResult(sqlLen, null, "");
         JSONArray jsonArray = (JSONArray) execResult.getData();
         JSONObject jsonObjectLen = jsonArray.getJSONObject(0);
-        String sqlInFor = "SELECT * ,GROUP_CONCAT(a.name) AS tag_names,GROUP_CONCAT(a.tag_id) AS tag_ids FROM " +
-                " (SELECT  a.*,c.name,b.tag_id,d.user_name,d.user_loginname  FROM sys_infor a,infor_tag b,sys_tag c,sys_user d " +
-                " WHERE a.id = b.infor_id  AND b.tag_id = c.id  AND a.infor_creater = d.user_loginname    ORDER BY a.infor_createtime DESC  LIMIT " + ((pageNumberInt - 1) * pageSizeInt) + "," + pageSizeInt + " ) a " +
-                " GROUP BY a.id  ORDER BY a.infor_createtime DESC";
+
+        String sqlInFor = "SELECT a.*,GROUP_CONCAT(a.tag_id) AS tag_ids,GROUP_CONCAT(a.name) AS tag_names  " +
+                "FROM (SELECT a.*,b.name FROM (SELECT a.*,b.tag_id,c.user_name FROM (SELECT * FROM  sys_infor a  " +
+                "ORDER BY a.infor_createtime DESC  LIMIT " + ((pageNumberInt - 1) * pageSizeInt) + "," + pageSizeInt + " )  a LEFT JOIN infor_tag b " +
+                "ON a.id = b.infor_id LEFT JOIN sys_user c ON a.infor_creater = c.user_loginname) a  " +
+                "LEFT JOIN sys_tag b ON a.tag_id = b.id) a GROUP BY a.id";
         execResult = jsonResponse.getSelectResult(sqlInFor, null, "");
         JSONArray allData = (JSONArray) execResult.getData();
         returnData.put("data", allData);
@@ -204,10 +207,14 @@ public class InForService implements IInForService {
             }
         }
 
+        // 启用
+        Date date = new Date();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String dateFormat = simpleDateFormat.format(date);
         List<String> sqlList = new ArrayList<>();
         sqlList.add(" SELECT a.*,b.qq_number FROM (SELECT  a.*,b.get_number,b.get_remark,b.get_type,c.scheme_plan_id  ");
         sqlList.add(" FROM sys_post_customer a, sys_customer_get b ,sys_scheme c ");
-        sqlList.add(" WHERE a.customer_status = 1 AND (" + StringUtils.join(listWhere, "") + ")  ");
+        sqlList.add(" WHERE a.customer_status = 1 AND  a.customer_start_time <'" + dateFormat + "' AND  a.customer_end_time >'" + dateFormat + "'  AND (" + StringUtils.join(listWhere, "") + ")  ");
         sqlList.add(" AND a.id = b.post_customer_id AND a.customer_scheme = c.id ) a LEFT JOIN sys_qq b  ON a.customer_post_qq = b.id ");
         ExecResult execResult = jsonResponse.getSelectResult(StringUtils.join(sqlList, ""), null, "");
         JSONArray jsonArray = (JSONArray) execResult.getData();
@@ -246,7 +253,7 @@ public class InForService implements IInForService {
     public JSONObject getAllInfoChoose(String pageNumber, String pageSize,
                                        String searchTagId, String searchInfoData,
                                        String customerName) {
-        JSONObject jsonObject = new JSONObject();
+/*        JSONObject jsonObject = new JSONObject();
         int pageNumberInt = Integer.parseInt(pageNumber, 10);
         int pageSizeInt = Integer.parseInt(pageSize, 10);
         JSONObject jsonObjectData = JSON.parseObject(searchInfoData);
@@ -344,6 +351,95 @@ public class InForService implements IInForService {
         }
         list.add("LIMIT " + ((pageNumberInt - 1) * pageSizeInt) + "," + pageSizeInt + "");
         sql = StringUtils.join(list, "");
+        System.out.println(sql);
+        ExecResult execResult2 = jsonResponse.getSelectResult(sql, null, "");
+        JSONArray jsonArray2 = (JSONArray) execResult2.getData();
+        jsonObject.put("data", jsonArray2);
+        return jsonObject;*/
+        JSONObject jsonObject = new JSONObject();
+        int pageNumberInt = Integer.parseInt(pageNumber, 10);
+        int pageSizeInt = Integer.parseInt(pageSize, 10);
+        // 搜索条件的普通条件
+        JSONObject jsonObjectData = JSON.parseObject(searchInfoData);
+        String chooseTime = jsonObjectData.getString("infor_createtime");
+        jsonObjectData.remove("infor_createtime");
+        // 搜索条件中的标签
+        String[] searchTagIds = searchTagId.split(",");
+        int searchTagIdsLen = searchTagIds.length;
+        // 搜索条件中的用户名称
+        String[] customerNames = customerName.split("\\|");
+        int customerNamesLen = customerNames.length;
+        List<String> list = new ArrayList<>();
+        list.add("SELECT a.*,GROUP_CONCAT(a.tag_id) AS tag_ids,GROUP_CONCAT(a.name) AS tag_names FROM ");
+        list.add("(SELECT a.*,b.customer_name FROM (SELECT a.*,b.name,c.scheme_id FROM ");
+        list.add("(SELECT * FROM(SELECT a.*,b.tag_id,c.user_name FROM sys_infor a ");
+        list.add("LEFT JOIN infor_tag b ON a.id = b.infor_id ");
+        list.add("LEFT JOIN sys_user c ON a.infor_creater = c.user_loginname ");
+        if (!"".equals(searchTagId)) {
+            for (int i = 0; i < searchTagIdsLen; i++) {
+                if (i == 0) {
+                    list.add("WHERE b.tag_id ='" + searchTagIds[i] + "'");
+                } else {
+                    list.add("OR b.tag_id ='" + searchTagIds[i] + "'");
+                }
+            }
+        }
+        /*WHERE b.tag_id ='212'*/
+        list.add(") a ");
+        Set<String> set = jsonObjectData.keySet();
+        Iterator<String> iterator = set.iterator();
+        int m = 0;
+        while (iterator.hasNext()) {
+            String jsonObjectValue = iterator.next();
+            //如果查询条件没有标签时。
+            if (m == 0) {
+                list.add("WHERE  a." + jsonObjectValue + " LIKE '%" + jsonObjectData.getString(jsonObjectValue) + "%' ");
+            } else {
+                list.add(" AND a." + jsonObjectValue + " LIKE '%" + jsonObjectData.getString(jsonObjectValue) + "%' ");
+            }
+            m++;
+        }
+        // 没有基本的搜索条件
+        if (jsonObjectData.isEmpty()) {
+            if ("".equals(chooseTime) || chooseTime == null) {
+            } else {
+                String[] chooseTimes = chooseTime.split("&");
+                list.add(" WHERE a.infor_createtime > '" + chooseTimes[0] + "' AND  a.infor_createtime < '" + chooseTimes[1] + "'");
+            }
+        } else {
+            if ("".equals(chooseTime) || chooseTime == null) {
+            } else {
+                String[] chooseTimes = chooseTime.split("&");
+                list.add(" AND a.infor_createtime > '" + chooseTimes[0] + "' AND  a.infor_createtime < '" + chooseTimes[1] + "'");
+            }
+        }
+        /*list.add("WHERE a.infor_title = '2312' ");*/
+        list.add(") a ");
+        list.add("LEFT JOIN sys_tag b ON a.tag_id = b.id ");
+        list.add("LEFT JOIN sys_scheme_tag_base c ON a.tag_id = c.tag_id ) a LEFT JOIN sys_post_customer b ");
+        list.add("ON a.scheme_id = b.customer_scheme ");
+        if (!"".equals(customerName)) {
+            for (int i = 0; i < customerNamesLen; i++) {
+                if (i == 0) {
+                    list.add(" WHERE  b.customer_name LIKE '%" + customerNames[i] + "%' ");
+                } else {
+                    list.add(" AND  b.customer_name LIKE '%" + customerNames[i] + "%' ");
+                }
+            }
+        }
+        /*list.add("WHERE b.`customer_name` ='赵刚测试' ");*/
+        list.add(") a GROUP BY a.id ORDER BY a.infor_createtime  DESC  ");
+        String sql = StringUtils.join(list, "");
+        ExecResult execResult = jsonResponse.getSelectResult(sql, null, "");
+        JSONArray jsonArray = (JSONArray) execResult.getData();
+        if (jsonArray == null) {
+            jsonObject.put("total", 0);
+        } else {
+            jsonObject.put("total", jsonArray.size());
+        }
+        list.add("LIMIT " + ((pageNumberInt - 1) * pageSizeInt) + "," + pageSizeInt + "");
+        sql = StringUtils.join(list, "");
+        System.out.println(sql);
         ExecResult execResult2 = jsonResponse.getSelectResult(sql, null, "");
         JSONArray jsonArray2 = (JSONArray) execResult2.getData();
         jsonObject.put("data", jsonArray2);
