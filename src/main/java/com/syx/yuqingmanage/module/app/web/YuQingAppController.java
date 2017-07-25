@@ -2,6 +2,7 @@ package com.syx.yuqingmanage.module.app.web;
 
 import com.alibaba.fastjson.JSONObject;
 import com.syx.yuqingmanage.module.app.service.IYuQingService;
+import com.syx.yuqingmanage.utils.SysCookie;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -24,6 +25,10 @@ import javax.servlet.http.HttpServletResponse;
 public class YuQingAppController {
     @Autowired
     IYuQingService iYuQingService;
+
+    @Autowired
+    SysCookie sysCookie;
+
 
     @ApiOperation(value = "judgerAppUser", notes = "app用户登录接口")
     @ApiImplicitParams({
@@ -63,7 +68,13 @@ public class YuQingAppController {
     })
     @RequestMapping(value = "/user/searchMenus", method = RequestMethod.POST)
     public String searchMenus(HttpServletRequest httpServletRequest) {
+        String loginName = judgeCookie(httpServletRequest);
         String result = "";
+        if ("".equals(loginName)) {
+            result = returnStaticJsonObject();
+        } else {
+
+        }
         return result;
     }
 
@@ -78,7 +89,13 @@ public class YuQingAppController {
                               @RequestParam("limit") int limit,
                               @RequestParam("date") String date,
                               HttpServletRequest httpServletRequest) {
+        String loginName = judgeCookie(httpServletRequest);
         String result = "";
+        if ("".equals(loginName)) {
+            result = returnStaticJsonObject();
+        } else {
+
+        }
         return result;
     }
 
@@ -93,7 +110,13 @@ public class YuQingAppController {
                                 @RequestParam("limit") int limit,
                                 @RequestParam("date") String date,
                                 HttpServletRequest httpServletRequest) {
+        String loginName = judgeCookie(httpServletRequest);
         String result = "";
+        if ("".equals(loginName)) {
+            result = returnStaticJsonObject();
+        } else {
+
+        }
         return result;
     }
 
@@ -106,7 +129,13 @@ public class YuQingAppController {
     public String searchFavor(@RequestParam("limit") int limit,
                               @RequestParam("date") String date,
                               HttpServletRequest httpServletRequest) {
+        String loginName = judgeCookie(httpServletRequest);
         String result = "";
+        if ("".equals(loginName)) {
+            result = returnStaticJsonObject();
+        } else {
+
+        }
         return result;
     }
 
@@ -117,7 +146,13 @@ public class YuQingAppController {
     @RequestMapping(value = "/favor/remove", method = RequestMethod.POST)
     public String removeFavor(@RequestParam("id") String limit,
                               HttpServletRequest httpServletRequest) {
+        String loginName = judgeCookie(httpServletRequest);
         String result = "";
+        if ("".equals(loginName)) {
+            result = returnStaticJsonObject();
+        } else {
+
+        }
         return result;
     }
 
@@ -129,7 +164,13 @@ public class YuQingAppController {
     public String addFavor(@RequestParam("limit") int limit,
                            @RequestParam("date") String date,
                            HttpServletRequest httpServletRequest) {
+        String loginName = judgeCookie(httpServletRequest);
         String result = "";
+        if ("".equals(loginName)) {
+            result = returnStaticJsonObject();
+        } else {
+
+        }
         return result;
     }
 
@@ -140,7 +181,13 @@ public class YuQingAppController {
     @RequestMapping(value = "/favor/check", method = RequestMethod.POST)
     public String checkFavor(@RequestParam("id") String id,
                              HttpServletRequest httpServletRequest) {
+        String loginName = judgeCookie(httpServletRequest);
         String result = "";
+        if ("".equals(loginName)) {
+            result = returnStaticJsonObject();
+        } else {
+
+        }
         return result;
     }
 
@@ -153,7 +200,13 @@ public class YuQingAppController {
     public String updatePwd(@RequestParam("old") String old,
                             @RequestParam("password") String password,
                             HttpServletRequest httpServletRequest) {
+        String loginName = judgeCookie(httpServletRequest);
         String result = "";
+        if ("".equals(loginName)) {
+            result = returnStaticJsonObject();
+        } else {
+
+        }
         return result;
     }
 
@@ -170,7 +223,13 @@ public class YuQingAppController {
                                @RequestParam("name") String name,
                                @RequestParam("push") String push,
                                HttpServletRequest httpServletRequest) {
+        String loginName = judgeCookie(httpServletRequest);
         String result = "";
+        if ("".equals(loginName)) {
+            result = returnStaticJsonObject();
+        } else {
+
+        }
         return result;
     }
 
@@ -189,8 +248,27 @@ public class YuQingAppController {
     })
     @RequestMapping(value = "/data/detail", method = RequestMethod.POST)
     public String detailInfo(HttpServletRequest httpServletRequest) {
+        String loginName = judgeCookie(httpServletRequest);
         String result = "";
+        if ("".equals(loginName)) {
+            result = returnStaticJsonObject();
+        } else {
+
+        }
         return result;
+    }
+
+
+    public String judgeCookie(HttpServletRequest httpServletRequest) {
+        String loginName = sysCookie.getUser(httpServletRequest);
+        return loginName;
+    }
+
+    public String returnStaticJsonObject() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", false);
+        jsonObject.put("value", 12001);
+        return jsonObject.toString();
     }
 
 }
