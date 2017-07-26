@@ -138,8 +138,49 @@ public class YuQingAppService implements IYuQingService {
     }
 
     @Override
-    public JSONObject getInfodetail(String id, String loginName) {
-        return null;
+    public JSONObject getInfodetail(String id) {
+        String sqlGetDeatil = "SELECT b.infor_type AS level_id,b.infor_title  " +
+                "AS title,b.infor_context AS content,b.infor_link   " +
+                "AS source_url,b.infor_createtime AS pub_time,b.infor_source   " +
+                "AS source_id, b.infor_site AS site FROM  sys_infor b WHERE b.id = '" + id + "' ";
+        ExecResult execResult = jsonResponse.getSelectResult(sqlGetDeatil, null, "");
+        JSONObject jsonObject = new JSONObject();
+        if (execResult.getResult() == 1) {
+            JSONObject jsonObjectInfo = ((JSONArray) execResult.getData()).getJSONObject(0);
+            String sourceId = jsonObjectInfo.getString("source_id");
+            switch (sourceId) {
+                case "新闻":
+                    jsonObjectInfo.put("source_id", 1);
+                    break;
+                case "论坛":
+                    jsonObjectInfo.put("source_id", 2);
+                    break;
+                case "博客":
+                    jsonObjectInfo.put("source_id", 3);
+                    break;
+                case "视频":
+                    jsonObjectInfo.put("source_id", 4);
+                    break;
+                case "微博":
+                    jsonObjectInfo.put("source_id", 5);
+                    break;
+                case "微信":
+                    jsonObjectInfo.put("source_id", 6);
+                    break;
+                case "移动资讯":
+                    jsonObjectInfo.put("source_id", 7);
+                    break;
+                default:
+                    jsonObjectInfo.put("source_id", 8);
+                    break;
+            }
+            jsonObject.put("success", true);
+            jsonObject.put("value", jsonObjectInfo);
+        } else {
+            jsonObject.put("success", false);
+            jsonObject.put("value", 53001);
+        }
+        return jsonObject;
     }
 
     @Override
@@ -195,11 +236,11 @@ public class YuQingAppService implements IYuQingService {
             jsonObject.put("success", false);
             jsonObject.put("value", 33001);
         }
-        return null;
+        return jsonObject;
     }
 
     @Override
-    public JSONObject checkFavor(int id, String loginName) {
+    public JSONObject checkFavor(String id, String loginName) {
         String checkSql = "SELECT * FROM app_user_favor a WHERE a.app_user_loginname = '" + loginName + "' AND a.app_favor_infor_id = '" + id + "'";
         ExecResult execResult = jsonResponse.getSelectResult(checkSql, null, "");
         JSONObject jsonObject = new JSONObject();

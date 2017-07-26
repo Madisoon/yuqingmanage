@@ -13,9 +13,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * Created by Msater Zg on 2017/7/13.
@@ -32,34 +30,26 @@ public class YuQingAppController {
 
     @ApiOperation(value = "judgerAppUser", notes = "app用户登录接口")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "loginName", value = "用户名", required = true, dataType = "STRING"),
-            @ApiImplicitParam(name = "password", value = "密码", required = true, dataType = "LONG"),
-            @ApiImplicitParam(name = "timestamp", value = "调用该接口时的时间戳，用于和用户名共同组成极光推送的别名alias", required = true, dataType = "STRING")
+            @ApiImplicitParam(name = "loginName", value = "用户名", required = true, dataType = "STRING", paramType = "query"),
+            @ApiImplicitParam(name = "password", value = "密码", required = true, dataType = "LONG", paramType = "query"),
+            @ApiImplicitParam(name = "timestamp", value = "调用该接口时的时间戳，用于和用户名共同组成极光推送的别名alias", required = true, dataType = "STRING", paramType = "query")
     })
     @RequestMapping(value = "/user/login", method = RequestMethod.POST)
     public String judgerAppUser(
             @RequestParam("loginName") String loginName,
             @RequestParam("password") String password,
-            @RequestParam("timestamp") long timestamp,
-            HttpServletResponse httpServletResponse) {
+            @RequestParam("timestamp") long timestamp) {
         JSONObject jsonObject = iYuQingService.judgerAppUser(loginName, password, timestamp);
-        boolean flag = jsonObject.getBoolean("success");
-        String token = "";
-        if (flag) {
-            token = jsonObject.getString("value");
-            Cookie cookie = new Cookie("token", token);
-            cookie.setMaxAge(3600 * 24);
-            httpServletResponse.addCookie(cookie);
-        }
         return jsonObject.toString();
     }
 
     @ApiOperation(value = "checkToken", notes = "查看登录状态码是否过期")
     @ApiImplicitParams({
+            @ApiImplicitParam(name = "token", value = "用户的token", required = true, dataType = "STRING", paramType = "query")
     })
     @RequestMapping(value = "/user/checkToken", method = RequestMethod.POST)
-    public String checkToken(HttpServletRequest httpServletRequest) {
-        String result = "";
+    public String checkToken(@RequestParam("token") String token, HttpServletRequest httpServletRequest) {
+        String result = iYuQingService.checkToken(token).toString();
         return result;
     }
 
@@ -73,16 +63,16 @@ public class YuQingAppController {
         if ("".equals(loginName)) {
             result = returnStaticJsonObject();
         } else {
-
+            result = iYuQingService.searchMenus(loginName).toString();
         }
         return result;
     }
 
     @ApiOperation(value = "searchFocus", notes = "获取聚焦频道的数据")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "tag_id", value = "聚焦频道的tag_id的值", required = true, dataType = "INT"),
-            @ApiImplicitParam(name = "limit", value = "分页查询每页条数，固定值：20", required = true, dataType = "INT"),
-            @ApiImplicitParam(name = "date", value = "日期字符串，固定值：“”（空字符串）", required = true, dataType = "STRING")
+            @ApiImplicitParam(name = "tag_id", value = "聚焦频道的tag_id的值", required = true, dataType = "INT", paramType = "query"),
+            @ApiImplicitParam(name = "limit", value = "分页查询每页条数，固定值：20", required = true, dataType = "INT", paramType = "query"),
+            @ApiImplicitParam(name = "date", value = "日期字符串，固定值：“”（空字符串）", required = true, dataType = "STRING", paramType = "query")
     })
     @RequestMapping(value = "/data/searchFocus", method = RequestMethod.POST)
     public String searchFocus(@RequestParam("tag_id") int tagId,
@@ -94,19 +84,19 @@ public class YuQingAppController {
         if ("".equals(loginName)) {
             result = returnStaticJsonObject();
         } else {
-
+            result = iYuQingService.searchFocus(tagId, limit, date, loginName).toString();
         }
         return result;
     }
 
     @ApiOperation(value = "searchTagInfo", notes = "获取某个信息频道（非聚焦频道）的数据")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "filters", value = "Json字符串，[{\"columnName\":\"tag_id\",\"op\":2,\"value\": xxxxx}]。其中的 xxxxx，是该频道的tag_id。", required = true, dataType = "STRING"),
-            @ApiImplicitParam(name = "limit", value = "分页查询每页条数，固定值：20", required = true, dataType = "INT"),
-            @ApiImplicitParam(name = "date", value = "日期字符串，固定值：“”（空字符串）", required = true, dataType = "STRING")
+            @ApiImplicitParam(name = "filters", value = "Json字符串，[{\"columnName\":\"tag_id\",\"op\":2,\"value\": xxxxx}]。其中的 xxxxx，是该频道的tag_id。", required = true, dataType = "STRING", paramType = "query"),
+            @ApiImplicitParam(name = "limit", value = "分页查询每页条数，固定值：20", required = true, dataType = "INT", paramType = "query"),
+            @ApiImplicitParam(name = "date", value = "日期字符串，固定值：“”（空字符串）", required = true, dataType = "STRING", paramType = "query")
     })
     @RequestMapping(value = "/data/searchTagInfo", method = RequestMethod.POST)
-    public String searchTagInfo(@RequestParam("filters") int tagId,
+    public String searchTagInfo(@RequestParam("filters") String filters,
                                 @RequestParam("limit") int limit,
                                 @RequestParam("date") String date,
                                 HttpServletRequest httpServletRequest) {
@@ -115,15 +105,15 @@ public class YuQingAppController {
         if ("".equals(loginName)) {
             result = returnStaticJsonObject();
         } else {
-
+            result = iYuQingService.searchTagInfo(filters, limit, date, loginName).toString();
         }
         return result;
     }
 
     @ApiOperation(value = "searchFavor", notes = "获取收藏信息")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "limit", value = "分页查询每页条数，固定值：20", required = true, dataType = "INT"),
-            @ApiImplicitParam(name = "date", value = "日期字符串，固定值：“”（空字符串）", required = true, dataType = "STRING")
+            @ApiImplicitParam(name = "limit", value = "分页查询每页条数，固定值：20", required = true, dataType = "INT", paramType = "query"),
+            @ApiImplicitParam(name = "date", value = "日期字符串，固定值：“”（空字符串）", required = true, dataType = "STRING", paramType = "query")
     })
     @RequestMapping(value = "/favor/search", method = RequestMethod.POST)
     public String searchFavor(@RequestParam("limit") int limit,
@@ -134,49 +124,48 @@ public class YuQingAppController {
         if ("".equals(loginName)) {
             result = returnStaticJsonObject();
         } else {
-
+            result = iYuQingService.searchFavor(limit, date, loginName).toString();
         }
         return result;
     }
 
     @ApiOperation(value = "removeFavor", notes = "删除收藏数据")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "id", value = "被删除的消息的id", required = true, dataType = "STRING"),
+            @ApiImplicitParam(name = "id", value = "被删除的消息的id", required = true, dataType = "STRING", paramType = "query"),
     })
     @RequestMapping(value = "/favor/remove", method = RequestMethod.POST)
-    public String removeFavor(@RequestParam("id") String limit,
+    public String removeFavor(@RequestParam("id") String id,
                               HttpServletRequest httpServletRequest) {
         String loginName = judgeCookie(httpServletRequest);
         String result = "";
         if ("".equals(loginName)) {
             result = returnStaticJsonObject();
         } else {
-
+            result = iYuQingService.removeFavor(id, loginName).toString();
         }
         return result;
     }
 
     @ApiOperation(value = "addFavor", notes = "添加收藏信息")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "id", value = "需要添加的数据的id", required = true, dataType = "STRING"),
+            @ApiImplicitParam(name = "id", value = "需要添加的数据的id", required = true, dataType = "STRING", paramType = "query"),
     })
     @RequestMapping(value = "/favor/add", method = RequestMethod.POST)
-    public String addFavor(@RequestParam("limit") int limit,
-                           @RequestParam("date") String date,
+    public String addFavor(@RequestParam("id") String id,
                            HttpServletRequest httpServletRequest) {
         String loginName = judgeCookie(httpServletRequest);
         String result = "";
         if ("".equals(loginName)) {
             result = returnStaticJsonObject();
         } else {
-
+            result = iYuQingService.addFavor(id, loginName).toString();
         }
         return result;
     }
 
     @ApiOperation(value = "checkFavor", notes = "检查收藏关系")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "id", value = "需要查看的数据的id", required = true, dataType = "STRING"),
+    @ApiImplicitParams(value = {
+            @ApiImplicitParam(name = "id", value = "需要查看的数据的id", required = true, dataType = "STRING", paramType = "query"),
     })
     @RequestMapping(value = "/favor/check", method = RequestMethod.POST)
     public String checkFavor(@RequestParam("id") String id,
@@ -186,15 +175,15 @@ public class YuQingAppController {
         if ("".equals(loginName)) {
             result = returnStaticJsonObject();
         } else {
-
+            result = iYuQingService.checkFavor(id, loginName).toString();
         }
         return result;
     }
 
     @ApiOperation(value = "updatePwd", notes = "修改密码")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "old", value = "原密码", required = true, dataType = "STRING"),
-            @ApiImplicitParam(name = "password", value = "新密码", required = true, dataType = "STRING")
+            @ApiImplicitParam(name = "old", value = "原密码", required = true, dataType = "STRING", paramType = "query"),
+            @ApiImplicitParam(name = "password", value = "新密码", required = true, dataType = "STRING", paramType = "query")
     })
     @RequestMapping(value = "/user/update", method = RequestMethod.POST)
     public String updatePwd(@RequestParam("old") String old,
@@ -205,17 +194,17 @@ public class YuQingAppController {
         if ("".equals(loginName)) {
             result = returnStaticJsonObject();
         } else {
-
+            result = iYuQingService.updatePwd(old, password, loginName).toString();
         }
         return result;
     }
 
     @ApiOperation(value = "updateConfig", notes = "修改推送设置")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "type", value = "频道的类型。1: 信息频道；2: 聚焦频道。即接口2.1的返回值中对应的type的值。", required = true, dataType = "STRING"),
-            @ApiImplicitParam(name = "tag_id", value = "频道的tag_id的值；", required = true, dataType = "STRING"),
-            @ApiImplicitParam(name = "name", value = "频道的名称", required = true, dataType = "STRING"),
-            @ApiImplicitParam(name = "push", value = "是否推送。 0：否；1：是", required = true, dataType = "STRING")
+            @ApiImplicitParam(name = "type", value = "频道的类型。1: 信息频道；2: 聚焦频道。即接口2.1的返回值中对应的type的值。", required = true, dataType = "STRING", paramType = "query"),
+            @ApiImplicitParam(name = "tag_id", value = "频道的tag_id的值；", required = true, dataType = "STRING", paramType = "query"),
+            @ApiImplicitParam(name = "name", value = "频道的名称", required = true, dataType = "STRING", paramType = "query"),
+            @ApiImplicitParam(name = "push", value = "是否推送。 0：否；1：是", required = true, dataType = "STRING", paramType = "query")
     })
     @RequestMapping(value = "/user/push/updateConfig", method = RequestMethod.POST)
     public String updateConfig(@RequestParam("type") String type,
@@ -244,20 +233,20 @@ public class YuQingAppController {
 
     @ApiOperation(value = "detailInfo", notes = "根据id来获取详情的接口")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "id", value = "想要查询的信息的id", required = true, dataType = "STRING")
+            @ApiImplicitParam(name = "id", value = "想要查询的信息的id", required = true, dataType = "STRING", paramType = "query")
     })
     @RequestMapping(value = "/data/detail", method = RequestMethod.POST)
-    public String detailInfo(HttpServletRequest httpServletRequest) {
+    public String detailInfo(@RequestParam("id") String id,
+                             HttpServletRequest httpServletRequest) {
         String loginName = judgeCookie(httpServletRequest);
         String result = "";
         if ("".equals(loginName)) {
             result = returnStaticJsonObject();
         } else {
-
+            result = iYuQingService.getInfodetail(id).toString();
         }
         return result;
     }
-
 
     public String judgeCookie(HttpServletRequest httpServletRequest) {
         String loginName = sysCookie.getUser(httpServletRequest);
