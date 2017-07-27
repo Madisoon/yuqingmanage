@@ -1,5 +1,6 @@
 package com.syx.yuqingmanage.module.app.service.imp;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alienlab.db.ExecResult;
@@ -18,9 +19,10 @@ public class YuQingAppService implements IYuQingService {
     @Autowired
     JSONResponse jsonResponse;
 
+    // 完成
     @Override
     public JSONObject judgerAppUser(String loginName, String password, long timestamp) {
-        String sqlGetUser = "SELECT * FROM app_user WHERE app_user_loginname = " + loginName;
+        String sqlGetUser = "SELECT * FROM app_user WHERE app_user_loginname = '" + loginName + "'";
         ExecResult execResult = jsonResponse.getSelectResult(sqlGetUser, null, "");
         JSONObject returnData = new JSONObject();
         if (execResult.getResult() == 1) {
@@ -54,6 +56,7 @@ public class YuQingAppService implements IYuQingService {
         return returnData;
     }
 
+    // 完成
     @Override
     public JSONObject checkToken(String token) {
         String getUserByCheckToken = "SELECT * FROM app_user WHERE app_user_token = '" + token + "'";
@@ -79,6 +82,7 @@ public class YuQingAppService implements IYuQingService {
         return jsonObject;
     }
 
+    // 完成
     @Override
     public JSONObject searchMenus(String loginName) {
         String getSMenus = "SELECT a.id AS tag_id,a.app_program_name AS NAME,b.app_module_type AS TYPE  " +
@@ -102,23 +106,49 @@ public class YuQingAppService implements IYuQingService {
         return jsonObjectReturn;
     }
 
+    // 完成
     @Override
     public JSONObject searchFocus(int tag_id, int limit, String date, String loginName) {
+        JSONObject jsonObject = new JSONObject();
+        JSONObject jsonObjectValue = new JSONObject();
+        String getFoucs = "";
+        ExecResult execResult = new ExecResult();
+        // 没有时间点
         if ("".equals(date)) {
-
+            // 根据id获取到焦点数据的
+            getFoucs = "SELECT b.topic_title AS title,b.topic_abstract AS content,b.topic_context AS source_url,b.topic_time AS pub_time" +
+                    " FROM (SELECT a.*,b.topic_context_id FROM (SELECT a.*,b.tag_id FROM  " +
+                    "(SELECT a.*,b.app_module_id FROM  app_user_program a  " +
+                    "LEFT JOIN app_user_program_module b  " +
+                    "ON a.id = b.app_program_id WHERE a.id = '" + tag_id + "') a LEFT JOIN app_module_tag_dep b   " +
+                    "ON a.app_module_id = b.app_module_id) a , topic_context  b   " +
+                    "WHERE a.tag_id = b.topic_id) a LEFT JOIN sys_topic_context b  " +
+                    "ON a.topic_context_id = b.id GROUP BY b.id ORDER BY b.topic_time DESC LIMIT 0,20 ";
         } else {
-
+            getFoucs = "SELECT b.topic_title AS title,b.topic_abstract AS content,b.topic_context AS source_url,b.topic_time AS pub_time" +
+                    " FROM (SELECT a.*,b.topic_context_id FROM (SELECT a.*,b.tag_id FROM  " +
+                    "(SELECT a.*,b.app_module_id FROM  app_user_program a  " +
+                    "LEFT JOIN app_user_program_module b  " +
+                    "ON a.id = b.app_program_id WHERE a.id = '" + tag_id + "') a LEFT JOIN app_module_tag_dep b  " +
+                    "ON a.app_module_id = b.app_module_id) a , topic_context  b  " +
+                    "WHERE a.tag_id = b.topic_id) a LEFT JOIN sys_topic_context b  " +
+                    "ON a.topic_context_id = b.id WHERE b.topic_time < '" + date + "' GROUP BY b.id ORDER BY b.topic_time DESC LIMIT 0,20 ";
         }
-        // 根据id获取到焦点数据的
-        String getFoucs = "SELECT b.* FROM (SELECT a.*,b.topic_context_id FROM (SELECT a.*,b.tag_id FROM  " +
-                "(SELECT a.*,b.app_module_id FROM  app_user_program a  " +
-                "LEFT JOIN app_user_program_module b  " +
-                "ON a.id = b.app_program_id WHERE a.id = " + tag_id + ") a LEFT JOIN app_module_tag_dep b  " +
-                "ON a.app_module_id = b.app_module_id) a , topic_context  b  " +
-                "WHERE a.tag_id = b.topic_id) a LEFT JOIN sys_topic_context b " +
-                "ON a.topic_context_id = b.id GROUP BY b.id ";
-        ExecResult execResult = jsonResponse.getSelectResult(getFoucs, null, "");
-        return null;
+        execResult = jsonResponse.getSelectResult(getFoucs, null, "");
+        if (execResult.getResult() == 1) {
+            // 有数据
+            JSONArray jsonArray = (JSONArray) execResult.getData();
+            jsonObjectValue = jsonArray.getJSONObject(jsonArray.size());
+            jsonObjectValue.put("time", jsonObjectValue.getString("pub_time"));
+            jsonObjectValue.put("data", jsonArray);
+            jsonObject.put("success", true);
+            jsonObject.put("value", jsonObjectValue);
+        } else {
+            // 无数据
+            jsonObject.put("success", false);
+            jsonObject.put("value", 22001);
+        }
+        return jsonObject;
     }
 
     @Override
@@ -134,9 +164,50 @@ public class YuQingAppService implements IYuQingService {
                 "ON a.id = b.app_program_id  WHERE a.id = '37') a LEFT JOIN app_module_tag_dep b  " +
                 "ON a.app_module_id = b.app_module_id) a LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b  " +
                 "WHERE a.infor_id = b.id GROUP BY b.id ";
+
+
+        JSONArray jsonArray = JSON.parseArray(filters);
+        for (int i = 0, jsonArrayLen = jsonArray.size(); i < jsonArrayLen; i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+            // 条件字段名称
+            String columnName = jsonObject.getString("columnName");
+            // 为1，2，3，4，5，6 数字格式
+            String columnOp = jsonObject.getString("op");
+            switch (columnOp) {
+                case "1":
+                    break;
+                case "2":
+                    break;
+                case "3":
+                    break;
+                case "4":
+                    break;
+                case "5":
+                    break;
+                case "6":
+                    break;
+                case "7":
+                    break;
+                case "8":
+                    break;
+                case "9":
+                    break;
+                case "10":
+                    break;
+                case "11":
+                    break;
+                case "12":
+                    break;
+                default:
+                    break;
+            }
+            // 可能为单值 1、1，2、1|2、(1|2|3) 四种数据格式
+            String columnValue = jsonObject.getString("value");
+        }
         return null;
     }
 
+    // 完成
     @Override
     public JSONObject getInfodetail(String id) {
         String sqlGetDeatil = "SELECT b.infor_type AS level_id,b.infor_title  " +
@@ -185,23 +256,53 @@ public class YuQingAppService implements IYuQingService {
 
     @Override
     public JSONObject searchFavor(int limit, String date, String loginName) {
-        String getFavorInfo = "SELECT b.infor_type AS level_id,b.infor_title " +
-                "AS title,b.infor_context AS content,b.infor_link  " +
-                "AS source_url,b.infor_createtime AS pub_time,b.infor_source  " +
-                "AS source_id, b.infor_site AS site FROM  app_user_favor a  " +
-                "LEFT JOIN sys_infor b ON a.app_favor_infor_id = b.id " +
-                "WHERE a.app_user_loginname = '" + loginName + "' ";
-
-        return null;
+        JSONObject jsonObject = new JSONObject();
+        JSONObject jsonObjectValue = new JSONObject();
+        String getFavor = "";
+        ExecResult execResult = new ExecResult();
+        // 没有时间点
+        if ("".equals(date)) {
+            // 根据id获取到焦点数据的
+            getFavor = " SELECT b.infor_type AS level_id,b.infor_title  " +
+                    " AS title,b.infor_context AS content,b.infor_link   " +
+                    " AS source_url,b.infor_createtime AS pub_time,b.infor_source   " +
+                    " AS source_id, b.infor_site AS site FROM  app_user_favor a   " +
+                    " LEFT JOIN sys_infor b ON a.app_favor_infor_id = b.id  " +
+                    " WHERE a.app_user_loginname = 'admin' ORDER BY b.infor_createtime DESC LIMIT 0,20";
+        } else {
+            getFavor = " SELECT b.infor_type AS level_id,b.infor_title   " +
+                    " AS title,b.infor_context AS content,b.infor_link    " +
+                    " AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
+                    " AS source_id, b.infor_site AS site FROM  app_user_favor a    " +
+                    " LEFT JOIN sys_infor b ON a.app_favor_infor_id = b.id   " +
+                    " WHERE a.app_user_loginname = 'admin' AND b.infor_createtime < '" + date + "'  " +
+                    " ORDER BY b.infor_createtime DESC LIMIT 0,20";
+        }
+        execResult = jsonResponse.getSelectResult(getFavor, null, "");
+        if (execResult.getResult() == 1) {
+            // 有数据
+            JSONArray jsonArray = (JSONArray) execResult.getData();
+            jsonObjectValue = jsonArray.getJSONObject(jsonArray.size());
+            jsonObjectValue.put("time", jsonObjectValue.getString("pub_time"));
+            jsonObjectValue.put("data", jsonArray);
+            jsonObject.put("success", true);
+            jsonObject.put("value", jsonObjectValue);
+        } else {
+            // 无数据
+            jsonObject.put("success", false);
+            jsonObject.put("value", 31001);
+        }
+        return jsonObject;
     }
 
+    // 完成
     @Override
     public JSONObject removeFavor(String id, String loginName) {
         String removeFavorSql = "";
+        JSONObject jsonObject = new JSONObject();
         if ("".equals(id)) {
             removeFavorSql = "DELETE FROM app_user_favor WHERE app_user_loginname = '" + loginName + "'";
             ExecResult execResult = jsonResponse.getExecResult(removeFavorSql, null);
-            JSONObject jsonObject = new JSONObject();
             if (execResult.getResult() == 1) {
                 jsonObject.put("success", true);
                 jsonObject.put("value", true);
@@ -212,7 +313,6 @@ public class YuQingAppService implements IYuQingService {
         } else {
             removeFavorSql = "DELETE FROM app_user_favor WHERE id = " + id;
             ExecResult execResult = jsonResponse.getExecResult(removeFavorSql, null);
-            JSONObject jsonObject = new JSONObject();
             if (execResult.getResult() == 1) {
                 jsonObject.put("success", true);
                 jsonObject.put("value", true);
@@ -221,9 +321,10 @@ public class YuQingAppService implements IYuQingService {
                 jsonObject.put("value", 33001);
             }
         }
-        return null;
+        return jsonObject;
     }
 
+    // 完成
     @Override
     public JSONObject addFavor(String id, String loginName) {
         String insertSql = "INSERT INTO  app_user_favor (app_user_loginname, app_favor_infor_id) VALUES ('" + loginName + "','" + id + "')";
@@ -239,6 +340,7 @@ public class YuQingAppService implements IYuQingService {
         return jsonObject;
     }
 
+    // 完成
     @Override
     public JSONObject checkFavor(String id, String loginName) {
         String checkSql = "SELECT * FROM app_user_favor a WHERE a.app_user_loginname = '" + loginName + "' AND a.app_favor_infor_id = '" + id + "'";
@@ -254,6 +356,8 @@ public class YuQingAppService implements IYuQingService {
         return jsonObject;
     }
 
+
+    // 接口完成
     @Override
     public JSONObject updatePwd(String oldPwd, String newPwd, String loginName) {
         String sqlPwd = "UPDATE app_user a SET a.app_user_pwd = '" + newPwd + "' " +

@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alienlab.db.ExecResult;
 import com.alienlab.response.JSONResponse;
+import com.alienlab.utils.Md5Azdg;
 import com.syx.yuqingmanage.module.appmodule.service.ISysAppUserService;
 import com.syx.yuqingmanage.utils.SqlEasy;
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +27,8 @@ public class SysAppUserService implements ISysAppUserService {
     public ExecResult insertAppUser(String appUserInfo, String appUserProgram, String areaId) {
         JSONObject jsonObjectUser = JSONObject.parseObject(appUserInfo);
         String appUserLoginName = jsonObjectUser.getString("app_user_loginname");
-        String insertSql = SqlEasy.insertObject(appUserInfo, "app_user");
+        jsonObjectUser.put("app_user_pwd", Md5Azdg.md5s(jsonObjectUser.getString("app_user_pwd")));
+        String insertSql = SqlEasy.insertObject(jsonObjectUser.toJSONString(), "app_user");
         ExecResult execResult = jsonResponse.getExecInsertId(insertSql, null, "", "");
         List list = insertUserProgram(appUserLoginName, appUserProgram);
         list.add("INSERT INTO app_user_area (user_loginname, user_area_id) VALUES ('" + appUserLoginName + "','" + areaId + "') ");
