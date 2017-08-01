@@ -26,7 +26,7 @@ public class SysCookie {
         String loginName = "";
         if (token != null) {
             String sqlUser = "SELECT * FROM app_user a WHERE a.app_user_token = '" + token + "'";
-            ExecResult execResult = jsonResponse.getSelectResult("sqlUser", null, "");
+            ExecResult execResult = jsonResponse.getSelectResult(sqlUser, null, "");
             JSONArray jsonArray = (JSONArray) execResult.getData();
             if (jsonArray != null) {
                 JSONObject jsonObject = jsonArray.getJSONObject(0);
@@ -36,11 +36,11 @@ public class SysCookie {
         return loginName;
     }
 
-    public String getToken(final HttpServletRequest req) {
+    public static String getToken(final HttpServletRequest req) {
         return getCookie(req, "token");
     }
 
-    public String getCookie(HttpServletRequest req, String field) {
+    public static String getCookie(HttpServletRequest req, String field) {
         Cookie[] cookies = req.getCookies();
         if (cookies == null) {
             return "";

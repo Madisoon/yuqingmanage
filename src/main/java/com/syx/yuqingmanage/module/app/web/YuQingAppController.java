@@ -45,11 +45,10 @@ public class YuQingAppController {
 
     @ApiOperation(value = "checkToken", notes = "查看登录状态码是否过期")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "token", value = "用户的token", required = true, dataType = "STRING", paramType = "query")
     })
     @RequestMapping(value = "/user/checkToken", method = RequestMethod.POST)
-    public String checkToken(@RequestParam("token") String token, HttpServletRequest httpServletRequest) {
-        String result = iYuQingService.checkToken(token).toString();
+    public String checkToken(HttpServletRequest httpServletRequest) {
+        String result = iYuQingService.checkToken(sysCookie.getToken(httpServletRequest)).toString();
         return result;
     }
 
@@ -72,7 +71,7 @@ public class YuQingAppController {
     @ApiImplicitParams({
             @ApiImplicitParam(name = "tag_id", value = "聚焦频道的tag_id的值", required = true, dataType = "INT", paramType = "query"),
             @ApiImplicitParam(name = "limit", value = "分页查询每页条数，固定值：20", required = true, dataType = "INT", paramType = "query"),
-            @ApiImplicitParam(name = "date", value = "日期字符串，固定值：“”（空字符串）", required = true, dataType = "STRING", paramType = "query")
+            @ApiImplicitParam(name = "date", value = "日期字符串，固定值：“”（空字符串）", required = false, dataType = "STRING", paramType = "query")
     })
     @RequestMapping(value = "/data/searchFocus", method = RequestMethod.POST)
     public String searchFocus(@RequestParam("tag_id") int tagId,

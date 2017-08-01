@@ -214,7 +214,7 @@ public class InForService implements IInForService {
         List<String> sqlList = new ArrayList<>();
         sqlList.add(" SELECT a.*,b.qq_number FROM (SELECT  a.*,b.get_number,b.get_remark,b.get_type,c.scheme_plan_id  ");
         sqlList.add(" FROM sys_post_customer a, sys_customer_get b ,sys_scheme c ");
-        sqlList.add(" WHERE a.customer_status = 1 AND  a.customer_start_time <'" + dateFormat + "' AND  a.customer_end_time >'" + dateFormat + "'  AND (" + StringUtils.join(listWhere, "") + ")  ");
+        sqlList.add(" WHERE a.customer_status = 1 AND  a.customer_start_time <='" + dateFormat + "' AND  a.customer_end_time >='" + dateFormat + "'  AND (" + StringUtils.join(listWhere, "") + ")  ");
         sqlList.add(" AND a.id = b.post_customer_id AND a.customer_scheme = c.id ) a LEFT JOIN sys_qq b  ON a.customer_post_qq = b.id ");
         ExecResult execResult = jsonResponse.getSelectResult(StringUtils.join(sqlList, ""), null, "");
         JSONArray jsonArray = (JSONArray) execResult.getData();
