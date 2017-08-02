@@ -170,27 +170,36 @@ public class YuQingAppService implements IYuQingService {
         }
         String getSql = "";
         if (!"".equals(date)) {
-            getSql = "SELECT * FROM (SELECT b.id , b.infor_type AS level_id,b.infor_title   " +
-                    "AS title,b.infor_context AS content,b.infor_link   " +
-                    "AS source_url,b.infor_createtime AS pub_time,b.infor_source   " +
-                    "AS source_id, b.infor_site AS site,a.id AS tag_id  " +
-                    "FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM   " +
-                    "(SELECT a.*,b.app_module_id FROM  app_user_program a   " +
-                    "LEFT JOIN app_user_program_module b   " +
-                    "ON a.id = b.app_program_id WHERE a.app_user_loginname = ''" + loginName + "'') a LEFT JOIN app_module_tag_dep b   " +
-                    "ON a.app_module_id = b.app_module_id) a LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   " +
-                    "WHERE a.infor_id = b.id  AND b.infor_createtime < ''" + date + "''  GROUP BY b.id ORDER BY b.infor_createtime DESC ) a  " + sqlWhere + " LIMIT 0," + limit + "";
+            getSql = "SELECT * FROM (SELECT *,CASE a.source  " +
+                    "WHEN ''新闻'' THEN ''1''  " +
+                    "WHEN ''论坛'' THEN ''2''  " +
+                    "WHEN ''博客'' THEN ''3''  " +
+                    "WHEN ''视频'' THEN ''4''  " +
+                    "WHEN ''微博'' THEN ''5''  " +
+                    "WHEN ''微信'' THEN ''6''  " +
+                    "WHEN ''移动咨询'' THEN ''7''  " +
+                    "ELSE ''8'' END AS source_id FROM (SELECT b.id , b.infor_type AS level_id,b.infor_title    " +
+                    "AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
+                    "AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM    " +
+                    "(SELECT a.*,b.app_module_id FROM  app_user_program a   LEFT JOIN app_user_program_module b   ON a.id = b.app_program_id  " +
+                    "WHERE a.app_user_loginname = ''" + loginName + "'' ) a LEFT JOIN app_module_tag_dep b   ON a.app_module_id = b.app_module_id) a  " +
+                    "LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id AND b.infor_createtime < ''" + date + "''  GROUP BY b.id ORDER BY b.infor_createtime DESC) a) a  " + sqlWhere + " LIMIT 0," + limit + "";
         } else {
-            getSql = "SELECT * FROM (SELECT b.id , b.infor_type AS level_id,b.infor_title   " +
-                    "AS title,b.infor_context AS content,b.infor_link   " +
-                    "AS source_url,b.infor_createtime AS pub_time,b.infor_source   " +
-                    "AS source_id, b.infor_site AS site,a.id AS tag_id  " +
-                    "FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM   " +
-                    "(SELECT a.*,b.app_module_id FROM  app_user_program a   " +
-                    "LEFT JOIN app_user_program_module b   " +
-                    "ON a.id = b.app_program_id WHERE a.app_user_loginname = ''" + loginName + "'' ) a LEFT JOIN app_module_tag_dep b   " +
-                    "ON a.app_module_id = b.app_module_id) a LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   " +
-                    "WHERE a.infor_id = b.id  GROUP BY b.id ORDER BY b.infor_createtime DESC ) a  " + sqlWhere + "   LIMIT 0," + limit + "";
+            getSql = "SELECT * FROM (SELECT *,CASE a.source  " +
+                    "WHEN ''新闻'' THEN ''1''  " +
+                    "WHEN ''论坛'' THEN ''2''  " +
+                    "WHEN ''博客'' THEN ''3''  " +
+                    "WHEN ''视频'' THEN ''4''  " +
+                    "WHEN ''微博'' THEN ''5''  " +
+                    "WHEN ''微信'' THEN ''6''  " +
+                    "WHEN ''移动咨询'' THEN ''7''  " +
+                    "ELSE ''8'' END AS source_id FROM (SELECT b.id , b.infor_type AS level_id,b.infor_title    " +
+                    "AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source   " +
+                    "AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM    " +
+                    "(SELECT a.*,b.app_module_id FROM  app_user_program a   LEFT JOIN app_user_program_module b   ON a.id = b.app_program_id  " +
+                    "WHERE a.app_user_loginname = ''" + loginName + "'' ) a LEFT JOIN app_module_tag_dep b   ON a.app_module_id = b.app_module_id) a  " +
+                    "LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id  GROUP BY b.id ORDER BY b.infor_createtime DESC) a) a " +
+                    " " + sqlWhere + "   LIMIT 0," + limit + "";
         }
         ExecResult execResult = jsonResponse.getSelectResult(getSql, sqlWhereValue, "");
         System.out.println(getSql);
@@ -217,45 +226,6 @@ public class YuQingAppService implements IYuQingService {
             jsonObject.put("value", 23001);
         }
         return jsonObject;
-
-/*        //  条件转换成功
-        for (int i = 0, jsonArrayLen = jsonArray.size(); i < jsonArrayLen; i++) {
-            JSONObject jsonObject = jsonArray.getJSONObject(i);
-            // 条件字段名称
-            String columnName = jsonObject.getString("columnName");
-            // 为1，2，3，4，5，6 数字格式
-            String columnOp = jsonObject.getString("op");
-            switch (columnOp) {
-                case "1":
-                    break;
-                case "2":
-                    break;
-                case "3":
-                    break;
-                case "4":
-                    break;
-                case "5":
-                    break;
-                case "6":
-                    break;
-                case "7":
-                    break;
-                case "8":
-                    break;
-                case "9":
-                    break;
-                case "10":
-                    break;
-                case "11":
-                    break;
-                case "12":
-                    break;
-                default:
-                    break;
-            }
-            // 可能为单值 1、1，2、1|2、(1|2|3) 四种数据格式
-            String columnValue = jsonObject.getString("value");
-        }*/
     }
 
     // 测试完成
@@ -390,7 +360,6 @@ public class YuQingAppService implements IYuQingService {
         }
         return jsonObject;
     }
-
 
     // 测试完成
     @Override
