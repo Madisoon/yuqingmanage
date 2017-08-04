@@ -43,14 +43,8 @@ public class SysAppModuleService implements ISysAppModuleService {
 
     @Override
     public ExecResult updateAppModule(String appModuleId, String appModuleInfo, String appModuleTag, String appModuleBaseTag) {
-        System.out.println(appModuleId);
-        System.out.println(appModuleInfo);
-        System.out.println(appModuleTag);
-        System.out.println(appModuleBaseTag);
-
         List list = new ArrayList();
         String sqlUpdate = SqlEasy.updateObject(appModuleInfo, "app_module", "id = " + appModuleId);
-        System.out.println(sqlUpdate);
         list.add(sqlUpdate);
         list.add("DELETE FROM app_module_tag WHERE app_module_id = '" + appModuleId + "'");
         list.add("DELETE FROM app_module_tag_dep WHERE app_module_id = '" + appModuleId + "'");

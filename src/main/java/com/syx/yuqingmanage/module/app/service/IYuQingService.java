@@ -31,8 +31,10 @@ public interface IYuQingService {
 
     public JSONObject updatePwd(String oldPwd, String newPwd, String loginName);
 
-    public JSONObject updateConfig(String type, String tag_id, String name, String push, String loginName);
+    public JSONObject updateConfig(String tag_id, String push, String loginName);
 
     public JSONObject getConfig(String loginName);
+
+    public JSONObject checkVersion(String appVersion);
 
 }

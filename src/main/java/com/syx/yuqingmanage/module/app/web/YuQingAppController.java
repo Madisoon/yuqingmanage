@@ -118,6 +118,9 @@ public class YuQingAppController {
     public String searchFavor(@RequestParam("limit") int limit,
                               @RequestParam("date") String date,
                               HttpServletRequest httpServletRequest) {
+        System.out.println("执行");
+        System.out.println(limit);
+        System.out.println(date);
         String loginName = judgeCookie(httpServletRequest);
         String result = "";
         if ("".equals(loginName)) {
@@ -200,15 +203,11 @@ public class YuQingAppController {
 
     @ApiOperation(value = "updateConfig", notes = "修改推送设置")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "type", value = "频道的类型。1: 信息频道；2: 聚焦频道。即接口2.1的返回值中对应的type的值。", required = true, dataType = "STRING", paramType = "query"),
             @ApiImplicitParam(name = "tag_id", value = "频道的tag_id的值；", required = true, dataType = "STRING", paramType = "query"),
-            @ApiImplicitParam(name = "name", value = "频道的名称", required = true, dataType = "STRING", paramType = "query"),
             @ApiImplicitParam(name = "push", value = "是否推送。 0：否；1：是", required = true, dataType = "STRING", paramType = "query")
     })
     @RequestMapping(value = "/user/push/updateConfig", method = RequestMethod.POST)
-    public String updateConfig(@RequestParam("type") String type,
-                               @RequestParam("tag_id") String tag_id,
-                               @RequestParam("name") String name,
+    public String updateConfig(@RequestParam("tag_id") String tagId,
                                @RequestParam("push") String push,
                                HttpServletRequest httpServletRequest) {
         String loginName = judgeCookie(httpServletRequest);
@@ -216,7 +215,7 @@ public class YuQingAppController {
         if ("".equals(loginName)) {
             result = returnStaticJsonObject();
         } else {
-
+            result = iYuQingService.updateConfig(tagId, push, loginName).toString();
         }
         return result;
     }
@@ -226,7 +225,13 @@ public class YuQingAppController {
     })
     @RequestMapping(value = "/user/push/getConfig", method = RequestMethod.POST)
     public String getConfig(HttpServletRequest httpServletRequest) {
+        String loginName = judgeCookie(httpServletRequest);
         String result = "";
+        if ("".equals(loginName)) {
+            result = returnStaticJsonObject();
+        } else {
+            result = iYuQingService.getConfig(loginName).toString();
+        }
         return result;
     }
 
@@ -243,6 +248,23 @@ public class YuQingAppController {
             result = returnStaticJsonObject();
         } else {
             result = iYuQingService.getInfodetail(id).toString();
+        }
+        return result;
+    }
+
+    @ApiOperation(value = "checkVersion", notes = "更新版本")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "version", value = "版本号", required = true, dataType = "STRING", paramType = "query")
+    })
+    @RequestMapping(value = "/release/check", method = RequestMethod.POST)
+    public String checkVersion(@RequestParam("version") String version,
+                               HttpServletRequest httpServletRequest) {
+        String loginName = judgeCookie(httpServletRequest);
+        String result = "";
+        if ("".equals(loginName)) {
+            result = returnStaticJsonObject();
+        } else {
+            result = iYuQingService.checkVersion(version).toString();
         }
         return result;
     }

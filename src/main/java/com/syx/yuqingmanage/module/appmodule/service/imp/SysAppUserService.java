@@ -33,6 +33,8 @@ public class SysAppUserService implements ISysAppUserService {
         List list = insertUserProgram(appUserLoginName, appUserProgram);
         list.add("INSERT INTO app_user_area (user_loginname, user_area_id) VALUES ('" + appUserLoginName + "','" + areaId + "') ");
         jsonResponse.getExecResult(list, "", "");
+
+
         return execResult;
     }
 
@@ -66,6 +68,7 @@ public class SysAppUserService implements ISysAppUserService {
         for (int i = 0, jsonArrayLen = jsonArray.size(); i < jsonArrayLen; i++) {
             JSONObject jsonObject = jsonArray.getJSONObject(i);
             list.add("DELETE FROM app_user_program_module  WHERE  app_program_id = " + jsonObject.getString("id"));
+            list.add("DELETE FROM app_user_config WHERE tag_id = " + jsonObject.getString("id"));
         }
         list.add(deleteSql);
         // 删除频道和模块
@@ -75,6 +78,8 @@ public class SysAppUserService implements ISysAppUserService {
         List listProgram = insertUserProgram(appUserLoginName, appUserProgram);
         listProgram.add(updateSql);
         execResult = jsonResponse.getExecResult(listProgram, "", "");
+
+
         return execResult;
     }
 
@@ -123,6 +128,7 @@ public class SysAppUserService implements ISysAppUserService {
             String insertUserProgram = "INSERT INTO  app_user_program (app_user_loginname, app_program_name) VALUES ('" + appUserLoginName + "','" + programName + "')";
             execResult = jsonResponse.getExecInsertId(insertUserProgram, null, "", "");
             int programId = Integer.parseInt(execResult.getMessage(), 10);
+            list.add("INSERT INTO app_user_config (tag_id, tag_push, tag_user) VALUES(" + programId + ", 0, '" + appUserLoginName + "') ");
             JSONArray jsonArrayModule = jsonObject.getJSONArray("programModule");
             for (int j = 0, jsonArrayModuleLen = jsonArrayModule.size(); j < jsonArrayModuleLen; j++) {
                 list.add("INSERT INTO app_user_program_module (app_program_id, app_module_id) VALUES (" + programId + ", " + jsonArrayModule.get(j) + ")");

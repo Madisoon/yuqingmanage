@@ -11,6 +11,7 @@ import com.syx.yuqingmanage.utils.DateTimeUtils;
 import com.syx.yuqingmanage.utils.jdbcfilters.Filter;
 import com.syx.yuqingmanage.utils.jdbcfilters.SelectParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -122,7 +123,7 @@ public class YuQingAppService implements IYuQingService {
         // 没有时间点
         if ("".equals(date)) {
             // 根据id获取到焦点数据的
-            getFoucs = "SELECT b.topic_title AS title,b.topic_abstract AS content,b.topic_context AS source_url,b.topic_time AS pub_time" +
+            getFoucs = "SELECT b.topic_title AS title,b.topic_abstract AS content,b.topic_context AS context,b.topic_time AS pub_time,b.topic_url AS source_url" +
                     " FROM (SELECT a.*,b.topic_context_id FROM (SELECT a.*,b.tag_id FROM  " +
                     "(SELECT a.*,b.app_module_id FROM  app_user_program a  " +
                     "LEFT JOIN app_user_program_module b  " +
@@ -131,7 +132,7 @@ public class YuQingAppService implements IYuQingService {
                     "WHERE a.tag_id = b.topic_id) a LEFT JOIN sys_topic_context b  " +
                     "ON a.topic_context_id = b.id WHERE b.topic_status = 1 GROUP BY b.id ORDER BY b.topic_time DESC LIMIT 0," + limit + " ";
         } else {
-            getFoucs = "SELECT b.topic_title AS title,b.topic_abstract AS content,b.topic_context AS source_url,b.topic_time AS pub_time" +
+            getFoucs = "SELECT b.topic_title AS title,b.topic_abstract AS content,b.topic_context AS context,b.topic_time AS pub_time,b.topic_url AS source_url" +
                     " FROM (SELECT a.*,b.topic_context_id FROM (SELECT a.*,b.tag_id FROM  " +
                     "(SELECT a.*,b.app_module_id FROM  app_user_program a  " +
                     "LEFT JOIN app_user_program_module b  " +
@@ -202,22 +203,14 @@ public class YuQingAppService implements IYuQingService {
                     " " + sqlWhere + "   LIMIT 0," + limit + "";
         }
         ExecResult execResult = jsonResponse.getSelectResult(getSql, sqlWhereValue, "");
-        System.out.println(getSql);
         JSONObject jsonObject = new JSONObject();
         if (execResult.getResult() == 1) {
             // 有数据
             JSONArray jsonArray = (JSONArray) execResult.getData();
-            JSONArray jsonArrayAll = new JSONArray();
-            for (int i = 0; i < jsonArray.size(); i++) {
-                JSONObject jsonObjectInfo = jsonArray.getJSONObject(i);
-                String sourceId = jsonObjectInfo.getString("source_id");
-                jsonObjectInfo.put("source_id", returnSource(sourceId));
-                jsonArrayAll.add(jsonObjectInfo);
-            }
             JSONObject jsonObjectValue = new JSONObject();
-            JSONObject jsonObjectReturn = jsonArrayAll.getJSONObject(jsonArrayAll.size() - 1);
+            JSONObject jsonObjectReturn = jsonArray.getJSONObject(jsonArray.size() - 1);
             jsonObjectValue.put("time", jsonObjectReturn.getString("pub_time"));
-            jsonObjectValue.put("data", jsonArrayAll);
+            jsonObjectValue.put("data", jsonArray);
             jsonObject.put("success", true);
             jsonObject.put("value", jsonObjectValue);
         } else {
@@ -259,19 +252,19 @@ public class YuQingAppService implements IYuQingService {
         // 没有时间点
         if ("".equals(date)) {
             // 根据id获取到焦点数据的
-            getFavor = " SELECT b.infor_type AS level_id,b.infor_title  " +
+            getFavor = " SELECT b.id , b.infor_type AS level_id,b.infor_title  " +
                     " AS title,b.infor_context AS content,b.infor_link   " +
                     " AS source_url,b.infor_createtime AS pub_time,b.infor_source   " +
                     " AS source_id, b.infor_site AS site FROM  app_user_favor a   " +
                     " LEFT JOIN sys_infor b ON a.app_favor_infor_id = b.id  " +
-                    " WHERE a.app_user_loginname = 'admin' ORDER BY b.infor_createtime DESC LIMIT 0," + limit + "";
+                    " WHERE a.app_user_loginname = '" + loginName + "' ORDER BY b.infor_createtime DESC LIMIT 0," + limit + "";
         } else {
-            getFavor = " SELECT b.infor_type AS level_id,b.infor_title   " +
+            getFavor = " SELECT b.id , b.infor_type AS level_id,b.infor_title   " +
                     " AS title,b.infor_context AS content,b.infor_link    " +
                     " AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
                     " AS source_id, b.infor_site AS site FROM  app_user_favor a    " +
                     " LEFT JOIN sys_infor b ON a.app_favor_infor_id = b.id   " +
-                    " WHERE a.app_user_loginname = 'admin' AND b.infor_createtime < '" + date + "'  " +
+                    " WHERE a.app_user_loginname = '" + loginName + "' AND b.infor_createtime < '" + date + "'  " +
                     " ORDER BY b.infor_createtime DESC LIMIT 0," + limit + "";
         }
         execResult = jsonResponse.getSelectResult(getFavor, null, "");
@@ -316,7 +309,7 @@ public class YuQingAppService implements IYuQingService {
                 jsonObject.put("value", 33002);
             }
         } else {
-            removeFavorSql = "DELETE FROM app_user_favor WHERE app_favor_infor_id = " + id;
+            removeFavorSql = "DELETE FROM app_user_favor WHERE app_favor_infor_id = '" + id + "'";
             ExecResult execResult = jsonResponse.getExecResult(removeFavorSql, null);
             if (execResult.getResult() == 1) {
                 jsonObject.put("success", true);
@@ -340,7 +333,7 @@ public class YuQingAppService implements IYuQingService {
             jsonObject.put("value", true);
         } else {
             jsonObject.put("success", false);
-            jsonObject.put("value", 33001);
+            jsonObject.put("value", 32001);
         }
         return jsonObject;
     }
@@ -379,13 +372,45 @@ public class YuQingAppService implements IYuQingService {
     }
 
     @Override
-    public JSONObject updateConfig(String type, String tag_id, String name, String push, String loginName) {
-        return null;
+    public JSONObject updateConfig(String tag_id, String push, String loginName) {
+        String[] tagIds = tag_id.split(",");
+        int tagIdsLen = tagIds.length;
+        List list = new ArrayList();
+        for (int i = 0; i < tagIdsLen; i++) {
+            list.add("UPDATE app_user_config SET tag_push = " + push + " WHERE tag_id = " + tagIds[i] + " ");
+        }
+        ExecResult execResult = jsonResponse.getExecResult(list, "", "");
+        JSONObject jsonObject = new JSONObject();
+        if (execResult.getResult() == 1) {
+            jsonObject.put("success", true);
+            jsonObject.put("value", true);
+        } else {
+            jsonObject.put("success", false);
+            jsonObject.put("value", 51001);
+        }
+        return jsonObject;
     }
 
     @Override
     public JSONObject getConfig(String loginName) {
-        return null;
+        String getConfigSql = "SELECT a.tag_push AS push,a.app_program_name AS NAME ,a.tag_id,b.app_module_type AS TYPE  " +
+                "FROM (SELECT * FROM app_user_config a  " +
+                "LEFT JOIN app_user_program_module b  " +
+                "ON a.tag_id = b.app_program_id LEFT JOIN app_user_program c ON a.tag_id = c.id " +
+                "WHERE a.tag_user = ''{0}'') a LEFT JOIN app_module b  " +
+                "ON a.app_module_id = b.id GROUP BY a.tag_id";
+        ExecResult execResult = jsonResponse.getSelectResult(getConfigSql, new String[]{loginName}, "");
+        JSONObject jsonObject = new JSONObject();
+        if (execResult.getResult() == 1) {
+            JSONObject jsonObjectItem = new JSONObject();
+            jsonObjectItem.put("push", (JSONArray) execResult.getData());
+            jsonObject.put("success", true);
+            jsonObject.put("value", jsonObjectItem);
+        } else {
+            jsonObject.put("success", false);
+            jsonObject.put("value", 52001);
+        }
+        return jsonObject;
     }
 
     public int returnSource(String sourceId) {
@@ -429,5 +454,27 @@ public class YuQingAppService implements IYuQingService {
         }
         SelectParam selectParam = Filter.getFilterParams(list);
         return selectParam;
+    }
+
+    @Override
+    public JSONObject checkVersion(String appVersion) {
+        String selectApp = "SELECT * FROM app_version ORDER BY app_time DESC  LIMIT 0,1";
+        ExecResult execResult = jsonResponse.getSelectResult(selectApp, null, "");
+        JSONArray jsonArray = (JSONArray) execResult.getData();
+        JSONObject jsonObject = jsonArray.getJSONObject(0);
+        JSONObject returnJsonObject = new JSONObject();
+        String appVs = jsonObject.getString("app_version");
+        if (appVersion.equals(appVs)) {
+            returnJsonObject.put("success", false);
+            returnJsonObject.put("value", "");
+        } else {
+            returnJsonObject.put("success", true);
+            JSONObject jsonObjectApp = new JSONObject();
+            jsonObjectApp.put("version", appVs);
+            jsonObjectApp.put("url", jsonObject.getString("app_url"));
+            jsonObjectApp.put("info", jsonObject.getString("app_info"));
+            returnJsonObject.put("value", jsonObjectApp);
+        }
+        return returnJsonObject;
     }
 }
