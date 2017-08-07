@@ -47,7 +47,7 @@ public class YuQingAppService implements IYuQingService {
                     // 生成token
                     String token = Md5Azdg.md5s(loginName + ":" + password + ":" + nowTime);
                     jsonObjectUser.put("token", token);
-                    String updateToken = "UPDATE app_user SET app_user_token = '" + token + "' WHERE app_user_loginname = '" + loginName + "'";
+                    String updateToken = "UPDATE app_user SET app_user_token = '" + token + "' , app_timestamp=" + timestamp + "  WHERE app_user_loginname = '" + loginName + "'";
                     jsonResponse.getExecResult(updateToken, null);
                     returnData.put("value", jsonObjectUser);
                 }

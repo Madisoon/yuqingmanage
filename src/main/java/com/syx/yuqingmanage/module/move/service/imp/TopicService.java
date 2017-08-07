@@ -1,11 +1,14 @@
 package com.syx.yuqingmanage.module.move.service.imp;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alienlab.db.ExecResult;
 import com.alienlab.response.JSONResponse;
 import com.syx.yuqingmanage.module.move.service.ITopicService;
 import com.syx.yuqingmanage.utils.SqlEasy;
+import com.syx.yuqingmanage.utils.jpush.JpushBean;
+import com.syx.yuqingmanage.utils.jpush.JpushServer;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,11 +23,41 @@ import java.util.List;
 public class TopicService implements ITopicService {
     @Autowired
     JSONResponse jsonResponse;
+    @Autowired
+    JpushServer jpushServer;
 
     @Override
     public ExecResult insertTopicContext(String topicId, String topicInfo) {
+        JSONObject jsonObject = JSON.parseObject(topicInfo);
+        String topicTitle = jsonObject.getString("topic_title");
+        String topicContext = jsonObject.getString("topic_abstract");
         String sqlInsertTopic = SqlEasy.insertObject(topicInfo, "sys_topic_context");
         ExecResult execResult = jsonResponse.getExecInsertId(sqlInsertTopic, null, "", "");
+        List<JpushBean> list = new ArrayList<>();
+        // 推送模块 starter
+        String getProgram = "SELECT d.id FROM  app_module_tag_dep a ,app_module b , " +
+                "app_user_program_module c,app_user_program d " +
+                "WHERE a.app_module_id = b.id AND b.id = c.app_module_id  " +
+                "AND c.app_program_id = d.id AND a.tag_id = '" + topicId + "'  " +
+                "AND b.app_module_type = 1 GROUP BY d.id  ";
+        ExecResult execResultProgram = jsonResponse.getSelectResult(getProgram, null, "");
+        if (execResultProgram.getResult() == 1) {
+            JSONArray jsonArray = (JSONArray) execResultProgram.getData();
+            int jsonArrayLen = jsonArray.size();
+            for (int i = 0; i < jsonArrayLen; i++) {
+                JSONObject jsonObjectTag = jsonArray.getJSONObject(i);
+                JpushBean jpushBean = new JpushBean();
+                jpushBean.setId("");
+                jpushBean.setTagId(jsonObjectTag.getString("id"));
+                jpushBean.setTitle(topicTitle);
+                jpushBean.setType("1");
+                jpushBean.setContent(topicContext.substring(0, 40));
+                jpushBean.setUrl("https://www.baidu.com/");
+                list.add(jpushBean);
+            }
+            jpushServer.pushNotification(list);
+        }
+        // end
         String id = execResult.getMessage();
         String sqlInsert = "INSERT INTO topic_context (topic_id, topic_context_id) VALUES('" + topicId + "','" + id + "')";
         jsonResponse.getExecResult(sqlInsert, null);

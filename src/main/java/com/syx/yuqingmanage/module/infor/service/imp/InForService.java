@@ -7,6 +7,8 @@ import com.alienlab.db.ExecResult;
 import com.alienlab.response.JSONResponse;
 import com.syx.yuqingmanage.module.infor.service.IInForService;
 import com.syx.yuqingmanage.utils.*;
+import com.syx.yuqingmanage.utils.jpush.JpushBean;
+import com.syx.yuqingmanage.utils.jpush.JpushServer;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -34,6 +36,9 @@ public class InForService implements IInForService {
     /*@Autowired*/
     private DataExport dataExport = new DataExport();
 
+    @Autowired
+    private JpushServer jpushServer;
+
     @Override
     public ExecResult insertInFor(String infoData, String infoTag) {
 
@@ -59,9 +64,10 @@ public class InForService implements IInForService {
         String sqlInsert = SqlEasy.insertObject(inFoData, "sys_infor");
         ExecResult execResult = jsonResponse.getExecInsertId(sqlInsert, null, "", "");
         //只有主表插入成功之后才会执行插入从表和发送逻辑
+        String infor_id = "";
         if (execResult.getResult() == 1) {
-            String infor_id = execResult.getMessage();
             //所有的标签的id
+            infor_id = execResult.getMessage();
             String[] tagIds = tagId.split(",");
             //信息的等级
             int tagIdsLen = tagIds.length;
@@ -154,7 +160,33 @@ public class InForService implements IInForService {
             }
             // 发送给平台的逻辑
             postTerraceCustomer(infoTag, infoGrade, infoContext, infoTitle, infoLink, infoSource, infoType, infoSite);
+            // 推送模块 starter
+            String infoProgram = "SELECT d.id FROM  app_module_tag_dep a ,app_module b , " +
+                    "app_user_program_module c,app_user_program d " +
+                    "WHERE a.app_module_id = b.id AND b.id = c.app_module_id  " +
+                    "AND c.app_program_id = d.id AND ( " + StringUtils.join(sqlList, "") + " ) " +
+                    "AND b.app_module_type = 0 GROUP BY d.id  ";
+
+            ExecResult execResultProgram = jsonResponse.getSelectResult(infoProgram, null, "");
+            if (execResultProgram.getResult() == 1) {
+                JSONArray jsonArray = (JSONArray) execResultProgram.getData();
+                int jsonArrayLen = jsonArray.size();
+                List<JpushBean> list = new ArrayList<>();
+                for (int i = 0; i < jsonArrayLen; i++) {
+                    JSONObject jsonObjectTag = jsonArray.getJSONObject(i);
+                    JpushBean jpushBean = new JpushBean();
+                    jpushBean.setId(infor_id);
+                    jpushBean.setTagId(jsonObjectTag.getString(jsonObjectTag.getString("id")));
+                    jpushBean.setTitle(infoTitle);
+                    jpushBean.setType("0");
+                    jpushBean.setUrl("");
+                    list.add(jpushBean);
+                }
+                jpushServer.pushNotification(list);
+            }
+            // 推送模块 end
         }
+
         return execResult;
     }
 
