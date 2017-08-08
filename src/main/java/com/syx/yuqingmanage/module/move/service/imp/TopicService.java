@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.alienlab.db.ExecResult;
 import com.alienlab.response.JSONResponse;
 import com.syx.yuqingmanage.module.move.service.ITopicService;
+import com.syx.yuqingmanage.utils.DataExport;
 import com.syx.yuqingmanage.utils.SqlEasy;
 import com.syx.yuqingmanage.utils.jpush.JpushBean;
 import com.syx.yuqingmanage.utils.jpush.JpushServer;
@@ -13,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,10 +30,14 @@ public class TopicService implements ITopicService {
 
     @Override
     public ExecResult insertTopicContext(String topicId, String topicInfo) {
+        DataExport dataExport = new DataExport();
         JSONObject jsonObject = JSON.parseObject(topicInfo);
         String topicTitle = jsonObject.getString("topic_title");
         String topicContext = jsonObject.getString("topic_abstract");
-        String sqlInsertTopic = SqlEasy.insertObject(topicInfo, "sys_topic_context");
+        String topicContent = jsonObject.getString("topic_context");
+        String urlHtml = dataExport.exportHtmlUrl(topicContent);
+        jsonObject.put("topic_url", urlHtml);
+        String sqlInsertTopic = SqlEasy.insertObject(jsonObject.toJSONString(), "sys_topic_context");
         ExecResult execResult = jsonResponse.getExecInsertId(sqlInsertTopic, null, "", "");
         List<JpushBean> list = new ArrayList<>();
         // 推送模块 starter
@@ -143,7 +149,19 @@ public class TopicService implements ITopicService {
 
     @Override
     public ExecResult updateTopicContext(String topicContextId, String topicContext) {
-        String updateSql = SqlEasy.updateObject(topicContext, "sys_topic_context", "id = " + topicContextId);
+        String sql = "SELECT * FROM  sys_topic_context WHERE id = '" + topicContextId + "'";
+        ExecResult execResultUrl = jsonResponse.getSelectResult(sql, null, "");
+        if (execResultUrl.getResult() > 0) {
+            JSONObject jsonObject = ((JSONArray) execResultUrl.getData()).getJSONObject(0);
+            String getUrl = jsonObject.getString("topic_url");
+            deleteFile("C:/dummyPath/" + getUrl + "");
+        }
+        JSONObject jsonObject = JSON.parseObject(topicContext);
+        String topicContent = jsonObject.getString("topic_context");
+        DataExport dataExport = new DataExport();
+        String urlHtml = dataExport.exportHtmlUrl(topicContent);
+        jsonObject.put("topic_url", urlHtml);
+        String updateSql = SqlEasy.updateObject(jsonObject.toJSONString(), "sys_topic_context", "id = " + topicContextId);
         ExecResult execResult = jsonResponse.getExecResult(updateSql, null);
         return execResult;
     }
@@ -157,5 +175,22 @@ public class TopicService implements ITopicService {
         }
         ExecResult execResult = jsonResponse.getExecResult(list, "", "");
         return execResult;
+    }
+
+    public static boolean deleteFile(String fileName) {
+        File file = new File(fileName);
+        // 如果文件路径所对应的文件存在，并且是一个文件，则直接删除
+        if (file.exists() && file.isFile()) {
+            if (file.delete()) {
+                System.out.println("删除单个文件" + fileName + "成功！");
+                return true;
+            } else {
+                System.out.println("删除单个文件" + fileName + "失败！");
+                return false;
+            }
+        } else {
+            System.out.println("删除单个文件失败：" + fileName + "不存在！");
+            return false;
+        }
     }
 }
