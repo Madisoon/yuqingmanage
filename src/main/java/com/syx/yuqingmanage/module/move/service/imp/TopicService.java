@@ -35,35 +35,11 @@ public class TopicService implements ITopicService {
         String topicTitle = jsonObject.getString("topic_title");
         String topicContext = jsonObject.getString("topic_abstract");
         String topicContent = jsonObject.getString("topic_context");
-        String urlHtml = dataExport.exportHtmlUrl(topicContent);
+        String longTime = String.valueOf(System.currentTimeMillis());
+        String urlHtml = dataExport.exportHtmlUrl(topicContent, longTime);
         jsonObject.put("topic_url", urlHtml);
         String sqlInsertTopic = SqlEasy.insertObject(jsonObject.toJSONString(), "sys_topic_context");
         ExecResult execResult = jsonResponse.getExecInsertId(sqlInsertTopic, null, "", "");
-        List<JpushBean> list = new ArrayList<>();
-        // 推送模块 starter
-        String getProgram = "SELECT d.id FROM  app_module_tag_dep a ,app_module b , " +
-                "app_user_program_module c,app_user_program d " +
-                "WHERE a.app_module_id = b.id AND b.id = c.app_module_id  " +
-                "AND c.app_program_id = d.id AND a.tag_id = '" + topicId + "'  " +
-                "AND b.app_module_type = 1 GROUP BY d.id  ";
-        ExecResult execResultProgram = jsonResponse.getSelectResult(getProgram, null, "");
-        if (execResultProgram.getResult() == 1) {
-            JSONArray jsonArray = (JSONArray) execResultProgram.getData();
-            int jsonArrayLen = jsonArray.size();
-            for (int i = 0; i < jsonArrayLen; i++) {
-                JSONObject jsonObjectTag = jsonArray.getJSONObject(i);
-                JpushBean jpushBean = new JpushBean();
-                jpushBean.setId("");
-                jpushBean.setTagId(jsonObjectTag.getString("id"));
-                jpushBean.setTitle(topicTitle);
-                jpushBean.setType("1");
-                jpushBean.setContent(topicContext.substring(0, 40));
-                jpushBean.setUrl("https://www.baidu.com/");
-                list.add(jpushBean);
-            }
-            jpushServer.pushNotification(list);
-        }
-        // end
         String id = execResult.getMessage();
         String sqlInsert = "INSERT INTO topic_context (topic_id, topic_context_id) VALUES('" + topicId + "','" + id + "')";
         jsonResponse.getExecResult(sqlInsert, null);
@@ -151,15 +127,16 @@ public class TopicService implements ITopicService {
     public ExecResult updateTopicContext(String topicContextId, String topicContext) {
         String sql = "SELECT * FROM  sys_topic_context WHERE id = '" + topicContextId + "'";
         ExecResult execResultUrl = jsonResponse.getSelectResult(sql, null, "");
+        String getUrl = "";
         if (execResultUrl.getResult() > 0) {
             JSONObject jsonObject = ((JSONArray) execResultUrl.getData()).getJSONObject(0);
-            String getUrl = jsonObject.getString("topic_url");
+            getUrl = jsonObject.getString("topic_url");
             deleteFile("C:/dummyPath/" + getUrl + "");
         }
         JSONObject jsonObject = JSON.parseObject(topicContext);
         String topicContent = jsonObject.getString("topic_context");
         DataExport dataExport = new DataExport();
-        String urlHtml = dataExport.exportHtmlUrl(topicContent);
+        String urlHtml = dataExport.exportHtmlUrl(topicContent, getUrl.substring(0, getUrl.lastIndexOf(".")));
         jsonObject.put("topic_url", urlHtml);
         String updateSql = SqlEasy.updateObject(jsonObject.toJSONString(), "sys_topic_context", "id = " + topicContextId);
         ExecResult execResult = jsonResponse.getExecResult(updateSql, null);
@@ -170,8 +147,43 @@ public class TopicService implements ITopicService {
     public ExecResult checkTopicContext(String topicContextId) {
         String[] topicContextIds = topicContextId.split(",");
         List list = new ArrayList();
+        List<JpushBean> listBean = new ArrayList<>();
         for (int i = 0, topicContextIdsLen = topicContextIds.length; i < topicContextIdsLen; i++) {
             list.add("UPDATE sys_topic_context a SET a.topic_status = 1 WHERE a.id = '" + topicContextIds[i] + "' ");
+            String sqlTopicId = "SELECT * FROM topic_context a ,sys_topic_context b " +
+                    "WHERE a.topic_context_id= b.id AND a.topic_context_id = '" + topicContextIds[i] + "'";
+            ExecResult topicIdResult = jsonResponse.getSelectResult(sqlTopicId, null, "");
+            if (topicIdResult.getResult() == 1) {
+                JSONObject jsonObject = ((JSONArray) topicIdResult.getData()).getJSONObject(0);
+                String topicId = jsonObject.getString("topic_id");
+                String topicTitle = jsonObject.getString("topic_title");
+                String topicContext = jsonObject.getString("topic_abstract");
+                String urlHtml = jsonObject.getString("topic_url");
+                // 推送模块 starter
+                String getProgram = "SELECT d.id FROM  app_module_tag_dep a ,app_module b , " +
+                        "app_user_program_module c,app_user_program d " +
+                        "WHERE a.app_module_id = b.id AND b.id = c.app_module_id  " +
+                        "AND c.app_program_id = d.id AND a.tag_id = '" + topicId + "'  " +
+                        "AND b.app_module_type = 1 GROUP BY d.id  ";
+                ExecResult execResultProgram = jsonResponse.getSelectResult(getProgram, null, "");
+                if (execResultProgram.getResult() == 1) {
+                    JSONArray jsonArray = (JSONArray) execResultProgram.getData();
+                    int jsonArrayLen = jsonArray.size();
+                    for (int j = 0; j < jsonArrayLen; j++) {
+                        JSONObject jsonObjectTag = jsonArray.getJSONObject(j);
+                        JpushBean jpushBean = new JpushBean();
+                        jpushBean.setId(topicContextIds[i]);
+                        jpushBean.setTagId(jsonObjectTag.getString("id"));
+                        jpushBean.setTitle(topicTitle);
+                        jpushBean.setType("1");
+                        jpushBean.setContent(topicContext);
+                        jpushBean.setUrl(urlHtml);
+                        listBean.add(jpushBean);
+                    }
+                    jpushServer.pushNotification(listBean);
+                }
+                // end
+            }
         }
         ExecResult execResult = jsonResponse.getExecResult(list, "", "");
         return execResult;
@@ -182,14 +194,11 @@ public class TopicService implements ITopicService {
         // 如果文件路径所对应的文件存在，并且是一个文件，则直接删除
         if (file.exists() && file.isFile()) {
             if (file.delete()) {
-                System.out.println("删除单个文件" + fileName + "成功！");
                 return true;
             } else {
-                System.out.println("删除单个文件" + fileName + "失败！");
                 return false;
             }
         } else {
-            System.out.println("删除单个文件失败：" + fileName + "不存在！");
             return false;
         }
     }

@@ -1,63 +1,75 @@
 package com.syx.yuqingmanage.utils.jpush;
 
 public class JpushBean {
-	private String tagId;
-	
-	private String title;
+    private String tagId;
 
-	private String type;
+    private String title;
 
-	private String id;
+    private String type;
 
-	private String url;
-	
-	private String content;
-	
-	public String getTagId() {
-		return tagId;
-	}
+    private String id;
 
-	public void setTagId(String tagId) {
-		this.tagId = tagId;
-	}
+    private String url;
 
-	public String getTitle() {
-		return title;
-	}
+    private String content;
 
-	public void setTitle(String title) {
-		this.title = title;
-	}
+    public String getTagId() {
+        return tagId;
+    }
 
-	public String getType() {
-		return type;
-	}
+    public void setTagId(String tagId) {
+        this.tagId = tagId;
+    }
 
-	public void setType(String type) {
-		this.type = type;
-	}
+    public String getTitle() {
+        return title;
+    }
 
-	public String getId() {
-		return id;
-	}
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+    public String getType() {
+        return type;
+    }
 
-	public String getUrl() {
-		return url;
-	}
+    public void setType(String type) {
+        this.type = type;
+    }
 
-	public void setUrl(String url) {
-		this.url = url;
-	}
+    public String getId() {
+        return id;
+    }
 
-	public String getContent() {
-		return content;
-	}
+    public void setId(String id) {
+        this.id = id;
+    }
 
-	public void setContent(String content) {
-		this.content = content;
-	}
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    @Override
+    public String toString() {
+        return "JpushBean{" +
+                "tagId='" + tagId + '\'' +
+                ", title='" + title + '\'' +
+                ", type='" + type + '\'' +
+                ", id='" + id + '\'' +
+                ", url='" + url + '\'' +
+                ", content='" + content + '\'' +
+                '}';
+    }
 }

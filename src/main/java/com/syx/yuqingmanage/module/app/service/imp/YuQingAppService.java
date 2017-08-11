@@ -10,6 +10,7 @@ import com.syx.yuqingmanage.module.app.service.IYuQingService;
 import com.syx.yuqingmanage.utils.DateTimeUtils;
 import com.syx.yuqingmanage.utils.jdbcfilters.Filter;
 import com.syx.yuqingmanage.utils.jdbcfilters.SelectParam;
+import org.bouncycastle.crypto.io.MacInputStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -123,24 +124,33 @@ public class YuQingAppService implements IYuQingService {
         // 没有时间点
         if ("".equals(date)) {
             // 根据id获取到焦点数据的
-            getFoucs = "SELECT b.topic_title AS title,b.topic_abstract AS content,b.topic_context AS context,b.topic_time AS pub_time,b.topic_url AS source_url" +
-                    " FROM (SELECT a.*,b.topic_context_id FROM (SELECT a.*,b.tag_id FROM  " +
-                    "(SELECT a.*,b.app_module_id FROM  app_user_program a  " +
-                    "LEFT JOIN app_user_program_module b  " +
-                    "ON a.id = b.app_program_id WHERE a.id = '" + tag_id + "') a LEFT JOIN app_module_tag_dep b   " +
-                    "ON a.app_module_id = b.app_module_id) a , topic_context  b   " +
-                    "WHERE a.tag_id = b.topic_id) a LEFT JOIN sys_topic_context b  " +
-                    "ON a.topic_context_id = b.id WHERE b.topic_status = 1 GROUP BY b.id ORDER BY b.topic_time DESC LIMIT 0," + limit + " ";
+            getFoucs = "SELECT a.*, CASE WHEN (b.app_read_id IS NULL) THEN '0' " +
+                    "            ELSE  '1' END as info_read  FROM (SELECT b.id ,b.topic_title AS title,b.topic_abstract AS content,b.topic_context AS context,b.topic_time " +
+                    "            AS pub_time,b.topic_url AS source_url " +
+                    "            FROM (SELECT a.*,b.topic_context_id FROM (SELECT a.*,b.tag_id FROM " +
+                    "                            (SELECT a.*,b.app_module_id FROM  app_user_program a " +
+                    "                                    LEFT JOIN app_user_program_module b " +
+                    "                                    ON a.id = b.app_program_id WHERE a.id = '" + tag_id + "') a LEFT JOIN app_module_tag_dep b " +
+                    "                    ON a.app_module_id = b.app_module_id) a , topic_context  b " +
+                    "                    WHERE a.tag_id = b.topic_id) a LEFT JOIN sys_topic_context b " +
+                    "            ON a.topic_context_id = b.id WHERE b.topic_status = 1 GROUP BY b.id ORDER BY b.topic_time DESC LIMIT 0," + limit + ") a " +
+                    "            LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = '1' AND app_user_loginName = '" + loginName + "') b " +
+                    "            ON a.id = b.app_read_id";
         } else {
-            getFoucs = "SELECT b.topic_title AS title,b.topic_abstract AS content,b.topic_context AS context,b.topic_time AS pub_time,b.topic_url AS source_url" +
-                    " FROM (SELECT a.*,b.topic_context_id FROM (SELECT a.*,b.tag_id FROM  " +
-                    "(SELECT a.*,b.app_module_id FROM  app_user_program a  " +
-                    "LEFT JOIN app_user_program_module b  " +
-                    "ON a.id = b.app_program_id WHERE a.id = '" + tag_id + "') a LEFT JOIN app_module_tag_dep b  " +
-                    "ON a.app_module_id = b.app_module_id) a , topic_context  b  " +
-                    "WHERE a.tag_id = b.topic_id) a LEFT JOIN sys_topic_context b  " +
-                    "ON a.topic_context_id = b.id WHERE b.topic_status = 1 AND b.topic_time < '" + date + "' GROUP BY b.id ORDER BY b.topic_time DESC LIMIT 0," + limit + " ";
+            getFoucs = "SELECT a.*, CASE WHEN (b.app_read_id IS NULL) THEN '0' " +
+                    "            ELSE  '1' END as info_read  FROM (SELECT b.id ,b.topic_title AS title,b.topic_abstract AS content,b.topic_context AS context,b.topic_time " +
+                    "            AS pub_time,b.topic_url AS source_url " +
+                    "            FROM (SELECT a.*,b.topic_context_id FROM (SELECT a.*,b.tag_id FROM " +
+                    "                            (SELECT a.*,b.app_module_id FROM  app_user_program a " +
+                    "                                    LEFT JOIN app_user_program_module b " +
+                    "                                    ON a.id = b.app_program_id WHERE a.id = '" + tag_id + "') a LEFT JOIN app_module_tag_dep b " +
+                    "                    ON a.app_module_id = b.app_module_id) a , topic_context  b " +
+                    "                    WHERE a.tag_id = b.topic_id) a LEFT JOIN sys_topic_context b " +
+                    "            ON a.topic_context_id = b.id WHERE b.topic_status = 1  AND b.topic_time < '" + date + "'  GROUP BY b.id ORDER BY b.topic_time DESC LIMIT 0," + limit + ") a " +
+                    "            LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = '1' AND app_user_loginName = '" + loginName + "') b " +
+                    "            ON a.id = b.app_read_id";
         }
+        System.out.println(getFoucs);
         execResult = jsonResponse.getSelectResult(getFoucs, null, "");
         if (execResult.getResult() == 1) {
             // 有数据
@@ -171,37 +181,39 @@ public class YuQingAppService implements IYuQingService {
         }
         String getSql = "";
         if (!"".equals(date)) {
-            getSql = "SELECT * FROM (SELECT *,CASE a.source  " +
-                    "WHEN ''新闻'' THEN ''1''  " +
-                    "WHEN ''论坛'' THEN ''2''  " +
-                    "WHEN ''博客'' THEN ''3''  " +
-                    "WHEN ''视频'' THEN ''4''  " +
-                    "WHEN ''微博'' THEN ''5''  " +
-                    "WHEN ''微信'' THEN ''6''  " +
-                    "WHEN ''移动咨询'' THEN ''7''  " +
-                    "ELSE ''8'' END AS source_id FROM (SELECT b.id , b.infor_type AS level_id,b.infor_title    " +
-                    "AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
-                    "AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM    " +
-                    "(SELECT a.*,b.app_module_id FROM  app_user_program a   LEFT JOIN app_user_program_module b   ON a.id = b.app_program_id  " +
-                    "WHERE a.app_user_loginname = ''" + loginName + "'' ) a LEFT JOIN app_module_tag_dep b   ON a.app_module_id = b.app_module_id) a  " +
-                    "LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id AND b.infor_createtime < ''" + date + "''  GROUP BY b.id ORDER BY b.infor_createtime DESC) a) a  " + sqlWhere + " LIMIT 0," + limit + "";
+            getSql = " SELECT a.*,CASE WHEN (b.app_read_id IS NULL) THEN ''0''  " +
+                    "ELSE  ''1'' END AS info_read FROM (SELECT * FROM (SELECT *,CASE a.source    " +
+                    " WHEN ''新闻'' THEN ''1''    " +
+                    " WHEN ''论坛'' THEN ''2''    " +
+                    " WHEN ''博客'' THEN ''3''    " +
+                    " WHEN ''微博'' THEN ''5''    " +
+                    " WHEN ''微信'' THEN ''6''    " +
+                    " WHEN ''移动咨询'' THEN ''7''    " +
+                    " ELSE ''8'' END AS source_id FROM (SELECT b.id , b.infor_type AS level_id,b.infor_title    " +
+                    " AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
+                    " AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM     " +
+                    " (SELECT a.*,b.app_module_id FROM  app_user_program a   LEFT JOIN app_user_program_module b   ON a.id = b.app_program_id   " +
+                    " WHERE a.app_user_loginname = ''" + loginName + "'' ) a LEFT JOIN app_module_tag_dep b   ON a.app_module_id = b.app_module_id) a   " +
+                    " LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id  AND  b.infor_createtime < ''" + date + "''  GROUP BY b.id ORDER BY b.infor_createtime DESC) a) a   " +
+                    " " + sqlWhere + "  LIMIT 0, " + limit + ") a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
         } else {
-            getSql = "SELECT * FROM (SELECT *,CASE a.source  " +
-                    "WHEN ''新闻'' THEN ''1''  " +
-                    "WHEN ''论坛'' THEN ''2''  " +
-                    "WHEN ''博客'' THEN ''3''  " +
-                    "WHEN ''视频'' THEN ''4''  " +
-                    "WHEN ''微博'' THEN ''5''  " +
-                    "WHEN ''微信'' THEN ''6''  " +
-                    "WHEN ''移动咨询'' THEN ''7''  " +
-                    "ELSE ''8'' END AS source_id FROM (SELECT b.id , b.infor_type AS level_id,b.infor_title    " +
-                    "AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source   " +
-                    "AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM    " +
-                    "(SELECT a.*,b.app_module_id FROM  app_user_program a   LEFT JOIN app_user_program_module b   ON a.id = b.app_program_id  " +
-                    "WHERE a.app_user_loginname = ''" + loginName + "'' ) a LEFT JOIN app_module_tag_dep b   ON a.app_module_id = b.app_module_id) a  " +
-                    "LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id  GROUP BY b.id ORDER BY b.infor_createtime DESC) a) a " +
-                    " " + sqlWhere + "   LIMIT 0," + limit + "";
+            getSql = " SELECT a.*,CASE WHEN (b.app_read_id IS NULL) THEN ''0''  " +
+                    "ELSE  ''1'' END AS info_read FROM (SELECT * FROM (SELECT *,CASE a.source    " +
+                    " WHEN ''新闻'' THEN ''1''    " +
+                    " WHEN ''论坛'' THEN ''2''    " +
+                    " WHEN ''博客'' THEN ''3''    " +
+                    " WHEN ''微博'' THEN ''5''    " +
+                    " WHEN ''微信'' THEN ''6''    " +
+                    " WHEN ''移动咨询'' THEN ''7''    " +
+                    " ELSE ''8'' END AS source_id FROM (SELECT b.id , b.infor_type AS level_id,b.infor_title    " +
+                    " AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
+                    " AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM     " +
+                    " (SELECT a.*,b.app_module_id FROM  app_user_program a   LEFT JOIN app_user_program_module b   ON a.id = b.app_program_id   " +
+                    " WHERE a.app_user_loginname = ''" + loginName + "'' ) a LEFT JOIN app_module_tag_dep b   ON a.app_module_id = b.app_module_id) a   " +
+                    " LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id  GROUP BY b.id ORDER BY b.infor_createtime DESC) a) a   " +
+                    " " + sqlWhere + "  LIMIT 0, " + limit + ") a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
         }
+        System.out.println(getSql);
         ExecResult execResult = jsonResponse.getSelectResult(getSql, sqlWhereValue, "");
         JSONObject jsonObject = new JSONObject();
         if (execResult.getResult() == 1) {
@@ -224,7 +236,7 @@ public class YuQingAppService implements IYuQingService {
     // 测试完成
     @Override
     public JSONObject getInfodetail(String id) {
-        String sqlGetDeatil = "SELECT b.infor_type AS level_id,b.infor_title  " +
+        String sqlGetDeatil = "SELECT b.id, b.infor_type AS level_id,b.infor_title  " +
                 "AS title,b.infor_context AS content,b.infor_link   " +
                 "AS source_url,b.infor_createtime AS pub_time,b.infor_source   " +
                 "AS source_id, b.infor_site AS site FROM  sys_infor b WHERE b.id = '" + id + "' ";
@@ -474,6 +486,31 @@ public class YuQingAppService implements IYuQingService {
             jsonObjectApp.put("url", jsonObject.getString("app_url"));
             jsonObjectApp.put("info", jsonObject.getString("app_info"));
             returnJsonObject.put("value", jsonObjectApp);
+        }
+        return returnJsonObject;
+    }
+
+    @Override
+    public JSONObject clickInfoData(String userName, String infoId, String infoType) {
+
+
+        String selectSqlInfo = "SELECT * FROM app_user_read a WHERE a.app_user_loginName = '" + userName + "' " +
+                "AND a.app_read_id = '" + infoId + "' AND a.app_read_type = '" + infoType + "'";
+        ExecResult selectSqlInfoResult = jsonResponse.getSelectResult(selectSqlInfo, null, "");
+        JSONObject returnJsonObject = new JSONObject();
+        if (selectSqlInfoResult.getResult() != 1) {
+            String insertSql = "INSERT INTO app_user_read (app_user_loginName, app_read_id, app_read_type) VALUES (''{0}'',''{1}'',''{2}'')";
+            ExecResult execResult = jsonResponse.getExecResult(insertSql, new String[]{userName, infoId, infoType});
+            if (execResult.getResult() == 1) {
+                returnJsonObject.put("success", true);
+                returnJsonObject.put("value", "");
+            } else {
+                returnJsonObject.put("success", false);
+                returnJsonObject.put("value", "");
+            }
+        } else {
+            returnJsonObject.put("success", false);
+            returnJsonObject.put("value", "");
         }
         return returnJsonObject;
     }

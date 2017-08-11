@@ -70,12 +70,14 @@ public class JpushServer {
         pushConfigAndroid.put(JpushCommon.DETAIL_ID, id);
         pushConfigAndroid.put(JpushCommon.DETAIL_URL, url);
         pushConfigAndroid.put(JpushCommon.DETAIL_TYPE, type);
+        pushConfigAndroid.put(JpushCommon.DETAIL_TITLE, alert);
         pushConfigAndroid.put(JpushCommon.DETAIL_CONTENT, content);
 
         Map<String, String> pushConfigIOS = new HashMap<String, String>();
         pushConfigIOS.put(JpushCommon.DETAIL_ID, id);
         pushConfigIOS.put(JpushCommon.DETAIL_URL, url);
         pushConfigIOS.put(JpushCommon.DETAIL_TYPE, type);
+        pushConfigIOS.put(JpushCommon.DETAIL_TITLE, alert);
         pushConfigIOS.put(JpushCommon.DETAIL_CONTENT, content);
 
         return PushPayload
@@ -135,9 +137,10 @@ public class JpushServer {
 
     private List<String> getUserAlias(String type, String tagId) {
         // ==========================需要实现
-        String sqlGet = "SELECT a.app_user_loginname,b.app_timestamp FROM app_user_program  a " +
-                "LEFT JOIN app_user b ON a.app_user_loginname = b.app_user_loginname " +
-                "WHERE a.id = '" + tagId + "'";
+        String sqlGet = " SELECT a.app_user_loginname,b.app_timestamp FROM app_user_program  a   " +
+                "LEFT JOIN app_user b ON a.app_user_loginname = b.app_user_loginname  " +
+                "LEFT JOIN app_user_config c ON a.id = c.tag_id " +
+                " WHERE a.id = '" + tagId + "' AND c.tag_push = '1'";
         ExecResult execResult = jsonResponse.getSelectResult(sqlGet, null, "");
         List list = new ArrayList();
         if (execResult.getResult() == 1) {

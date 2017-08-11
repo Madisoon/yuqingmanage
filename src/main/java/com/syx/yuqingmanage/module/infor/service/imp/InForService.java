@@ -166,7 +166,6 @@ public class InForService implements IInForService {
                     "WHERE a.app_module_id = b.id AND b.id = c.app_module_id  " +
                     "AND c.app_program_id = d.id AND ( " + StringUtils.join(sqlList, "") + " ) " +
                     "AND b.app_module_type = 0 GROUP BY d.id  ";
-
             ExecResult execResultProgram = jsonResponse.getSelectResult(infoProgram, null, "");
             if (execResultProgram.getResult() == 1) {
                 JSONArray jsonArray = (JSONArray) execResultProgram.getData();
@@ -176,8 +175,9 @@ public class InForService implements IInForService {
                     JSONObject jsonObjectTag = jsonArray.getJSONObject(i);
                     JpushBean jpushBean = new JpushBean();
                     jpushBean.setId(infor_id);
-                    jpushBean.setTagId(jsonObjectTag.getString(jsonObjectTag.getString("id")));
+                    jpushBean.setTagId(jsonObjectTag.getString("id"));
                     jpushBean.setTitle(infoTitle);
+                    jpushBean.setContent("");
                     jpushBean.setType("0");
                     jpushBean.setUrl("");
                     list.add(jpushBean);
@@ -186,7 +186,6 @@ public class InForService implements IInForService {
             }
             // 推送模块 end
         }
-
         return execResult;
     }
 
