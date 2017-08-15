@@ -269,6 +269,23 @@ public class YuQingAppController {
         return result;
     }
 
+    @ApiOperation(value = "checkNoCus", notes = "更新版本")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "version", value = "版本号", required = true, dataType = "STRING", paramType = "query")
+    })
+    @RequestMapping(value = "/release/checkNoCus", method = RequestMethod.POST)
+    public String checkNoCus(@RequestParam("version") String version,
+                             HttpServletRequest httpServletRequest) {
+        String loginName = judgeCookie(httpServletRequest);
+        String result = "";
+        if ("".equals(loginName)) {
+            result = returnStaticJsonObject();
+        } else {
+            result = iYuQingService.checkVersionNoCustom(version).toString();
+        }
+        return result;
+    }
+
     @ApiOperation(value = "clickInfoData", notes = "更新版本")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "infoId", value = "信息的id", required = true, dataType = "STRING", paramType = "query"),

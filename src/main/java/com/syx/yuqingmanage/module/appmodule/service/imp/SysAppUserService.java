@@ -128,7 +128,7 @@ public class SysAppUserService implements ISysAppUserService {
             String insertUserProgram = "INSERT INTO  app_user_program (app_user_loginname, app_program_name) VALUES ('" + appUserLoginName + "','" + programName + "')";
             execResult = jsonResponse.getExecInsertId(insertUserProgram, null, "", "");
             int programId = Integer.parseInt(execResult.getMessage(), 10);
-            list.add("INSERT INTO app_user_config (tag_id, tag_push, tag_user) VALUES(" + programId + ", 0, '" + appUserLoginName + "') ");
+            list.add("INSERT INTO app_user_config (tag_id, tag_push, tag_user) VALUES(" + programId + ", 1, '" + appUserLoginName + "') ");
             JSONArray jsonArrayModule = jsonObject.getJSONArray("programModule");
             for (int j = 0, jsonArrayModuleLen = jsonArrayModule.size(); j < jsonArrayModuleLen; j++) {
                 list.add("INSERT INTO app_user_program_module (app_program_id, app_module_id) VALUES (" + programId + ", " + jsonArrayModule.get(j) + ")");

@@ -37,6 +37,8 @@ public interface IYuQingService {
 
     public JSONObject checkVersion(String appVersion);
 
+    public JSONObject checkVersionNoCustom(String appVersion);
+
     public JSONObject clickInfoData(String userName, String infoId, String infoType);
 
 }

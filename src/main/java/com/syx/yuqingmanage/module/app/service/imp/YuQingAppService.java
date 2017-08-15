@@ -265,14 +265,14 @@ public class YuQingAppService implements IYuQingService {
         if ("".equals(date)) {
             // 根据id获取到焦点数据的
             getFavor = " SELECT b.id , b.infor_type AS level_id,b.infor_title  " +
-                    " AS title,b.infor_context AS content,b.infor_link   " +
+                    " AS title,b.infor_context AS content,b.infor_link  " +
                     " AS source_url,b.infor_createtime AS pub_time,b.infor_source   " +
                     " AS source_id, b.infor_site AS site FROM  app_user_favor a   " +
                     " LEFT JOIN sys_infor b ON a.app_favor_infor_id = b.id  " +
                     " WHERE a.app_user_loginname = '" + loginName + "' ORDER BY b.infor_createtime DESC LIMIT 0," + limit + "";
         } else {
             getFavor = " SELECT b.id , b.infor_type AS level_id,b.infor_title   " +
-                    " AS title,b.infor_context AS content,b.infor_link    " +
+                    " AS title,b.infor_context AS content,b.infor_link  " +
                     " AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
                     " AS source_id, b.infor_site AS site FROM  app_user_favor a    " +
                     " LEFT JOIN sys_infor b ON a.app_favor_infor_id = b.id   " +
@@ -470,7 +470,29 @@ public class YuQingAppService implements IYuQingService {
 
     @Override
     public JSONObject checkVersion(String appVersion) {
-        String selectApp = "SELECT * FROM app_version ORDER BY app_time DESC  LIMIT 0,1";
+        String selectApp = "SELECT * FROM app_version where app_type = 1 ORDER BY app_time DESC  LIMIT 0,1";
+        ExecResult execResult = jsonResponse.getSelectResult(selectApp, null, "");
+        JSONArray jsonArray = (JSONArray) execResult.getData();
+        JSONObject jsonObject = jsonArray.getJSONObject(0);
+        JSONObject returnJsonObject = new JSONObject();
+        String appVs = jsonObject.getString("app_version");
+        if (appVersion.equals(appVs)) {
+            returnJsonObject.put("success", false);
+            returnJsonObject.put("value", "");
+        } else {
+            returnJsonObject.put("success", true);
+            JSONObject jsonObjectApp = new JSONObject();
+            jsonObjectApp.put("version", appVs);
+            jsonObjectApp.put("url", jsonObject.getString("app_url"));
+            jsonObjectApp.put("info", jsonObject.getString("app_info"));
+            returnJsonObject.put("value", jsonObjectApp);
+        }
+        return returnJsonObject;
+    }
+
+    @Override
+    public JSONObject checkVersionNoCustom(String appVersion) {
+        String selectApp = "SELECT * FROM app_version where app_type = 0 ORDER BY app_time DESC  LIMIT 0,1";
         ExecResult execResult = jsonResponse.getSelectResult(selectApp, null, "");
         JSONArray jsonArray = (JSONArray) execResult.getData();
         JSONObject jsonObject = jsonArray.getJSONObject(0);
