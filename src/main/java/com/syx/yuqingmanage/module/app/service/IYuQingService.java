@@ -41,4 +41,6 @@ public interface IYuQingService {
 
     public JSONObject clickInfoData(String userName, String infoId, String infoType);
 
+    public JSONObject clickFavor(String favorId);
+
 }

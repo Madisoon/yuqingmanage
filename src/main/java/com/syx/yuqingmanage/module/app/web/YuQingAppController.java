@@ -286,7 +286,7 @@ public class YuQingAppController {
         return result;
     }
 
-    @ApiOperation(value = "clickInfoData", notes = "更新版本")
+    @ApiOperation(value = "clickInfoData", notes = "点击信息，已读状态")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "infoId", value = "信息的id", required = true, dataType = "STRING", paramType = "query"),
             @ApiImplicitParam(name = "infoType", value = "信息的类型", required = true, dataType = "STRING", paramType = "query")
@@ -301,6 +301,24 @@ public class YuQingAppController {
             result = returnStaticJsonObject();
         } else {
             result = iYuQingService.clickInfoData(loginName, infoId, infoType).toString();
+        }
+        return result;
+    }
+
+    @ApiOperation(value = "clickFavor", notes = "点击信息，已读状态")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "infoId", value = "信息的id", required = true, dataType = "STRING", paramType = "query"),
+            @ApiImplicitParam(name = "infoType", value = "信息的类型", required = true, dataType = "STRING", paramType = "query")
+    })
+    @RequestMapping(value = "/data/clickFavor", method = RequestMethod.POST)
+    public String clickFavor(@RequestParam("favorId") String favorId,
+                                HttpServletRequest httpServletRequest) {
+        String loginName = judgeCookie(httpServletRequest);
+        String result = "";
+        if ("".equals(loginName)) {
+            result = returnStaticJsonObject();
+        } else {
+            result = iYuQingService.clickFavor(favorId).toString();
         }
         return result;
     }

@@ -213,7 +213,6 @@ public class YuQingAppService implements IYuQingService {
                     " LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id  GROUP BY b.id ORDER BY b.infor_createtime DESC) a) a   " +
                     " " + sqlWhere + "  LIMIT 0, " + limit + ") a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
         }
-        System.out.println(getSql);
         ExecResult execResult = jsonResponse.getSelectResult(getSql, sqlWhereValue, "");
         JSONObject jsonObject = new JSONObject();
         if (execResult.getResult() == 1) {
@@ -264,20 +263,24 @@ public class YuQingAppService implements IYuQingService {
         // 没有时间点
         if ("".equals(date)) {
             // 根据id获取到焦点数据的
-            getFavor = " SELECT b.id , b.infor_type AS level_id,b.infor_title  " +
+            getFavor = "  SELECT a.*, CASE WHEN (b.app_favor_id IS NULL) THEN '0' ELSE  '1' END AS favor_read " +
+                    " FROM ( SELECT a.id AS favor_id, b.id , b.infor_type AS level_id,b.infor_title  " +
                     " AS title,b.infor_context AS content,b.infor_link  " +
                     " AS source_url,b.infor_createtime AS pub_time,b.infor_source   " +
                     " AS source_id, b.infor_site AS site FROM  app_user_favor a   " +
                     " LEFT JOIN sys_infor b ON a.app_favor_infor_id = b.id  " +
-                    " WHERE a.app_user_loginname = '" + loginName + "' ORDER BY b.infor_createtime DESC LIMIT 0," + limit + "";
+                    " WHERE a.app_user_loginname = '" + loginName + "' ORDER BY b.infor_createtime DESC LIMIT 0," + limit + " ) a LEFT JOIN app_user_favor_read b " +
+                    " ON a.favor_id = b.app_favor_id";
         } else {
-            getFavor = " SELECT b.id , b.infor_type AS level_id,b.infor_title   " +
+            getFavor = " SELECT a.*, CASE WHEN (b.app_favor_id IS NULL) THEN '0' ELSE  '1' END AS favor_read " +
+                    " FROM ( SELECT a.id AS favor_id, b.id , b.infor_type AS level_id,b.infor_title   " +
                     " AS title,b.infor_context AS content,b.infor_link  " +
                     " AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
                     " AS source_id, b.infor_site AS site FROM  app_user_favor a    " +
                     " LEFT JOIN sys_infor b ON a.app_favor_infor_id = b.id   " +
                     " WHERE a.app_user_loginname = '" + loginName + "' AND b.infor_createtime < '" + date + "'  " +
-                    " ORDER BY b.infor_createtime DESC LIMIT 0," + limit + "";
+                    " ORDER BY b.infor_createtime DESC LIMIT 0," + limit + " ) a LEFT JOIN app_user_favor_read b " +
+                    " ON a.favor_id = b.app_favor_id";
         }
         execResult = jsonResponse.getSelectResult(getFavor, null, "");
         if (execResult.getResult() == 1) {
@@ -514,8 +517,6 @@ public class YuQingAppService implements IYuQingService {
 
     @Override
     public JSONObject clickInfoData(String userName, String infoId, String infoType) {
-
-
         String selectSqlInfo = "SELECT * FROM app_user_read a WHERE a.app_user_loginName = '" + userName + "' " +
                 "AND a.app_read_id = '" + infoId + "' AND a.app_read_type = '" + infoType + "'";
         ExecResult selectSqlInfoResult = jsonResponse.getSelectResult(selectSqlInfo, null, "");
@@ -523,6 +524,29 @@ public class YuQingAppService implements IYuQingService {
         if (selectSqlInfoResult.getResult() != 1) {
             String insertSql = "INSERT INTO app_user_read (app_user_loginName, app_read_id, app_read_type) VALUES (''{0}'',''{1}'',''{2}'')";
             ExecResult execResult = jsonResponse.getExecResult(insertSql, new String[]{userName, infoId, infoType});
+            if (execResult.getResult() == 1) {
+                returnJsonObject.put("success", true);
+                returnJsonObject.put("value", "");
+            } else {
+                returnJsonObject.put("success", false);
+                returnJsonObject.put("value", "");
+            }
+        } else {
+            returnJsonObject.put("success", false);
+            returnJsonObject.put("value", "");
+        }
+        return returnJsonObject;
+    }
+
+    @Override
+    public JSONObject clickFavor(String favorId) {
+
+        String selectSql = "SELECT * FROM app_user_favor_read a WHERE a.app_favor_id = " + favorId + "";
+        ExecResult execResultFavor = jsonResponse.getSelectResult(selectSql, null, "");
+        JSONObject returnJsonObject = new JSONObject();
+        if (execResultFavor.getResult() != 1) {
+            String insertSql = "INSERT INTO app_user_favor_read (app_favor_id) VALUES (" + favorId + ")";
+            ExecResult execResult = jsonResponse.getExecResult(insertSql, null);
             if (execResult.getResult() == 1) {
                 returnJsonObject.put("success", true);
                 returnJsonObject.put("value", "");
