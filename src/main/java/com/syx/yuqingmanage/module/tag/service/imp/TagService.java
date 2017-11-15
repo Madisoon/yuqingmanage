@@ -133,4 +133,11 @@ public class TagService implements ITagService {
         execResult.setData(jsonArrayAll);
         return execResult;
     }
+
+    @Override
+    public ExecResult getChildTag() {
+        String sqlTag = "SELECT id,NAME FROM sys_tag WHERE id NOT IN (SELECT tag_parent FROM sys_tag a GROUP BY a.tag_parent)";
+        ExecResult execResult = jsonResponse.getSelectResult(sqlTag, null, "");
+        return execResult;
+    }
 }

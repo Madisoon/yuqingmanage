@@ -30,4 +30,10 @@ public interface IConfigureService {
     public ExecResult deleteWx(String idData);
 
     public ExecResult updateWx(String wxData, String id);
+
+    public JSONObject postAnnouncement(String title, String content);
+
+    public JSONObject getAnnouncement(String filters, String start, String limit);
+
+    public JSONObject resetAnnouncement();
 }

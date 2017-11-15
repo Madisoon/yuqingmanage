@@ -74,7 +74,11 @@ public class SysAppUserService implements ISysAppUserService {
         // 删除频道和模块
         jsonResponse.getExecResult(list, "", "");
         // 开始完成插入和修改
-        String updateSql = SqlEasy.updateObject(appUserInfo, "app_user", "app_user_loginname = '" + appUserLoginName + "'");
+        JSONObject jsonObject = JSONObject.parseObject(appUserInfo);
+        if (jsonObject.containsKey("app_user_pwd")) {
+            jsonObject.put("app_user_pwd", Md5Azdg.md5s(jsonObject.getString("app_user_pwd")));
+        }
+        String updateSql = SqlEasy.updateObject(jsonObject.toString(), "app_user", "app_user_loginname = '" + appUserLoginName + "'");
         List listProgram = insertUserProgram(appUserLoginName, appUserProgram);
         listProgram.add(updateSql);
         execResult = jsonResponse.getExecResult(listProgram, "", "");

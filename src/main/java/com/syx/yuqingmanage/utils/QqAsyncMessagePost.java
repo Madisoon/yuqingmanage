@@ -21,12 +21,10 @@ public class QqAsyncMessagePost {
     private QqMessagePost qqMessagePost;
     @Autowired
     private FailData failData;
-    /* @Autowired*/
     private JSONResponse jsonResponse = new JSONResponse();
 
     @Async
     public void postCustomerMessage(JSONArray jsonArray, String infoContext, String infoTitle, String infoLink, String source, String inforCreater, String infoSite) {
-        long beginTime = System.currentTimeMillis(); // 这段代码放在程序执行前
         int allCustomerLen = jsonArray.size();
         List<String> list = new ArrayList<>();
         list.add("链接：" + infoLink);
@@ -57,17 +55,6 @@ public class QqAsyncMessagePost {
             if ("number".equals(postType)) {
                 numberList.add(getNumber);
             } else {
-                /*int timeNumber = 2 + (int) Math.random() * 4;
-                try {
-                    TimeUnit.SECONDS.sleep(timeNumber);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                boolean flag = qqMessagePost.postMessage(getNumber, postNumber, postType, infoTitle, infoContext, infoLink, source);
-                if (!flag) {
-                    numberInfoPost.sendMsgByYunPian(postNumber + "消息发送失败了!", "18752002129");
-                    failData.qqResend(getNumber, postNumber, postType, infoTitle, infoContext, infoLink, source);
-                }*/
                 String insertSql = "";
                 if ("qq".equals(postType) || "qqGroup".equals(postType)) {
                     insertSql = "INSERT INTO sys_manual_post (infor_context,infor_post_type,infor_post_people," +
@@ -79,12 +66,9 @@ public class QqAsyncMessagePost {
                 jsonResponse.getExecResult(insertSql, null);
             }
         }
-        System.out.println(numberInfoPost.sendMsgByYunPian(StringUtils.join(list, ""), StringUtils.join(numberList, ",")));
-        /*numberInfoPost.sendMsgByYunPian(StringUtils.join(list, ""), StringUtils.join(numberList, ","));*/
-        long endTime = System.currentTimeMillis(); // 这段代码放在程序执行后
-        long wasteTime = endTime - beginTime;
-        double seconds = wasteTime / 1000;
-        System.out.println("耗时：" + seconds + "秒");
+        if (numberList.size() > 0) {
+            numberInfoPost.sendMsgByYunPian(StringUtils.join(list, ""), StringUtils.join(numberList, ","));
+        }
     }
 
     public void postCustomerLate(JSONArray jsonArray, String infoContext, String infoTitle, String infoLink, String infoSource, String inforCreater, String infoSite) {

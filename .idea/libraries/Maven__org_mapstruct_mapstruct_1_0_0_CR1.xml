@@ -3,9 +3,7 @@
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/mapstruct/mapstruct/1.0.0.CR1/mapstruct-1.0.0.CR1.jar!/" />
     </CLASSES>
-    <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/mapstruct/mapstruct/1.0.0.CR1/mapstruct-1.0.0.CR1-javadoc.jar!/" />
-    </JAVADOC>
+    <JAVADOC />
     <SOURCES>
       <root url="jar://$MAVEN_REPOSITORY$/org/mapstruct/mapstruct/1.0.0.CR1/mapstruct-1.0.0.CR1-sources.jar!/" />
     </SOURCES>

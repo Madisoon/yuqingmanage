@@ -12,8 +12,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by Msater Zg on 2017/7/13.
@@ -276,13 +281,7 @@ public class YuQingAppController {
     @RequestMapping(value = "/release/checkNoCus", method = RequestMethod.POST)
     public String checkNoCus(@RequestParam("version") String version,
                              HttpServletRequest httpServletRequest) {
-        String loginName = judgeCookie(httpServletRequest);
-        String result = "";
-        if ("".equals(loginName)) {
-            result = returnStaticJsonObject();
-        } else {
-            result = iYuQingService.checkVersionNoCustom(version).toString();
-        }
+        String result = iYuQingService.checkVersionNoCustom(version).toString();
         return result;
     }
 
@@ -312,7 +311,7 @@ public class YuQingAppController {
     })
     @RequestMapping(value = "/data/clickFavor", method = RequestMethod.POST)
     public String clickFavor(@RequestParam("favorId") String favorId,
-                                HttpServletRequest httpServletRequest) {
+                             HttpServletRequest httpServletRequest) {
         String loginName = judgeCookie(httpServletRequest);
         String result = "";
         if ("".equals(loginName)) {
@@ -333,6 +332,24 @@ public class YuQingAppController {
         jsonObject.put("success", false);
         jsonObject.put("value", 12001);
         return jsonObject.toString();
+    }
+
+    @RequestMapping(value = "/guidance/uploadOrderFile", method = RequestMethod.POST)
+    public String uploadHead(HttpServletRequest request, @RequestParam("file") MultipartFile file) throws IOException {
+        System.out.println("执行");
+        if (!file.isEmpty()) {
+            Date date = new Date();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+            String str = sdf.format(date);
+            String filePath = "C:/dummyPath/" + str + ""
+                    + file.getOriginalFilename();//获取服务器的绝对路径+项目相对路径head/图片原名
+            file.transferTo(new File(filePath));//讲客户端文件传输到服务器端
+           /* int position = filePath.lastIndexOf("/");//
+            System.out.println(position);
+            String head = filePath.substring(position + 1);//获取真正的图片名字，如“1.png”*/
+            return str + file.getOriginalFilename();
+        }
+        return "";
     }
 
 }

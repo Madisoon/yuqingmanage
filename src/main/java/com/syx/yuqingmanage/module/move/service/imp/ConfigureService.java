@@ -6,12 +6,15 @@ import com.alibaba.fastjson.JSONObject;
 import com.alienlab.db.ExecResult;
 import com.alienlab.response.JSONResponse;
 import com.syx.yuqingmanage.module.move.service.IConfigureService;
+import com.syx.yuqingmanage.utils.HttpClientUtil;
 import com.syx.yuqingmanage.utils.SqlEasy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Master  Zg on 2016/11/9.
@@ -135,5 +138,44 @@ public class ConfigureService implements IConfigureService {
         String updateSql = SqlEasy.updateObject(wxData, "sys_weixin", "id = " + id);
         ExecResult execResult = jsonResponse.getExecResult(updateSql, null);
         return execResult;
+    }
+
+    @Override
+    public JSONObject postAnnouncement(String title, String content) {
+        Map map = new HashMap();
+        JSONObject jsonObjectMap = new JSONObject();
+        jsonObjectMap.put("title", title);
+        jsonObjectMap.put("content", content);
+        Map mapParam = new HashMap();
+        mapParam.put("data", jsonObjectMap.toString());
+        JSONObject jsonObject = HttpClientUtil.sendPost("http://yq.yuwoyg.com:8080/yuqing-app-dict/app/notice/insert", mapParam);
+        System.out.println(jsonObject);
+        return jsonObject;
+    }
+
+    @Override
+    public JSONObject getAnnouncement(String filters, String start, String limit) {
+        Map map = new HashMap();
+        map.put("filters", filters);
+        map.put("start", start);
+        map.put("limit", limit);
+        JSONObject jsonObject = HttpClientUtil.sendPost("http://yq.yuwoyg.com:8080/yuqing-app-dict/app/notice/search", map);
+        JSONArray jsonArray = jsonObject.getJSONArray("value");
+        JSONObject returnJsonobject = new JSONObject();
+        returnJsonobject.put("data", jsonArray);
+        return returnJsonobject;
+    }
+
+    @Override
+    public JSONObject resetAnnouncement() {
+        Map map = new HashMap();
+        JSONObject jsonObject = HttpClientUtil.sendPost("http://yq.yuwoyg.com:8080/yuqing-app-dict/app/notice/reset", map);
+        return jsonObject;
+    }
+
+    public static void main(String[] args) {
+        ConfigureService configureService = new ConfigureService();
+        JSONObject jsonObject = configureService.getAnnouncement("", "0", "20");
+        System.out.println(jsonObject);
     }
 }

@@ -86,4 +86,11 @@ public class TagController {
         String result = iTagService.getTypeTag().toString();
         return result;
     }
+
+    @RequestMapping(value = "/getChildTag", method = RequestMethod.POST)
+    @ApiOperation(value = "得到所有的子标签", notes = "无")
+    public String getChildTag() {
+        String result = iTagService.getChildTag().toString();
+        return result;
+    }
 }

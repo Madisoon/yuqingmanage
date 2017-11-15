@@ -8,6 +8,7 @@ import com.alienlab.response.JSONResponse;
 import com.alienlab.utils.Md5Azdg;
 import com.syx.yuqingmanage.module.app.service.IYuQingService;
 import com.syx.yuqingmanage.utils.DateTimeUtils;
+import com.syx.yuqingmanage.utils.MessagePost;
 import com.syx.yuqingmanage.utils.jdbcfilters.Filter;
 import com.syx.yuqingmanage.utils.jdbcfilters.SelectParam;
 import org.bouncycastle.crypto.io.MacInputStream;
@@ -150,7 +151,6 @@ public class YuQingAppService implements IYuQingService {
                     "            LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = '1' AND app_user_loginName = '" + loginName + "') b " +
                     "            ON a.id = b.app_read_id";
         }
-        System.out.println(getFoucs);
         execResult = jsonResponse.getSelectResult(getFoucs, null, "");
         if (execResult.getResult() == 1) {
             // 有数据
@@ -189,12 +189,12 @@ public class YuQingAppService implements IYuQingService {
                     " WHEN ''微博'' THEN ''5''    " +
                     " WHEN ''微信'' THEN ''6''    " +
                     " WHEN ''移动咨询'' THEN ''7''    " +
-                    " ELSE ''8'' END AS source_id FROM (SELECT b.id , b.infor_type AS level_id,b.infor_title    " +
+                    " ELSE ''8'' END AS source_id FROM (SELECT a.id AS program_id, b.id , b.infor_type AS level_id,b.infor_title    " +
                     " AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
                     " AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM     " +
                     " (SELECT a.*,b.app_module_id FROM  app_user_program a   LEFT JOIN app_user_program_module b   ON a.id = b.app_program_id   " +
                     " WHERE a.app_user_loginname = ''" + loginName + "'' ) a LEFT JOIN app_module_tag_dep b   ON a.app_module_id = b.app_module_id) a   " +
-                    " LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id  AND  b.infor_createtime < ''" + date + "''  GROUP BY b.id ORDER BY b.infor_createtime DESC) a) a   " +
+                    " LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id  AND  b.infor_createtime < ''" + date + "''  ORDER BY b.infor_createtime DESC) a) a   " +
                     " " + sqlWhere + "  LIMIT 0, " + limit + ") a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
         } else {
             getSql = " SELECT a.*,CASE WHEN (b.app_read_id IS NULL) THEN ''0''  " +
@@ -205,25 +205,112 @@ public class YuQingAppService implements IYuQingService {
                     " WHEN ''微博'' THEN ''5''    " +
                     " WHEN ''微信'' THEN ''6''    " +
                     " WHEN ''移动咨询'' THEN ''7''    " +
-                    " ELSE ''8'' END AS source_id FROM (SELECT b.id , b.infor_type AS level_id,b.infor_title    " +
+                    " ELSE ''8'' END AS source_id FROM (SELECT a.id AS program_id, b.id , b.infor_type AS level_id,b.infor_title    " +
                     " AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
                     " AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM     " +
                     " (SELECT a.*,b.app_module_id FROM  app_user_program a   LEFT JOIN app_user_program_module b   ON a.id = b.app_program_id   " +
                     " WHERE a.app_user_loginname = ''" + loginName + "'' ) a LEFT JOIN app_module_tag_dep b   ON a.app_module_id = b.app_module_id) a   " +
-                    " LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id  GROUP BY b.id ORDER BY b.infor_createtime DESC) a) a   " +
+                    " LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id   ORDER BY b.infor_createtime DESC) a) a   " +
                     " " + sqlWhere + "  LIMIT 0, " + limit + ") a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
         }
         ExecResult execResult = jsonResponse.getSelectResult(getSql, sqlWhereValue, "");
         JSONObject jsonObject = new JSONObject();
         if (execResult.getResult() == 1) {
             // 有数据
+            JSONArray jsonArrayImpReturn = new JSONArray();
             JSONArray jsonArray = (JSONArray) execResult.getData();
+            JSONObject jsonObjectOne = jsonArray.getJSONObject(0);
+            String imp = "SELECT * FROM  app_user_program a ,app_user_program_module b ,app_module c " +
+                    "WHERE a.id = b.`app_program_id` AND a.`id` = '" + jsonObjectOne.getString("program_id") + "' " +
+                    "AND b.`app_module_id` = c.id AND a.`app_user_loginname` = '" + loginName + "'";
+            ExecResult execResult1 = jsonResponse.getSelectResult(imp, null, "");
+            JSONArray jsonArrayImp = (JSONArray) execResult1.getData();
+            boolean flag = false;
+            // 需要先判断是否有关键词
+            for (int i = 0; i < jsonArrayImp.size(); i++) {
+                JSONObject jsonObjectImp = jsonArrayImp.getJSONObject(i);
+                String impContent = jsonObjectImp.getString("app_module_imp_word");
+                String noImpContent = jsonObjectImp.getString("app_module_noimp_word");
+                if (impContent != "" || noImpContent != "") {
+                    flag = true;
+                    break;
+                }
+            }
             JSONObject jsonObjectValue = new JSONObject();
-            JSONObject jsonObjectReturn = jsonArray.getJSONObject(jsonArray.size() - 1);
-            jsonObjectValue.put("time", jsonObjectReturn.getString("pub_time"));
-            jsonObjectValue.put("data", jsonArray);
-            jsonObject.put("success", true);
-            jsonObject.put("value", jsonObjectValue);
+            if (flag) {
+                // 有关键词，需要重新筛选匹配
+                String getSqlImp = "";
+                if (!"".equals(date)) {
+                    getSqlImp = " SELECT a.*,CASE WHEN (b.app_read_id IS NULL) THEN ''0''  " +
+                            "ELSE  ''1'' END AS info_read FROM (SELECT * FROM (SELECT *,CASE a.source    " +
+                            " WHEN ''新闻'' THEN ''1''    " +
+                            " WHEN ''论坛'' THEN ''2''    " +
+                            " WHEN ''博客'' THEN ''3''    " +
+                            " WHEN ''微博'' THEN ''5''    " +
+                            " WHEN ''微信'' THEN ''6''    " +
+                            " WHEN ''移动咨询'' THEN ''7''    " +
+                            " ELSE ''8'' END AS source_id FROM (SELECT a.id AS program_id, b.id , b.infor_type AS level_id,b.infor_title    " +
+                            " AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
+                            " AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM     " +
+                            " (SELECT a.*,b.app_module_id FROM  app_user_program a   LEFT JOIN app_user_program_module b   ON a.id = b.app_program_id   " +
+                            " WHERE a.app_user_loginname = ''" + loginName + "'' ) a LEFT JOIN app_module_tag_dep b   ON a.app_module_id = b.app_module_id) a   " +
+                            " LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id  AND  b.infor_createtime < ''" + date + "''  ORDER BY b.infor_createtime DESC) a) a   " +
+                            " " + sqlWhere + " ) a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
+                } else {
+                    getSqlImp = " SELECT a.*,CASE WHEN (b.app_read_id IS NULL) THEN ''0''  " +
+                            "ELSE  ''1'' END AS info_read FROM (SELECT * FROM (SELECT *,CASE a.source    " +
+                            " WHEN ''新闻'' THEN ''1''    " +
+                            " WHEN ''论坛'' THEN ''2''    " +
+                            " WHEN ''博客'' THEN ''3''    " +
+                            " WHEN ''微博'' THEN ''5''    " +
+                            " WHEN ''微信'' THEN ''6''    " +
+                            " WHEN ''移动咨询'' THEN ''7''    " +
+                            " ELSE ''8'' END AS source_id FROM (SELECT a.id AS program_id, b.id , b.infor_type AS level_id,b.infor_title    " +
+                            " AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
+                            " AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM     " +
+                            " (SELECT a.*,b.app_module_id FROM  app_user_program a   LEFT JOIN app_user_program_module b   ON a.id = b.app_program_id   " +
+                            " WHERE a.app_user_loginname = ''" + loginName + "'' ) a LEFT JOIN app_module_tag_dep b   ON a.app_module_id = b.app_module_id) a   " +
+                            " LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id   ORDER BY b.infor_createtime DESC) a) a   " +
+                            " " + sqlWhere + " ) a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
+                }
+
+                ExecResult execResultImp = jsonResponse.getSelectResult(getSqlImp, sqlWhereValue, "");
+                JSONArray jsonArray1 = (JSONArray) execResultImp.getData();
+                for (int j = 0, jsonArrayLen = jsonArray1.size(); j < jsonArrayLen; j++) {
+                    JSONObject jsonObjectInfo = jsonArray1.getJSONObject(j);
+                    String title = jsonObjectInfo.getString("title");
+                    String content = jsonObjectInfo.getString("content");
+                    for (int i = 0; i < jsonArrayImp.size(); i++) {
+                        JSONObject jsonObjectImp = jsonArrayImp.getJSONObject(i);
+                        String impContent = jsonObjectImp.getString("app_module_imp_word");
+                        String noImpContent = jsonObjectImp.getString("app_module_noimp_word");
+                        boolean noWordJudgeFlag = !MessagePost.judgeWord(noImpContent, content, title) || noImpContent.equals("");
+                        if (noWordJudgeFlag) {
+                            //不包含排除关键词。
+                            boolean wordJudgeFlag = (impContent.equals("") || MessagePost.judgeWord(impContent, content, title));
+                            if (wordJudgeFlag) {
+                                jsonArrayImpReturn.add(jsonObjectInfo);
+                            }
+                        }
+                    }
+                }
+                if (jsonArrayImpReturn.size() == 0) {
+                    jsonObject.put("success", false);
+                    jsonObject.put("value", 23001);
+                } else {
+                    JSONObject jsonObjectReturn = jsonArrayImpReturn.getJSONObject(jsonArrayImpReturn.size() - 1);
+                    jsonObjectValue.put("time", jsonObjectReturn.getString("pub_time"));
+                    jsonObjectValue.put("data", jsonArrayImpReturn);
+                    jsonObject.put("success", true);
+                    jsonObject.put("value", jsonObjectValue);
+                }
+            } else {
+                JSONObject jsonObjectReturn = jsonArray.getJSONObject(jsonArray.size() - 1);
+                jsonObjectValue.put("time", jsonObjectReturn.getString("pub_time"));
+                jsonObjectValue.put("data", jsonArray);
+                jsonObject.put("success", true);
+                jsonObject.put("value", jsonObjectValue);
+            }
         } else {
             // 无数据
             jsonObject.put("success", false);
@@ -270,7 +357,7 @@ public class YuQingAppService implements IYuQingService {
                     " AS source_id, b.infor_site AS site FROM  app_user_favor a   " +
                     " LEFT JOIN sys_infor b ON a.app_favor_infor_id = b.id  " +
                     " WHERE a.app_user_loginname = '" + loginName + "' ORDER BY b.infor_createtime DESC LIMIT 0," + limit + " ) a LEFT JOIN app_user_favor_read b " +
-                    " ON a.favor_id = b.app_favor_id";
+                    " ON a.favor_id = b.app_favor_id ORDER BY a.pub_time DESC";
         } else {
             getFavor = " SELECT a.*, CASE WHEN (b.app_favor_id IS NULL) THEN '0' ELSE  '1' END AS favor_read " +
                     " FROM ( SELECT a.id AS favor_id, b.id , b.infor_type AS level_id,b.infor_title   " +
@@ -280,7 +367,7 @@ public class YuQingAppService implements IYuQingService {
                     " LEFT JOIN sys_infor b ON a.app_favor_infor_id = b.id   " +
                     " WHERE a.app_user_loginname = '" + loginName + "' AND b.infor_createtime < '" + date + "'  " +
                     " ORDER BY b.infor_createtime DESC LIMIT 0," + limit + " ) a LEFT JOIN app_user_favor_read b " +
-                    " ON a.favor_id = b.app_favor_id";
+                    " ON a.favor_id = b.app_favor_id ORDER BY a.pub_time DESC";
         }
         execResult = jsonResponse.getSelectResult(getFavor, null, "");
         if (execResult.getResult() == 1) {

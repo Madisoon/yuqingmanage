@@ -1,13 +1,19 @@
 package com.syx.yuqingmanage.module.move.web;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.alienlab.db.ExecResult;
 import com.syx.yuqingmanage.module.move.service.IConfigureService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Created by Master  Zg on 2016/11/9.
@@ -100,6 +106,68 @@ public class ConfigureController {
     @ApiOperation(value = "updateWx", notes = "根据id修改配置qq信息")
     public String updateWx(@RequestParam("wxData") String wxData, @RequestParam("id") String id) {
         String result = iConfigureService.updateWx(wxData, id).toString();
+        return result;
+    }
+
+    @RequestMapping(value = "/postAnnouncement", method = RequestMethod.POST)
+    @ApiOperation(value = "postAnnouncement", notes = "新增公告")
+    public String postAnnouncement(@RequestParam("title") String title, @RequestParam("content") String content) {
+        String result = iConfigureService.postAnnouncement(title, content).toString();
+        return result;
+    }
+
+    @RequestMapping(value = "/getAnnouncement", method = RequestMethod.POST)
+    @ApiOperation(value = "getAnnouncement", notes = "根据id删除QQ")
+    public String getAnnouncement(HttpServletRequest request) {
+        try {
+            String param = IOUtils.toString(request.getInputStream(), "utf-8");
+            JSONObject params = JSONObject.parseObject(param);
+            JSONArray jsonArray = new JSONArray();
+            String title = params.getString("title");
+            if (!"".equals(title)) {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("columnName", "title");
+                jsonObject.put("op", "4");
+                jsonObject.put("value", title);
+                jsonArray.add(jsonObject);
+            }
+            String content = params.getString("content");
+            if (!"".equals(content)) {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("columnName", "content");
+                jsonObject.put("op", "4");
+                jsonObject.put("value", content);
+                jsonArray.add(jsonObject);
+            }
+            String startTime = params.getString("startTime");
+            if (!"".equals(startTime)) {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("columnName", "add_time");
+                jsonObject.put("op", "1");
+                jsonObject.put("value", startTime);
+                jsonArray.add(jsonObject);
+            }
+            String endTime = params.getString("endTime");
+            if (!"".equals(endTime)) {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("columnName", "add_time");
+                jsonObject.put("op", "3");
+                jsonObject.put("value", endTime);
+                jsonArray.add(jsonObject);
+            }
+            System.out.println(jsonArray.toJSONString());
+            String result = iConfigureService.getAnnouncement(jsonArray.toJSONString(), "0", "1000").toString();
+            return result;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return new ExecResult(false, "获取数据异常。").toString();
+        }
+    }
+
+    @RequestMapping(value = "/resetAnnouncement", method = RequestMethod.POST)
+    @ApiOperation(value = "resetAnnouncement", notes = "重置公告")
+    public String resetAnnouncement() {
+        String result = iConfigureService.resetAnnouncement().toString();
         return result;
     }
 

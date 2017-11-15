@@ -73,4 +73,6 @@ public interface ITagService {
     public ExecResult deleteMyTag(String userLoginName, String ids);
 
     public ExecResult getTypeTag();
+
+    public ExecResult getChildTag();
 }
