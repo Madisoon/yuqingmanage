@@ -9,11 +9,11 @@ import com.alienlab.utils.Md5Azdg;
 import com.syx.yuqingmanage.module.app.service.IYuQingService;
 import com.syx.yuqingmanage.utils.DateTimeUtils;
 import com.syx.yuqingmanage.utils.MessagePost;
+import com.syx.yuqingmanage.utils.NumberInfoPost;
 import com.syx.yuqingmanage.utils.jdbcfilters.Filter;
 import com.syx.yuqingmanage.utils.jdbcfilters.SelectParam;
-import org.bouncycastle.crypto.io.MacInputStream;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -26,6 +26,9 @@ import java.util.List;
 public class YuQingAppService implements IYuQingService {
     @Autowired
     JSONResponse jsonResponse;
+
+    @Autowired
+    AppNoteServiceImpl appNoteService;
 
     // 测试成功
     @Override
@@ -52,6 +55,8 @@ public class YuQingAppService implements IYuQingService {
                     String updateToken = "UPDATE app_user SET app_user_token = '" + token + "' , app_timestamp=" + timestamp + "  WHERE app_user_loginname = '" + loginName + "'";
                     jsonResponse.getExecResult(updateToken, null);
                     returnData.put("value", jsonObjectUser);
+                    // 添加登陆日志
+                    appNoteService.insertAppNote("", "1", "", loginName);
                 }
             } else {
                 //不存在这个用户
@@ -123,6 +128,7 @@ public class YuQingAppService implements IYuQingService {
         String getFoucs = "";
         ExecResult execResult = new ExecResult();
         // 没有时间点
+        appNoteService.insertAppNote("查看了聚焦的信息！", "2", "", loginName);
         if ("".equals(date)) {
             // 根据id获取到焦点数据的
             getFoucs = "SELECT a.*, CASE WHEN (b.app_read_id IS NULL) THEN '0' " +
@@ -173,12 +179,19 @@ public class YuQingAppService implements IYuQingService {
     // 测试普通信息的获取
     @Override
     public JSONObject searchTagInfo(String filters, int limit, String date, String loginName) {
+
+        // 普通数据的获取
+
         SelectParam selectParam = getSelectParam(filters);
         String sqlWhere = selectParam.getWhereClause();
+        // 所有的值
+        List<String> list = new ArrayList<>();
         String[] sqlWhereValue = selectParam.getParams();
         for (int i = 0, sqlWhereValueLen = sqlWhereValue.length; i < sqlWhereValueLen; i++) {
             sqlWhere = sqlWhere.replaceFirst("\\?", "''{" + i + "}''");
+            list.add(sqlWhereValue[i]);
         }
+        appNoteService.insertAppNote(StringUtils.join(list, "|"), "2", "", loginName);
         String getSql = "";
         if (!"".equals(date)) {
             getSql = " SELECT a.*,CASE WHEN (b.app_read_id IS NULL) THEN ''0''  " +
@@ -321,7 +334,7 @@ public class YuQingAppService implements IYuQingService {
 
     // 测试完成
     @Override
-    public JSONObject getInfodetail(String id) {
+    public JSONObject getInfodetail(String id, String loginName) {
         String sqlGetDeatil = "SELECT b.id, b.infor_type AS level_id,b.infor_title  " +
                 "AS title,b.infor_context AS content,b.infor_link   " +
                 "AS source_url,b.infor_createtime AS pub_time,b.infor_source   " +
@@ -334,6 +347,8 @@ public class YuQingAppService implements IYuQingService {
             jsonObjectInfo.put("source_id", returnSource(sourceId));
             jsonObject.put("success", true);
             jsonObject.put("value", jsonObjectInfo);
+            // 添加得到详情的日志
+            appNoteService.insertAppNote(jsonObjectInfo.getString("title"), "3", "", loginName);
         } else {
             jsonObject.put("success", false);
             jsonObject.put("value", 53001);
@@ -607,6 +622,11 @@ public class YuQingAppService implements IYuQingService {
         String selectSqlInfo = "SELECT * FROM app_user_read a WHERE a.app_user_loginName = '" + userName + "' " +
                 "AND a.app_read_id = '" + infoId + "' AND a.app_read_type = '" + infoType + "'";
         ExecResult selectSqlInfoResult = jsonResponse.getSelectResult(selectSqlInfo, null, "");
+        String sql = "SELECT * FROM sys_infor a WHERE a.id = '" + infoId + "'";
+        ExecResult execResultData = jsonResponse.getSelectResult(sql, null, "");
+        JSONArray jsonArray = (JSONArray) execResultData.getData();
+        JSONObject jsonObjectData = jsonArray.getJSONObject(0);
+        appNoteService.insertAppNote(jsonObjectData.getString("infor_title"), "3", "", userName);
         JSONObject returnJsonObject = new JSONObject();
         if (selectSqlInfoResult.getResult() != 1) {
             String insertSql = "INSERT INTO app_user_read (app_user_loginName, app_read_id, app_read_type) VALUES (''{0}'',''{1}'',''{2}'')";

@@ -3,6 +3,7 @@ package com.syx.yuqingmanage.module.app.service.imp;
 import com.alienlab.response.JSONResponse;
 import com.syx.yuqingmanage.module.app.service.AppNoteService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 /**
  * 描述:
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author Msater Zg
  * @create 2017-11-15 16:51
  */
+@Service
 public class AppNoteServiceImpl implements AppNoteService {
     @Autowired
     JSONResponse jsonResponse;

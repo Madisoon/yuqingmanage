@@ -252,7 +252,7 @@ public class YuQingAppController {
         if ("".equals(loginName)) {
             result = returnStaticJsonObject();
         } else {
-            result = iYuQingService.getInfodetail(id).toString();
+            result = iYuQingService.getInfodetail(id, loginName).toString();
         }
         return result;
     }

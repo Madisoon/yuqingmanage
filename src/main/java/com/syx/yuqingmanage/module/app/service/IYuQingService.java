@@ -18,7 +18,7 @@ public interface IYuQingService {
 
     public JSONObject searchTagInfo(String filters, int limit, String data, String loginName);
 
-    public JSONObject getInfodetail(String id);
+    public JSONObject getInfodetail(String id, String loginName);
 
     public JSONObject searchFavor(int limit, String date, String loginName);
 
