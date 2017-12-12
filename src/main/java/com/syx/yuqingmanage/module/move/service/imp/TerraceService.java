@@ -6,15 +6,15 @@ import com.alibaba.fastjson.JSONObject;
 import com.alienlab.db.ExecResult;
 import com.alienlab.response.JSONResponse;
 import com.syx.yuqingmanage.module.move.service.ITerraceService;
+import com.syx.yuqingmanage.utils.HttpClientUtil;
+import com.syx.yuqingmanage.utils.NumberInfoPost;
 import com.syx.yuqingmanage.utils.SqlEasy;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Created by Msater Zg on 2017/3/6.
@@ -24,8 +24,12 @@ public class TerraceService implements ITerraceService {
     @Autowired
     private JSONResponse jsonResponse;
 
+    @Autowired
+    NumberInfoPost numberInfoPost = new NumberInfoPost();
+
     @Override
     public ExecResult insertTerrace(String terraceData, String moduleData, String areaId) {
+        JSONObject jsonObjectData = JSONObject.parseObject(terraceData);
         String sqlInsert = SqlEasy.insertObject(terraceData, "sys_terrace");
         ExecResult execResult = jsonResponse.getExecInsertId(sqlInsert, null, "", "");
         int terraceId = Integer.parseInt(execResult.getMessage());
@@ -33,13 +37,66 @@ public class TerraceService implements ITerraceService {
         String sqlArea = " INSERT INTO sys_terrace_area (area_id,terrace_id) VALUES(" + areaId + "," + terraceId + ") ";
         list.add(sqlArea);
         String[] moduleDatas = moduleData.split(",");
-        int moduleDatasLen = moduleDatas.length;
-        for (int i = 0; i < moduleDatasLen; i++) {
+        int moduleDataSLen = moduleDatas.length;
+        for (int i = 0; i < moduleDataSLen; i++) {
             String sqlModule = "INSERT INTO terrace_module (terrace_id,module_id) VALUES(" + terraceId + "," + moduleDatas[i] + ")";
             list.add(sqlModule);
+            String moduleSelect = "SELECT id, terrace_module_name FROM sys_terrace_module WHERE id = '" + moduleDatas[i] + "'";
+            ExecResult execResultModule = jsonResponse.getSelectResult(moduleSelect, null, "");
+            JSONArray jsonArray = (JSONArray) execResultModule.getData();
+            JSONObject jsonObject = jsonArray.getJSONObject(0);
+            postOneWeekData(jsonObjectData.getString("terrace_link"),
+                    jsonObject.getString("id"),
+                    jsonObject.getString("terrace_module_name"));
+            System.out.println(jsonObject.getString("id"));
+            System.out.println(jsonObject.getString("terrace_module_name"));
         }
         execResult = jsonResponse.getExecResult(list, "", "");
         return execResult;
+    }
+
+    public void postOneWeekData(String url, String moduleId, String moduleName) {
+        String paramStartDate = "";
+        String paramEndDate = "";
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Date dateNow = new Date();
+        Date dateBefore = new Date();
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(dateNow);
+        cal.add(Calendar.DAY_OF_MONTH, -6);
+        dateBefore = cal.getTime();
+        paramEndDate = sdf.format(dateNow);
+        paramStartDate = sdf.format(dateBefore);
+
+        String sqlSelect = "SELECT c.* FROM sys_terrace_module_tag_base a, infor_tag b, sys_infor c WHERE  " +
+                "a.terrace_module_id = " + moduleId + " AND a.tag_id= b.tag_id AND b.infor_id = c.id  " +
+                "AND c.infor_createtime<='" + paramEndDate + "' AND c.infor_createtime >='" + paramStartDate + "'";
+        ExecResult execResult = jsonResponse.getSelectResult(sqlSelect, null, "");
+        JSONArray jsonArray = (JSONArray) execResult.getData();
+        if (jsonArray != null) {
+            int len = jsonArray.size();
+            for (int i = 0; i < len; i++) {
+                JSONObject jsonObjectData = jsonArray.getJSONObject(i);
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("infoTime", jsonObjectData.getString("infor_createtime"));
+                jsonObject.put("infoSource", jsonObjectData.getString("infor_source"));
+                jsonObject.put("infoLink", jsonObjectData.getString("infor_link"));
+                jsonObject.put("pubTime", jsonObjectData.getString("infor_createtime"));
+                jsonObject.put("levelId", ("1".equals(jsonObjectData.getString("infor_type"))) ? "" : "-1");
+                jsonObject.put("infoTitle", jsonObjectData.getString("infor_title"));
+                jsonObject.put("infoSite", jsonObjectData.getString("infor_site"));
+                jsonObject.put("infoContext", jsonObjectData.getString("infor_context"));
+                jsonObject.put("tagId", moduleId);
+                jsonObject.put("tagName", moduleName);
+                Map<String, String> param = new HashMap<>();
+                param.put("data", jsonObject.toString());
+                try {
+                    System.out.println(HttpClientUtil.sendPost(url, param).toString());
+                } catch (Exception e) {
+                    numberInfoPost.sendMsgByYunPian(url + "信息发送出错!", "18752002129");
+                }
+            }
+        }
     }
 
     @Override
@@ -56,12 +113,6 @@ public class TerraceService implements ITerraceService {
             }
         }
         List<String> listSql = new ArrayList<>();
-/*        listSql.add(" SELECT a.*,GROUP_CONCAT(a.module_id) AS module_ids,GROUP_CONCAT(a.terrace_module_name) ");
-        listSql.add(" AS terrace_module_names ");
-        listSql.add(" FROM (SELECT b.*,c.module_id,d.terrace_module_name,e.user_name ");
-        listSql.add(" FROM sys_terrace_area a , sys_terrace b,terrace_module c,sys_terrace_module d,sys_user e ");
-        listSql.add(" WHERE ( " + StringUtils.join(sqlArea, "") + " ) AND a.terrace_id=b.id AND b.id = c.terrace_id AND c.module_id = d.id ");
-        listSql.add(" AND b.terrace_create = e.user_loginname) a GROUP BY a.id ORDER BY a.terrace_time DESC ");*/
         listSql.add("SELECT a.*,GROUP_CONCAT(a.module_id) AS module_ids,GROUP_CONCAT(a.terrace_module_name) ");
         listSql.add("AS terrace_module_names FROM  (SELECT a.*,b.terrace_module_name  ");
         listSql.add("FROM (SELECT a.*,b.area_id,c.user_name,d.module_id FROM sys_terrace a  ");

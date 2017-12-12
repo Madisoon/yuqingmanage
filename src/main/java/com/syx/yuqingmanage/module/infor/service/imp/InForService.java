@@ -22,6 +22,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -100,6 +101,8 @@ public class InForService implements IInForService {
             selectList.add(" WHERE a.scheme_id = b.id AND b.scheme_grade LIKE '%" + infoGrade + "%' ");
             //获取到符合到条件的方案（去除重复+等级匹配）
             String sqlScheme = StringUtils.join(selectList, "");
+            System.out.println("方案sql");
+            System.out.println(sqlScheme);
             ExecResult allSqlScheme = jsonResponse.getSelectResult(sqlScheme, null, "");
             JSONArray jsonArrayScheme = (JSONArray) allSqlScheme.getData();
             List<String> schemeIdList = new ArrayList<>();
@@ -248,12 +251,13 @@ public class InForService implements IInForService {
         sqlList.add(" FROM sys_post_customer a, sys_customer_get b ,sys_scheme c ");
         sqlList.add(" WHERE a.customer_status = 1 AND  a.customer_start_time <='" + dateFormat + "' AND  a.customer_end_time >='" + dateFormat + "'  AND (" + StringUtils.join(listWhere, "") + ")  ");
         sqlList.add(" AND a.id = b.post_customer_id AND a.customer_scheme = c.id ) a LEFT JOIN sys_qq b  ON a.customer_post_qq = b.id ");
+        System.out.println("sql++++++++++");
+        System.out.println(StringUtils.join(sqlList, ""));
         ExecResult execResult = jsonResponse.getSelectResult(StringUtils.join(sqlList, ""), null, "");
         JSONArray jsonArray = (JSONArray) execResult.getData();
         return jsonArray;
     }
 
-    // 得到所有需要发送信息的平台
     public JSONArray getAllCustomerByModule(List<String> list) {
         int listLen = list.size();
         List<String> listWhere = new ArrayList<>();
@@ -285,109 +289,6 @@ public class InForService implements IInForService {
     public JSONObject getAllInfoChoose(String pageNumber, String pageSize,
                                        String searchTagId, String searchInfoData,
                                        String customerName) {
-/*        JSONObject jsonObject = new JSONObject();
-        int pageNumberInt = Integer.parseInt(pageNumber, 10);
-        int pageSizeInt = Integer.parseInt(pageSize, 10);
-        JSONObject jsonObjectData = JSON.parseObject(searchInfoData);
-        String chooseTime = jsonObjectData.getString("infor_createtime");
-        jsonObjectData.remove("infor_createtime");
-
-
-        String[] searchTagIds = searchTagId.split(",");
-        int searchTagIdsLen = searchTagIds.length;
-        String[] customerNames = customerName.split("\\|");
-        int customerNamesLen = customerNames.length;
-
-        List<String> list = new ArrayList<>();
-
-
-        list.add(" SELECT b.* FROM (SELECT a.id FROM ");
-        list.add(" (SELECT  a.*, b.customer_name FROM (SELECT  a.*,c.scheme_id,c.tag_id, d.user_name  ");
-        list.add(" FROM sys_infor a,infor_tag b, sys_scheme_tag_base c ,sys_user d  ");
-        list.add(" WHERE a.id = b.infor_id AND b.tag_id = c.tag_id AND a.infor_creater = d.user_loginname ) a ");
-        list.add(" LEFT JOIN sys_post_customer b  ON a.scheme_id = b.customer_scheme ");
-        if (jsonObjectData.isEmpty() &&
-                "".equals(searchTagId) &&
-                "".equals(customerName)) {
-
-        } else {
-            list.add("  WHERE ");
-        }
-        if (!"".equals(searchTagId)) {
-            for (int i = 0; i < searchTagIdsLen; i++) {
-                if (searchTagIdsLen == 1) {
-                    list.add("  a. tag_id =  " + searchTagIds[i]);
-                } else {
-                    if (i == 0) {
-                        list.add("( a. tag_id = " + searchTagIds[i]);
-                    } else if (i == (searchTagIdsLen - 1)) {
-                        list.add(" OR a. tag_id = " + searchTagIds[i] + ") ");
-                    } else {
-                        list.add(" OR a. tag_id = " + searchTagIds[i]);
-                    }
-                }
-            }
-        }
-        Set<String> set = jsonObjectData.keySet();
-        Iterator<String> iterator = set.iterator();
-        int m = 0;
-        while (iterator.hasNext()) {
-            String jsonObjectValue = iterator.next();
-            if ("".equals(searchTagId)) {
-                //如果查询条件没有标签时。
-                if (m == 0) {
-                    list.add("  a." + jsonObjectValue + " LIKE '%" + jsonObjectData.getString(jsonObjectValue) + "%' ");
-                } else {
-                    list.add(" AND a." + jsonObjectValue + " LIKE '%" + jsonObjectData.getString(jsonObjectValue) + "%' ");
-                }
-            } else {
-                list.add(" AND a." + jsonObjectValue + " LIKE '%" + jsonObjectData.getString(jsonObjectValue) + "%' ");
-            }
-            m++;
-        }
-        if (!"".equals(customerName)) {
-            for (int i = 0; i < customerNamesLen; i++) {
-                if (customerNamesLen == 1) {
-                    list.add(" AND  b.customer_name LIKE '%" + customerNames[i] + "%' ");
-                } else {
-                    if (i == 0) {
-                        list.add(" AND ( b.customer_name LIKE '%" + customerNames[i] + "%' ");
-                    } else if (i == (customerNamesLen - 1)) {
-                        list.add(" OR b.customer_name LIKE '%" + customerNames[i] + "%' ) ");
-                    } else {
-                        list.add(" OR b.customer_name LIKE '%" + customerNames[i] + "%'");
-                    }
-                }
-            }
-        }
-        list.add("  ) a ");
-        list.add(" GROUP BY a.id ) a ,(SELECT * ,GROUP_CONCAT(a.name) AS tag_names,GROUP_CONCAT(a.tag_id) AS tag_ids ");
-        list.add(" FROM (SELECT  a.*,c.name,b.tag_id,d.user_name,d.user_loginname ");
-        list.add(" FROM sys_infor a,infor_tag b,sys_tag c,sys_user d");
-        list.add(" WHERE a.id = b.infor_id  AND b.tag_id = c.id  AND a.infor_creater = d.user_loginname) a ");
-        list.add(" GROUP BY a.id) b ");
-        if ("".equals(chooseTime) || chooseTime == null) {
-            list.add(" WHERE a.id = b.id  ORDER BY b.infor_createtime DESC ");
-        } else {
-            String[] chooseTimes = chooseTime.split("&");
-            list.add(" WHERE a.id = b.id AND  b.infor_createtime > '" + chooseTimes[0] + "' AND  b.infor_createtime < '" + chooseTimes[1] + "' ORDER BY b.infor_createtime DESC  ");
-        }
-
-        String sql = StringUtils.join(list, "");
-        ExecResult execResult = jsonResponse.getSelectResult(sql, null, "");
-        JSONArray jsonArray = (JSONArray) execResult.getData();
-        if (jsonArray == null) {
-            jsonObject.put("total", 0);
-        } else {
-            jsonObject.put("total", jsonArray.size());
-        }
-        list.add("LIMIT " + ((pageNumberInt - 1) * pageSizeInt) + "," + pageSizeInt + "");
-        sql = StringUtils.join(list, "");
-        System.out.println(sql);
-        ExecResult execResult2 = jsonResponse.getSelectResult(sql, null, "");
-        JSONArray jsonArray2 = (JSONArray) execResult2.getData();
-        jsonObject.put("data", jsonArray2);
-        return jsonObject;*/
         JSONObject jsonObject = new JSONObject();
         int pageNumberInt = Integer.parseInt(pageNumber, 10);
         int pageSizeInt = Integer.parseInt(pageSize, 10);
@@ -410,11 +311,6 @@ public class InForService implements IInForService {
         list.add("WHERE a.id = b.infor_id AND a.infor_creater = c.user_loginname ");
 
         list.add("AND b.tag_id=d.id  ");
-        /*list.add("SELECT a.*,GROUP_CONCAT(a.tag_id) AS tag_ids,GROUP_CONCAT(a.name) AS tag_names FROM ");
-        list.add("(SELECT a.*,b.customer_name FROM (SELECT a.*,b.name,c.scheme_id FROM ");
-        list.add("(SELECT * FROM(SELECT a.*,b.tag_id,c.user_name FROM sys_infor a ");
-        list.add("LEFT JOIN infor_tag b ON a.id = b.infor_id ");
-        list.add("LEFT JOIN sys_user c ON a.infor_creater = c.user_loginname ");*/
         if (!"".equals(searchTagId)) {
             List tagList = new ArrayList();
             tagList.add("(");
@@ -444,24 +340,6 @@ public class InForService implements IInForService {
         } else {
             list.add("  AND c.user_name LIKE '%" + userName + "%' ");
         }
-        /*// 没有基本的搜索条件
-        if (jsonObjectData.isEmpty()) {
-            if ("".equals(chooseTime) || chooseTime == null) {
-            } else {
-                String[] chooseTimes = chooseTime.split("&");
-                list.add(" WHERE a.infor_createtime > '" + chooseTimes[0] + "' AND  a.infor_createtime < '" + chooseTimes[1] + "'");
-            }
-        } else {
-            if ("".equals(chooseTime) || chooseTime == null) {
-            } else {
-                String[] chooseTimes = chooseTime.split("&");
-                list.add(" AND a.infor_createtime > '" + chooseTimes[0] + "' AND  a.infor_createtime < '" + chooseTimes[1] + "'");
-            }
-        }*/
-        /*list.add("WHERE a.infor_title = '2312' ");*/
-        /*list.add(") a ");
-        list.add("LEFT JOIN sys_tag b ON a.tag_id = b.id ");
-        list.add("LEFT JOIN sys_scheme_tag_base c ON a.tag_id = c.tag_id ) a LEFT JOIN sys_post_customer b ");*/
         list.add(" ) a ");
         list.add("LEFT JOIN sys_scheme_tag_base c ");
         list.add("ON a.tag_id = c.tag_id ) a ");
@@ -802,38 +680,4 @@ public class InForService implements IInForService {
             return "";
         }
     }
-
-/*    // 快速排序的一趟分划
-    int completeJ(int leftNumber, int rightNumber) {
-        int[] a = {3, 2, 1, 4};
-        int i = leftNumber;
-        int j = rightNumber + 1;
-        do {
-            do {
-                i++;
-            } while (a[i] < a[leftNumber]);
-            do {
-                j--;
-            } while (a[j] > a[leftNumber]);
-            if (i < j) {
-                int t;
-                t = a[i];
-                a[i] = a[j];
-                a[j] = t;
-            }
-        } while (i < j);
-        int t;
-        t = a[leftNumber];
-        a[leftNumber] = a[j];
-        a[j] = t;
-        for (int m = 0; m < a.length; m++) {
-            System.out.println(a[m]);
-        }
-        return 0;
-    }
-
-    public static void main(String[] args) {
-        InForService inForService = new InForService();
-        inForService.completeJ(0, 3);
-    }*/
 }

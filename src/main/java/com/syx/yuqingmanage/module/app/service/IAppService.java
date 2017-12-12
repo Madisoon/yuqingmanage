@@ -23,4 +23,7 @@ public interface IAppService {
     public JSONObject insertCutomerId(String id);
 
     public void refreshData();
+
+    public ExecResult insertInformation(String content, String postType,
+                                    String postPeople, String receivePeople);
 }

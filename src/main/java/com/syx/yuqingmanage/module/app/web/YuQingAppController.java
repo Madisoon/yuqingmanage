@@ -1,5 +1,7 @@
 package com.syx.yuqingmanage.module.app.web;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.syx.yuqingmanage.module.app.service.IYuQingService;
 import com.syx.yuqingmanage.utils.SysCookie;
@@ -15,8 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -335,19 +339,26 @@ public class YuQingAppController {
     }
 
     @RequestMapping(value = "/guidance/uploadOrderFile", method = RequestMethod.POST)
-    public String uploadHead(HttpServletRequest request, @RequestParam("file") MultipartFile file) throws IOException {
-        System.out.println("执行");
+    public String uploadHead(HttpServletRequest request, HttpServletResponse httpServletResponse, @RequestParam("myImage") MultipartFile file) throws IOException {
         if (!file.isEmpty()) {
             Date date = new Date();
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
             String str = sdf.format(date);
             String filePath = "C:/dummyPath/" + str + ""
                     + file.getOriginalFilename();//获取服务器的绝对路径+项目相对路径head/图片原名
-            file.transferTo(new File(filePath));//讲客户端文件传输到服务器端
-           /* int position = filePath.lastIndexOf("/");//
-            System.out.println(position);
-            String head = filePath.substring(position + 1);//获取真正的图片名字，如“1.png”*/
-            return str + file.getOriginalFilename();
+            //讲客户端文件传输到服务器端
+            file.transferTo(new File(filePath));
+            httpServletResponse.setContentType("text/text;charset=utf-8");
+            PrintWriter out = httpServletResponse.getWriter();
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("errno", "0");
+            JSONArray jsonArray = new JSONArray();
+            jsonArray.add("http://118.178.237.219:8080/dummyPath/" + str + file.getOriginalFilename() + "");
+            jsonObject.put("data", jsonArray);
+            out.print(jsonObject.toString());
+            out.flush();
+            out.close();
+            return jsonObject.toString();
         }
         return "";
     }

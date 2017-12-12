@@ -65,4 +65,14 @@ public class AppController {
     public void refreshData() {
         iAppService.refreshData();
     }
+
+    @ApiOperation(value = "插入人工发送的信息", notes = "无")
+    @RequestMapping(value = "/insertInformation", method = RequestMethod.POST)
+    public String insertInformation(@RequestParam("content") String content,
+                                    @RequestParam("postType") String postType,
+                                    @RequestParam("postPeople") String postPeople,
+                                    @RequestParam("receivePeople") String receivePeople) {
+
+        return iAppService.insertInformation(content, postType, postPeople, receivePeople).toString();
+    }
 }

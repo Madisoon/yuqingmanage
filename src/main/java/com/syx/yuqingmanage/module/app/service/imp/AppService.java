@@ -169,4 +169,13 @@ public class AppService implements IAppService {
         long endTime = System.currentTimeMillis();
         System.out.println("程序运行时间：" + (endTime - startTime) + "ms");
     }
+
+    @Override
+    public ExecResult insertInformation(String content, String postType,
+                                    String postPeople, String receivePeople) {
+        String insertSql = "INSERT INTO (infor_contxt, infor_post_type, " +
+                "infor_post_people, infor_get_people) VALUES('','','','')";
+        ExecResult execResult = jsonResponse.getExecResult(insertSql, null);
+        return execResult;
+    }
 }

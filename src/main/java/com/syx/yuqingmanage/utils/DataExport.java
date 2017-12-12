@@ -60,9 +60,6 @@ public class DataExport {
             String docxTemplate = "template/word.docx";
             String toFilePath = "C:/dummyPath/" + fileName; // 导出的路径
             //填充完数据的临时xml
-/*            Writer w = new FileWriter(new File(xmlTemp));
-            XmlToExcel.process(xmlTemplate, maps, w);
-            //3.把填充完成的xml写入到docx中*/
             XmlToDocx xtd = new XmlToDocx();
             try {
                 xtd.outDocx(new File(xmlTemp), docxTemplate, toFilePath);
@@ -183,6 +180,51 @@ public class DataExport {
         String fileFtl = "";
         fileName = fileNameUrl + ".html";
         fileFtl = "newstemplate.ftl";
+        try {
+            documentHandler.createDoc(maps, "C:/dummyPath/" + fileName, fileFtl);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return fileName;
+    }
+
+    public String exportAppNoteExcel(JSONArray jsonArray) {
+        List list = new ArrayList();
+        DocumentHandler documentHandler = new DocumentHandler();
+        int jsonArrayLen = jsonArray.size();
+        for (int i = 0; i < jsonArrayLen; i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+            Map map = new HashedMap();
+            map.put("user", jsonObject.getString("note_create"));
+            switch (jsonObject.getString("note_type")) {
+                case "1":
+                    map.put("name", "登陆");
+                    break;
+                case "2":
+                    map.put("name", "查询");
+                    break;
+                case "3":
+                    map.put("name", "详情");
+                    break;
+                default:
+                    break;
+            }
+
+            String regEx = "[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】'；：”“’。，、？]";
+            Pattern p = Pattern.compile(regEx);
+            Matcher m = p.matcher(jsonObject.getString("note_title"));
+            map.put("title", m.replaceAll("").trim());
+            map.put("time", jsonObject.getString("note_date"));
+            list.add(map);
+        }
+        Map maps = new HashMap(16);
+        maps.put("appList", list);
+        String longTime = String.valueOf(System.currentTimeMillis());
+        String fileName = "";
+        String fileFtl = "";
+
+        fileName = longTime + ".xls";
+        fileFtl = "appnoteexcel.ftl";
         try {
             documentHandler.createDoc(maps, "C:/dummyPath/" + fileName, fileFtl);
         } catch (UnsupportedEncodingException e) {
