@@ -23,7 +23,7 @@ public class SchemeService implements ISchemeService {
     private JSONResponse jsonResponse;
 
     @Override
-    public ExecResult insertScheme(String schemeData, String tagIds, String areaId, String baseTag) {
+    public ExecResult insertScheme(String schemeData, String terraceTagIds, String tagIds, String areaId, String baseTag) {
         String sql = SqlEasy.insertObject(schemeData, "sys_scheme");
         ExecResult execResult = jsonResponse.getExecInsertId(sql, null, "", "");
         int schemeId = Integer.parseInt(execResult.getMessage());
@@ -32,6 +32,12 @@ public class SchemeService implements ISchemeService {
         int idsLen = ids.length;
         for (int i = 0; i < idsLen; i++) {
             sqlList.add("INSERT INTO sys_scheme_tag_dep (scheme_id,tag_id) VALUES(" + schemeId + "," + ids[i] + ")");
+        }
+
+        String[] terraceIds = terraceTagIds.split(",");
+        int terraceIdsLen = terraceIds.length;
+        for (int i = 0; i < terraceIdsLen; i++) {
+            sqlList.add("INSERT INTO sys_scheme_terrace_tag (scheme_id,terrace_customer_id) VALUES(" + schemeId + "," + terraceIds[i] + ")");
         }
         String[] baseTagS = baseTag.split(",");
         int baseTagSLen = baseTagS.length;
@@ -92,16 +98,22 @@ public class SchemeService implements ISchemeService {
     }
 
     @Override
-    public ExecResult updateScheme(String schemeId, String tagId, String schemeData, String baseTag) {
+    public ExecResult updateScheme(String schemeId, String tagId, String terraceTagId, String schemeData, String baseTag) {
         List<String> list = new ArrayList<>();
         String sql = SqlEasy.updateObject(schemeData, "sys_scheme", "id = " + schemeId);
         String[] tagIds = tagId.split(",");
+        String[] terraceTagIdS = terraceTagId.split(",");
         list.add(sql);
         list.add("DELETE FROM sys_scheme_tag_dep WHERE scheme_id = " + schemeId);
         list.add("DELETE FROM sys_scheme_tag_base WHERE scheme_id = " + schemeId);
+        list.add("DELETE FROM sys_scheme_terrace_tag WHERE scheme_id = " + schemeId);
         int tagIdsLen = tagIds.length;
         for (int i = 0; i < tagIdsLen; i++) {
             list.add("INSERT INTO sys_scheme_tag_dep (scheme_id,tag_id) VALUES(" + schemeId + "," + tagIds[i] + ")");
+        }
+        int terraceTagIdSLen = terraceTagIdS.length;
+        for (int i = 0; i < terraceTagIdSLen; i++) {
+            list.add(" INSERT INTO  sys_scheme_terrace_tag (scheme_id,terrace_customer_id) VALUES (" + schemeId + ", " + terraceTagIdS[i] + ") ");
         }
         String[] baseTagS = baseTag.split(",");
         int baseTagSLen = baseTagS.length;

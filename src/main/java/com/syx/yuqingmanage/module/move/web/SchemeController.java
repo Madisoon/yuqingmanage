@@ -27,10 +27,11 @@ public class SchemeController {
     @RequestMapping(value = "/insertScheme", method = RequestMethod.POST)
     @ApiOperation(value = "添加方案", notes = "方案对象，标签数组，地区数组，所选标签的基础标签")
     public String insertScheme(@RequestParam("schemeData") String schemeData,
+                               @RequestParam("terraceTagIds") String terraceTagIds,
                                @RequestParam("tagIds") String tagIds,
                                @RequestParam("areaId") String areaId,
                                @RequestParam("baseTag") String baseTag) {
-        String result = iSchemeService.insertScheme(schemeData, tagIds, areaId, baseTag).toString();
+        String result = iSchemeService.insertScheme(schemeData, terraceTagIds, tagIds, areaId, baseTag).toString();
         return result;
     }
 
@@ -60,9 +61,10 @@ public class SchemeController {
     @ApiOperation(value = "修改方案", notes = "方案id,标签id数组，方案对象，基础标签")
     public String updateScheme(@RequestParam("schemeId") String schemeId,
                                @RequestParam("tagIds") String tagIds,
+                               @RequestParam("terraceTagId") String terraceTagId,
                                @RequestParam("schemeData") String schemeData,
                                @RequestParam("baseTag") String baseTag) {
-        String result = iSchemeService.updateScheme(schemeId, tagIds, schemeData, baseTag).toString();
+        String result = iSchemeService.updateScheme(schemeId, tagIds, terraceTagId, schemeData, baseTag).toString();
         return result;
     }
 

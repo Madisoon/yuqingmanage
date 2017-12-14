@@ -7,16 +7,16 @@ import com.alienlab.db.ExecResult;
 import com.alienlab.response.JSONResponse;
 import com.sun.xml.internal.xsom.impl.ListSimpleTypeImpl;
 import com.syx.yuqingmanage.module.app.service.IAppService;
+import com.syx.yuqingmanage.module.infor.service.imp.InForService;
+import com.syx.yuqingmanage.utils.DifTimeGet;
 import com.syx.yuqingmanage.utils.HttpClientUtil;
+import com.syx.yuqingmanage.utils.MessagePost;
 import com.syx.yuqingmanage.utils.QqAsyncMessagePost;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Master  Zg on 2016/12/12.
@@ -27,6 +27,10 @@ public class AppService implements IAppService {
     private JSONResponse jsonResponse;
     @Autowired
     QqAsyncMessagePost qqAsyncMessagePost;
+    @Autowired
+    InForService inForService;
+
+    final static String TERRACE_URL = "http://sync.yuwoyg.com:58080/yuqing-allot-main/config/yuqingmanage/dep/get";
 
     @Override
     public ExecResult addUser(String userInfo) {
@@ -146,36 +150,61 @@ public class AppService implements IAppService {
         for (int i = 0; i < jsonArrayLen; i++) {
             JSONObject jsonObject1 = jsonArray.getJSONObject(i);
             qqAsyncMessagePost.insertData(jsonObject1, jsonArray1);
-            /*int j;
-            for (j = 0; j < jsonArray1Len; j++) {
-                JSONObject jsonObject2 = jsonArray1.getJSONObject(j);
-                String ids = jsonObject2.getString("base_id");
-                if (id.equals(ids)) {
-                    break;
-                }
-            }
-            if (j == jsonArray1Len) {
-                list.add("INSERT INTO base_yuqing_user  (base_id,base_user_name,base_start_time,base_end_time) " +
-                        "VALUES ('" + jsonObject1.getString("id") + "','" + jsonObject1.getString("name") + "'" +
-                        ",'" + jsonObject1.getString("add_time") + "','" + jsonObject1.getString("end_date") + "')");
-                System.out.println("插入了数据");
-            }*/
-
-            /*list.add("INSERT INTO base_yuqing_user  (base_id,base_user_name,base_start_time,base_end_time) " +
-                    "VALUES ('" + jsonObject1.getString("id") + "','" + jsonObject1.getString("name") + "'" +
-                    ",'" + jsonObject1.getString("add_time") + "','" + jsonObject1.getString("end_date") + "')");
-            System.out.println("插入了数据");*/
         }
         long endTime = System.currentTimeMillis();
         System.out.println("程序运行时间：" + (endTime - startTime) + "ms");
     }
 
     @Override
-    public ExecResult insertInformation(String content, String postType,
-                                    String postPeople, String receivePeople) {
-        String insertSql = "INSERT INTO (infor_contxt, infor_post_type, " +
-                "infor_post_people, infor_get_people) VALUES('','','','')";
+    public JSONObject insertInformation(String data) {
+        JSONObject jsonObject = JSON.parseObject(data);
+        String title = jsonObject.getString("title");
+        String content = jsonObject.getString("content");
+        String grade = jsonObject.getString("level_id");
+        String link = jsonObject.getString("source_url");
+        String creater = jsonObject.getString("user_name");
+        String source = jsonObject.getString("source");
+        String site = jsonObject.getString("sub_site");
+        String customerId = jsonObject.getString("dep_ids");
+        String insertSql = "INSERT INTO sys_terrace_infor (infor_title, infor_context, infor_grade, " +
+                "infor_link, infor_creater, " +
+                "infor_source, infor_site) VALUES " +
+                "('" + title + "','" + content + "','" + grade + "','" + link + "','" + creater + "','" + source + "','" + site + "')";
         ExecResult execResult = jsonResponse.getExecResult(insertSql, null);
-        return execResult;
+        String[] customerIdS = customerId.split(",");
+        int customerIdSLen = customerIdS.length;
+        List list = new ArrayList();
+        list.add("SELECT * FROM sys_scheme_terrace_tag a WHERE a.terrace_customer_id = " + customerIdS[0] + "");
+        for (int i = 1; i < customerIdSLen; i++) {
+            list.add(" OR a.terrace_customer_id = " + customerIdS[i] + " ");
+        }
+
+        list.add(" GROUP BY a.scheme_id ");
+        ExecResult execResultScheme = jsonResponse.getSelectResult(StringUtils.join(list, ""), null, "");
+        JSONArray jsonArrayScheme = (JSONArray) execResultScheme.getData();
+        List<String> schemeIdList = new ArrayList<>();
+        if (jsonArrayScheme != null) {
+            int jsonArraySchemeLen = jsonArrayScheme.size();
+            for (int i = 0; i < jsonArraySchemeLen; i++) {
+                JSONObject jsonObjectScheme = jsonArrayScheme.getJSONObject(i);
+                schemeIdList.add(jsonObjectScheme.getString("scheme_id"));
+            }
+        }
+        JSONObject jsonObjectReturn = new JSONObject();
+        JSONArray allCustomer = inForService.getAllCustomerByScheme(schemeIdList);
+        if (allCustomer == null) {
+            jsonObjectReturn.put("flag", false);
+        } else {
+            qqAsyncMessagePost.postCustomerMessage(allCustomer, content, title, link, source, creater, site);
+        }
+        jsonObjectReturn.put("flag", true);
+        return jsonObjectReturn;
+    }
+
+    @Override
+    public JSONObject getTerraceCustomerTag() {
+        Map<String, String> map = new HashMap<>(16);
+        JSONObject jsonObject = HttpClientUtil.postJsonData(TERRACE_URL, map);
+        return jsonObject;
     }
 }

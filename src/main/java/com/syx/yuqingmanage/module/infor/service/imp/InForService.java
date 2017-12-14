@@ -101,15 +101,12 @@ public class InForService implements IInForService {
             selectList.add(" WHERE a.scheme_id = b.id AND b.scheme_grade LIKE '%" + infoGrade + "%' ");
             //获取到符合到条件的方案（去除重复+等级匹配）
             String sqlScheme = StringUtils.join(selectList, "");
-            System.out.println("方案sql");
-            System.out.println(sqlScheme);
             ExecResult allSqlScheme = jsonResponse.getSelectResult(sqlScheme, null, "");
             JSONArray jsonArrayScheme = (JSONArray) allSqlScheme.getData();
             List<String> schemeIdList = new ArrayList<>();
             List<String> schemeIdListLate = new ArrayList<>();
             if (jsonArrayScheme != null) {
                 int jsonArraySchemeLen = jsonArrayScheme.size();
-                System.out.println("符合条件的方案" + jsonArrayScheme.toString());
                 for (int i = 0; i < jsonArraySchemeLen; i++) {
                     JSONObject jsonObjectScheme = jsonArrayScheme.getJSONObject(i);
                     String schemeId = jsonObjectScheme.getString("id");

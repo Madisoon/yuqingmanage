@@ -68,11 +68,13 @@ public class AppController {
 
     @ApiOperation(value = "插入人工发送的信息", notes = "无")
     @RequestMapping(value = "/insertInformation", method = RequestMethod.POST)
-    public String insertInformation(@RequestParam("content") String content,
-                                    @RequestParam("postType") String postType,
-                                    @RequestParam("postPeople") String postPeople,
-                                    @RequestParam("receivePeople") String receivePeople) {
+    public String insertInformation(@RequestParam("data") String data) {
+        return iAppService.insertInformation(data).toString();
+    }
 
-        return iAppService.insertInformation(content, postType, postPeople, receivePeople).toString();
+    @ApiOperation(value = "得到平台的客户标签数据", notes = "无")
+    @RequestMapping(value = "/getTerraceCustomerTag", method = RequestMethod.POST)
+    public String getTerraceCustomerTag() {
+        return iAppService.getTerraceCustomerTag().toString();
     }
 }
