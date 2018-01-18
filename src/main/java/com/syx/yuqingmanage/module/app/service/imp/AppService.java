@@ -15,6 +15,7 @@ import com.syx.yuqingmanage.utils.QqAsyncMessagePost;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import sun.security.util.AuthResources_it;
 
 import java.util.*;
 
@@ -31,13 +32,13 @@ public class AppService implements IAppService {
     InForService inForService;
 
     final static String TERRACE_URL = "http://sync.yuwoyg.com:58080/yuqing-allot-main/config/yuqingmanage/dep/get";
+    final static String TERRACE_DATA_NAME = "海外";
 
     @Override
     public ExecResult addUser(String userInfo) {
         JSONObject jsonObject = JSONObject.parseObject(userInfo);
         //用uuid来确定数据的唯一性
         String custom_id = jsonObject.getString("customer_id");
-        System.out.println(custom_id);
         String custom_uuid = jsonObject.getString("custom_uuid");
         String user_name = jsonObject.getString("user_name");
         String user_start_time = jsonObject.getString("user_start_time");
@@ -160,44 +161,94 @@ public class AppService implements IAppService {
         JSONObject jsonObject = JSON.parseObject(data);
         String title = jsonObject.getString("title");
         String content = jsonObject.getString("content");
-        String grade = jsonObject.getString("level_id");
+        String grade = jsonObject.getString("alarm");
         String link = jsonObject.getString("source_url");
         String creater = jsonObject.getString("user_name");
         String source = jsonObject.getString("source");
-        String site = jsonObject.getString("sub_site");
+        String site = jsonObject.getString("site");
         String customerId = jsonObject.getString("dep_ids");
+        JSONObject jsonObjectReturn = new JSONObject();
         String insertSql = "INSERT INTO sys_terrace_infor (infor_title, infor_context, infor_grade, " +
                 "infor_link, infor_creater, " +
-                "infor_source, infor_site) VALUES " +
-                "('" + title + "','" + content + "','" + grade + "','" + link + "','" + creater + "','" + source + "','" + site + "')";
-        ExecResult execResult = jsonResponse.getExecResult(insertSql, null);
+                "infor_source, infor_site, infor_deps) VALUES " +
+                "('" + title + "','" + content + "','" + grade + "','" + link + "','" + creater + "','" + source + "','" + site + "','" + customerId + "')";
+        ExecResult execResult = jsonResponse.getExecInsertId(insertSql, null, "", "");
         String[] customerIdS = customerId.split(",");
         int customerIdSLen = customerIdS.length;
         List list = new ArrayList();
-        list.add("SELECT * FROM sys_scheme_terrace_tag a WHERE a.terrace_customer_id = " + customerIdS[0] + "");
+        list.add("SELECT a.*,b.scheme_status,b.scheme_imp,b.scheme_no_imp,b.scheme_link,b.scheme_no_link FROM sys_scheme_terrace_tag a ,sys_scheme b " +
+                "WHERE a.scheme_id = b.id AND b.scheme_grade LIKE '%" + grade + "%' AND (a.terrace_customer_id = " + customerIdS[0] + "");
+        String sql = "INSERT INTO sys_terrace_infor_tag (infor_id, infor_tag_id) VALUES ('" + execResult.getMessage() + "','" + customerIdS[0] + "')";
+        jsonResponse.getExecResult(sql, null);
         for (int i = 1; i < customerIdSLen; i++) {
             list.add(" OR a.terrace_customer_id = " + customerIdS[i] + " ");
+            sql = "INSERT INTO sys_terrace_infor_tag (infor_id, infor_tag_id) VALUES ('" + execResult.getMessage() + "','" + customerIdS[i] + "')";
+            jsonResponse.getExecResult(sql, null);
         }
-
-        list.add(" GROUP BY a.scheme_id ");
+        list.add(" )  GROUP BY a.scheme_id ");
         ExecResult execResultScheme = jsonResponse.getSelectResult(StringUtils.join(list, ""), null, "");
         JSONArray jsonArrayScheme = (JSONArray) execResultScheme.getData();
         List<String> schemeIdList = new ArrayList<>();
+        List<String> schemeIdListLate = new ArrayList<>();
+        System.out.println(StringUtils.join(list, ""));
+        System.out.println("值");
+        System.out.println(jsonArrayScheme);
         if (jsonArrayScheme != null) {
             int jsonArraySchemeLen = jsonArrayScheme.size();
             for (int i = 0; i < jsonArraySchemeLen; i++) {
                 JSONObject jsonObjectScheme = jsonArrayScheme.getJSONObject(i);
-                schemeIdList.add(jsonObjectScheme.getString("scheme_id"));
+                String schemeId = jsonObjectScheme.getString("scheme_id");
+                String schemeStatus = jsonObjectScheme.getString("scheme_status");
+                int flag = 1;
+                if ("0".equals(schemeStatus)) {
+                    String intervalTime = inForService.getPostTime(schemeId, new Date());
+                    flag = DifTimeGet.judgeTimeInterval(intervalTime, new Date());
+                }
+                String impWord = jsonObjectScheme.getString("scheme_imp");
+                String noImpWord = jsonObjectScheme.getString("scheme_no_imp");
+                String impLink = jsonObjectScheme.getString("scheme_link");
+                String noImpLink = jsonObjectScheme.getString("scheme_no_link");
+                boolean noWordJudgeFlag = !MessagePost.judgeWord(noImpWord, content, title) || noImpWord.equals("")
+                        && (!MessagePost.judgeLink(noImpLink, link) || noImpLink.equals(""));
+                if (noWordJudgeFlag) {
+                    //不包含排除关键词，如果包含
+                    boolean wordJudgeFlag = (impWord.equals("") || MessagePost.judgeWord(impWord, content, title)) &&
+                            ("".equals(impLink) || MessagePost.judgeLink(impLink, link));
+                    if (wordJudgeFlag) {
+                        //执行发标
+                        if (flag == 1) {
+                            schemeIdList.add(schemeId);
+                        } else {
+                            schemeIdListLate.add(schemeId);
+                        }
+                    }
+                }
             }
         }
-        JSONObject jsonObjectReturn = new JSONObject();
+        if (schemeIdListLate.size() > 0) {
+            //延迟发送
+            JSONArray allCustomerLate = inForService.getAllCustomerByScheme(schemeIdListLate);
+            System.out.println(allCustomerLate);
+            if (allCustomerLate == null) {
+                //没有需要延迟发送的人
+                System.out.println("客户为空");
+            } else {
+                qqAsyncMessagePost.postCustomerLate(allCustomerLate, content, title, link, source, creater, site);
+            }
+        }
         JSONArray allCustomer = inForService.getAllCustomerByScheme(schemeIdList);
+        System.out.println(allCustomer);
         if (allCustomer == null) {
-            jsonObjectReturn.put("flag", false);
+            jsonObjectReturn.put("flag", true);
         } else {
+            System.out.println(allCustomer);
             qqAsyncMessagePost.postCustomerMessage(allCustomer, content, title, link, source, creater, site);
         }
-        jsonObjectReturn.put("flag", true);
+        if (execResult.getResult() == 1) {
+            jsonObjectReturn.put("flag", true);
+        } else {
+            jsonObjectReturn.put("flag", false);
+        }
         return jsonObjectReturn;
     }
 

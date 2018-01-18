@@ -23,10 +23,11 @@ public class SchemeService implements ISchemeService {
     private JSONResponse jsonResponse;
 
     @Override
-    public ExecResult insertScheme(String schemeData, String terraceTagIds, String tagIds, String areaId, String baseTag) {
+    public ExecResult insertScheme(String schemeData, String terraceTagIds, String terraceTagName, String tagIds, String areaId, String baseTag) {
         String sql = SqlEasy.insertObject(schemeData, "sys_scheme");
         ExecResult execResult = jsonResponse.getExecInsertId(sql, null, "", "");
         int schemeId = Integer.parseInt(execResult.getMessage());
+        String[] terraceTagNameS = terraceTagName.split(",");
         List<String> sqlList = new ArrayList<>();
         String[] ids = tagIds.split(",");
         int idsLen = ids.length;
@@ -36,8 +37,11 @@ public class SchemeService implements ISchemeService {
 
         String[] terraceIds = terraceTagIds.split(",");
         int terraceIdsLen = terraceIds.length;
-        for (int i = 0; i < terraceIdsLen; i++) {
-            sqlList.add("INSERT INTO sys_scheme_terrace_tag (scheme_id,terrace_customer_id) VALUES(" + schemeId + "," + terraceIds[i] + ")");
+        System.out.println("打印标签id" + terraceTagIds);
+        if (!"".equals(terraceTagIds)) {
+            for (int i = 0; i < terraceIdsLen; i++) {
+                sqlList.add("INSERT INTO sys_scheme_terrace_tag (scheme_id,terrace_customer_id,tag_name) VALUES(" + schemeId + "," + terraceIds[i] + ",'" + terraceTagNameS[i] + "')");
+            }
         }
         String[] baseTagS = baseTag.split(",");
         int baseTagSLen = baseTagS.length;
@@ -98,11 +102,12 @@ public class SchemeService implements ISchemeService {
     }
 
     @Override
-    public ExecResult updateScheme(String schemeId, String tagId, String terraceTagId, String schemeData, String baseTag) {
+    public ExecResult updateScheme(String schemeId, String tagId, String terraceTagId, String terraceTagName, String schemeData, String baseTag) {
         List<String> list = new ArrayList<>();
         String sql = SqlEasy.updateObject(schemeData, "sys_scheme", "id = " + schemeId);
         String[] tagIds = tagId.split(",");
         String[] terraceTagIdS = terraceTagId.split(",");
+        String[] terraceTagNameS = terraceTagName.split(",");
         list.add(sql);
         list.add("DELETE FROM sys_scheme_tag_dep WHERE scheme_id = " + schemeId);
         list.add("DELETE FROM sys_scheme_tag_base WHERE scheme_id = " + schemeId);
@@ -112,8 +117,10 @@ public class SchemeService implements ISchemeService {
             list.add("INSERT INTO sys_scheme_tag_dep (scheme_id,tag_id) VALUES(" + schemeId + "," + tagIds[i] + ")");
         }
         int terraceTagIdSLen = terraceTagIdS.length;
-        for (int i = 0; i < terraceTagIdSLen; i++) {
-            list.add(" INSERT INTO  sys_scheme_terrace_tag (scheme_id,terrace_customer_id) VALUES (" + schemeId + ", " + terraceTagIdS[i] + ") ");
+        if (!"".equals(terraceTagId)) {
+            for (int i = 0; i < terraceTagIdSLen; i++) {
+                list.add(" INSERT INTO  sys_scheme_terrace_tag (scheme_id,terrace_customer_id,tag_name) VALUES (" + schemeId + ", " + terraceTagIdS[i] + ",'" + terraceTagNameS[i] + "') ");
+            }
         }
         String[] baseTagS = baseTag.split(",");
         int baseTagSLen = baseTagS.length;
@@ -191,5 +198,20 @@ public class SchemeService implements ISchemeService {
         jsonObject.put("data", jsonArray);
         jsonObject.put("total", jsonArray.size());
         return jsonObject;
+    }
+
+    @Override
+    public ExecResult getTerraceTagBySchemeId(String schemeId) {
+        String sqlSelect = "SELECT * FROM sys_scheme_terrace_tag WHERE scheme_id = '" + schemeId + "'";
+        ExecResult execResult = jsonResponse.getSelectResult(sqlSelect, null, "");
+        return execResult;
+    }
+
+    @Override
+    public JSONArray getTerraceScheme() {
+        String sql = "SELECT a.*,GROUP_CONCAT(b.`tag_name`) AS tag_name FROM sys_scheme a ,sys_scheme_terrace_tag b WHERE a.id = b.scheme_id " +
+                "GROUP BY a.`id` ORDER BY a.`scheme_time` DESC ";
+        ExecResult execResult = jsonResponse.getSelectResult(sql, null, "");
+        return (JSONArray) execResult.getData();
     }
 }

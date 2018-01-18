@@ -179,9 +179,7 @@ public class YuQingAppService implements IYuQingService {
     // 测试普通信息的获取
     @Override
     public JSONObject searchTagInfo(String filters, int limit, String date, String loginName) {
-
         // 普通数据的获取
-
         SelectParam selectParam = getSelectParam(filters);
         String sqlWhere = selectParam.getWhereClause();
         // 所有的值

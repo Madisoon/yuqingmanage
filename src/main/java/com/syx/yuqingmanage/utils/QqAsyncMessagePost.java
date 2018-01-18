@@ -120,11 +120,9 @@ public class QqAsyncMessagePost {
             Map<String, String> param = new HashMap<>();
             param.put("data", jsonObject.toString());
             try {
-                System.out.println("开始发送");
                 HttpClientUtil.sendPost(allModule.getString("terrace_link"), param).toString();
             } catch (Exception e) {
                 System.out.println("发送失败");
-                numberInfoPost.sendMsgByYunPian(allModule.getString("terrace_link") + "信息发送出错!", "18752002129");
             }
         }
     }

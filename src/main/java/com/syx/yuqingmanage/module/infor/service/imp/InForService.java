@@ -7,22 +7,14 @@ import com.alienlab.db.ExecResult;
 import com.alienlab.response.JSONResponse;
 import com.syx.yuqingmanage.module.infor.service.IInForService;
 import com.syx.yuqingmanage.utils.*;
-import com.syx.yuqingmanage.utils.freemark.XmlToDocx;
-import com.syx.yuqingmanage.utils.freemark.XmlToExcel;
 import com.syx.yuqingmanage.utils.jpush.JpushBean;
 import com.syx.yuqingmanage.utils.jpush.JpushServer;
-import freemarker.template.TemplateException;
+import net.sf.ehcache.transaction.xa.EhcacheXAException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
 import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -608,73 +600,108 @@ public class InForService implements IInForService {
         }
         sqlList.add(" GROUP BY a.id ");
         sqlExport = StringUtils.join(sqlList, "");
-        System.out.println(sqlExport);
         ExecResult execResult = jsonResponse.getSelectResult(sqlExport, null, "");
         JSONArray jsonArray = (JSONArray) execResult.getData();
         JSONArray jsonArrayData = new JSONArray();
-
-        if (jsonArray != null) {
-            if (!"".equals(customerName)) {
-                List list = new ArrayList();
-            /*SELECT b.scheme_imp,b.scheme_no_imp,b.scheme_link,b.scheme_no_link
-            FROM sys_post_customer a , sys_scheme b
-            WHERE (a.customer_name LIKE'%昆山宣传部%' OR  a.customer_name LIKE '%菏泽单县公安%')
-            AND  a.customer_scheme = b.id*/
-                list.add("SELECT b.scheme_imp,b.scheme_no_imp,b.scheme_link,b.scheme_no_link " +
-                        "FROM sys_post_customer a , sys_scheme b  " +
-                        "WHERE (  ");
-                for (int i = 0; i < customerNamesLen; i++) {
-                    if (i == 0) {
-                        list.add(" a.customer_name LIKE'%" + customerNames[0] + "%' ");
-                    } else {
-                        list.add(" OR a.customer_name LIKE'%" + customerNames[0] + "%' ");
-                    }
+        if (jsonArray == null) {
+            jsonArray = new JSONArray();
+        }
+        if (!"".equals(customerName)) {
+            List list = new ArrayList();
+            list.add("SELECT b.id, b.scheme_imp,b.scheme_no_imp,b.scheme_link,b.scheme_no_link,b.scheme_grade " +
+                    "FROM sys_post_customer a , sys_scheme b  " +
+                    "WHERE (  ");
+            for (int i = 0; i < customerNamesLen; i++) {
+                if (i == 0) {
+                    list.add(" a.customer_name LIKE'%" + customerNames[0] + "%' ");
+                } else {
+                    list.add(" OR a.customer_name LIKE'%" + customerNames[0] + "%' ");
                 }
-                list.add(" ) AND  a.customer_scheme = b.id ");
+            }
+            list.add(" ) AND  a.customer_scheme = b.id ");
 
-                ExecResult execResultImp = jsonResponse.getSelectResult(StringUtils.join(list, ""), null, "");
-                JSONArray jsonArrayImp = (JSONArray) execResultImp.getData();
-                for (int n = 0; n < jsonArray.size(); n++) {
-                    JSONObject jsonObjectImpData = jsonArray.getJSONObject(n);
-                    String title = jsonObjectImpData.getString("infor_title");
-                    String content = jsonObjectImpData.getString("infor_context");
-                    for (int m = 0; m < jsonArrayImp.size(); m++) {
-                        JSONObject jsonObjectImp = jsonArrayImp.getJSONObject(m);
-                        String dataImp = jsonObjectImp.getString("scheme_imp");
-                        if (!"".equals(dataImp)) {
-                            System.out.println("执行那一步");
-                            String[] impWords = dataImp.split("\\|");
-                            int impWordsLen = impWords.length;
-                            int i;
-                            for (i = 0; i < impWordsLen; i++) {
-                                if (title.indexOf(impWords[i]) != -1 || content.indexOf(impWords[i]) != -1) {
+            ExecResult execResultImp = jsonResponse.getSelectResult(StringUtils.join(list, ""), null, "");
+            JSONArray jsonArrayImp = (JSONArray) execResultImp.getData();
+            for (int n = 0; n < jsonArray.size(); n++) {
+                JSONObject jsonObjectImpData = jsonArray.getJSONObject(n);
+                String title = jsonObjectImpData.getString("infor_title");
+                String content = jsonObjectImpData.getString("infor_context");
+                String grade = jsonObjectImpData.getString("infor_grade");
+                for (int m = 0; m < jsonArrayImp.size(); m++) {
+                    JSONObject jsonObjectImp = jsonArrayImp.getJSONObject(m);
+                    String dataImp = jsonObjectImp.getString("scheme_imp");
+                    String schemeGrade = jsonObjectImp.getString("scheme_grade");
+                    if (!"".equals(dataImp)) {
+                        String[] impWords = dataImp.split("\\|");
+                        int impWordsLen = impWords.length;
+                        int i;
+                        for (i = 0; i < impWordsLen; i++) {
+                            if (title.indexOf(impWords[i]) != -1 || content.indexOf(impWords[i]) != -1) {
+                                if (schemeGrade.indexOf(grade) != -1) {
                                     jsonArrayData.add(jsonObjectImpData);
-                                    System.out.println("满足条件");
                                     break;
                                 }
                             }
-                        } else {
-                            System.out.println("执行这一步");
+                        }
+                    } else {
+                        if (schemeGrade.indexOf(grade) != -1) {
                             jsonArrayData.add(jsonObjectImpData);
                         }
                     }
                 }
-            } else {
-                jsonArrayData = jsonArray;
             }
-            String returnResult = "";
-            if (jsonArrayData == null || jsonArray == null) {
-                return "";
-            } else {
-                if (jsonArrayData.size() == 0) {
-                    return "";
+            List listTerraceTag = new ArrayList();
+            for (int m = 0; m < jsonArrayImp.size(); m++) {
+                JSONObject jsonObjectImp = jsonArrayImp.getJSONObject(m);
+                String id = jsonObjectImp.getString("id");
+                System.out.println("id为");
+                System.out.println(id);
+                if (m == 0) {
+                    listTerraceTag.add("SELECT * FROM sys_scheme_terrace_tag a WHERE a.scheme_id = " + id + " ");
                 } else {
-                    returnResult = dataExport.exportInforData(jsonArrayData, exportType);
-                    return returnResult;
+                    listTerraceTag.add(" OR a.scheme_id = " + id + " ");
+                }
+            }
+            ExecResult execResultTerrace = jsonResponse.getSelectResult(StringUtils.join(listTerraceTag, ""), null, "");
+            JSONArray jsonArrayTerrace = (JSONArray) execResultTerrace.getData();
+            if (jsonArrayTerrace != null) {
+                List listTerraceTagDetail = new ArrayList(16);
+                for (int m = 0; m < jsonArrayTerrace.size(); m++) {
+                    JSONObject jsonArrayTerraceJSONObject = jsonArrayTerrace.getJSONObject(m);
+                    String terraceTagId = jsonArrayTerraceJSONObject.getString("terrace_customer_id");
+                    if (m == 0) {
+                        listTerraceTagDetail.add("SELECT a.* FROM sys_terrace_infor a, sys_terrace_infor_tag b WHERE a.id = b.infor_id AND  ( b.infor_tag_id =  '" + terraceTagId + "'");
+                    } else {
+                        listTerraceTagDetail.add(" OR b.infor_tag_id = '" + terraceTagId + "'");
+                    }
+                }
+                listTerraceTagDetail.add(" ) ");
+                if ("".equals(chooseTime) || chooseTime == null) {
+                } else {
+                    String[] chooseTimes = chooseTime.split("&");
+                    listTerraceTagDetail.add(" AND a.infor_createtime > '" + chooseTimes[0] + "' AND  a.infor_createtime < '" + chooseTimes[1] + "'");
+                }
+                ExecResult execResultTerraceInfo = jsonResponse.getSelectResult(StringUtils.join(listTerraceTagDetail, ""), null, "");
+                JSONArray jsonArrayTerraceInfo = (JSONArray) execResultTerraceInfo.getData();
+                if (jsonArrayTerraceInfo != null) {
+                    for (int i = 0; i < jsonArrayTerraceInfo.size(); i++) {
+                        jsonArrayData.add(jsonArrayTerraceInfo.getJSONObject(i));
+                    }
                 }
             }
         } else {
+            jsonArrayData = jsonArray;
+        }
+        String returnResult = "";
+        if (jsonArrayData == null) {
             return "";
+        } else {
+            if (jsonArrayData.size() == 0) {
+                return "";
+            } else {
+                returnResult = dataExport.exportInforData(jsonArrayData, exportType);
+                return returnResult;
+            }
         }
     }
 }
