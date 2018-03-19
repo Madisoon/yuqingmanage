@@ -9,7 +9,6 @@ import com.syx.yuqingmanage.module.infor.service.IInForService;
 import com.syx.yuqingmanage.utils.*;
 import com.syx.yuqingmanage.utils.jpush.JpushBean;
 import com.syx.yuqingmanage.utils.jpush.JpushServer;
-import net.sf.ehcache.transaction.xa.EhcacheXAException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +16,8 @@ import org.springframework.stereotype.Service;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by Master  Zg on 2016/11/9.
@@ -43,7 +44,10 @@ public class InForService implements IInForService {
 
         JSONObject jsonObject = JSONObject.parseObject(infoData);
         // 信息的内容
-        String infoContext = jsonObject.getString("infor_context");
+        String regEx = "[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】'；：”“’。，、？]";
+        Pattern p = Pattern.compile(regEx);
+        Matcher m = p.matcher(jsonObject.getString("infor_context"));
+        String infoContext = m.replaceAll("").trim();
         // 信息的标题
         String infoTitle = jsonObject.getString("infor_title");
         // 信息的链接
@@ -175,7 +179,7 @@ public class InForService implements IInForService {
                     jpushBean.setUrl("");
                     list.add(jpushBean);
                 }
-                /*jpushServer.pushNotification(list);*/
+                jpushServer.pushNotification(list);
             }
             // 推送模块 end
         }
@@ -360,10 +364,6 @@ public class InForService implements IInForService {
 
         if (!"".equals(customerName)) {
             List listCustomerName = new ArrayList();
-            /*SELECT b.scheme_imp,b.scheme_no_imp,b.scheme_link,b.scheme_no_link
-            FROM sys_post_customer a , sys_scheme b
-            WHERE (a.customer_name LIKE'%昆山宣传部%' OR  a.customer_name LIKE '%菏泽单县公安%')
-            AND  a.customer_scheme = b.id*/
             listCustomerName.add("SELECT b.scheme_imp,b.scheme_no_imp,b.scheme_link,b.scheme_no_link " +
                     "FROM sys_post_customer a , sys_scheme b  " +
                     "WHERE (  ");
@@ -613,9 +613,9 @@ public class InForService implements IInForService {
                     "WHERE (  ");
             for (int i = 0; i < customerNamesLen; i++) {
                 if (i == 0) {
-                    list.add(" a.customer_name LIKE'%" + customerNames[0] + "%' ");
+                    list.add(" a.customer_name ='" + customerNames[0] + "' ");
                 } else {
-                    list.add(" OR a.customer_name LIKE'%" + customerNames[0] + "%' ");
+                    list.add(" OR a.customer_name ='" + customerNames[0] + "' ");
                 }
             }
             list.add(" ) AND  a.customer_scheme = b.id ");
@@ -647,45 +647,6 @@ public class InForService implements IInForService {
                         if (schemeGrade.indexOf(grade) != -1) {
                             jsonArrayData.add(jsonObjectImpData);
                         }
-                    }
-                }
-            }
-            List listTerraceTag = new ArrayList();
-            for (int m = 0; m < jsonArrayImp.size(); m++) {
-                JSONObject jsonObjectImp = jsonArrayImp.getJSONObject(m);
-                String id = jsonObjectImp.getString("id");
-                System.out.println("id为");
-                System.out.println(id);
-                if (m == 0) {
-                    listTerraceTag.add("SELECT * FROM sys_scheme_terrace_tag a WHERE a.scheme_id = " + id + " ");
-                } else {
-                    listTerraceTag.add(" OR a.scheme_id = " + id + " ");
-                }
-            }
-            ExecResult execResultTerrace = jsonResponse.getSelectResult(StringUtils.join(listTerraceTag, ""), null, "");
-            JSONArray jsonArrayTerrace = (JSONArray) execResultTerrace.getData();
-            if (jsonArrayTerrace != null) {
-                List listTerraceTagDetail = new ArrayList(16);
-                for (int m = 0; m < jsonArrayTerrace.size(); m++) {
-                    JSONObject jsonArrayTerraceJSONObject = jsonArrayTerrace.getJSONObject(m);
-                    String terraceTagId = jsonArrayTerraceJSONObject.getString("terrace_customer_id");
-                    if (m == 0) {
-                        listTerraceTagDetail.add("SELECT a.* FROM sys_terrace_infor a, sys_terrace_infor_tag b WHERE a.id = b.infor_id AND  ( b.infor_tag_id =  '" + terraceTagId + "'");
-                    } else {
-                        listTerraceTagDetail.add(" OR b.infor_tag_id = '" + terraceTagId + "'");
-                    }
-                }
-                listTerraceTagDetail.add(" ) ");
-                if ("".equals(chooseTime) || chooseTime == null) {
-                } else {
-                    String[] chooseTimes = chooseTime.split("&");
-                    listTerraceTagDetail.add(" AND a.infor_createtime > '" + chooseTimes[0] + "' AND  a.infor_createtime < '" + chooseTimes[1] + "'");
-                }
-                ExecResult execResultTerraceInfo = jsonResponse.getSelectResult(StringUtils.join(listTerraceTagDetail, ""), null, "");
-                JSONArray jsonArrayTerraceInfo = (JSONArray) execResultTerraceInfo.getData();
-                if (jsonArrayTerraceInfo != null) {
-                    for (int i = 0; i < jsonArrayTerraceInfo.size(); i++) {
-                        jsonArrayData.add(jsonArrayTerraceInfo.getJSONObject(i));
                     }
                 }
             }

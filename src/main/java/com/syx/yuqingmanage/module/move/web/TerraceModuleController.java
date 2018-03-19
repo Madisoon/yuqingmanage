@@ -29,9 +29,11 @@ public class TerraceModuleController {
     @ApiOperation(value = "插入平台模块", notes = "平台模块对象，标签id数组，地区id，基础id数组")
     public String insertTerraceModule(@RequestParam("terraceData") String terraceData,
                                       @RequestParam("tagIds") String tagIds,
+                                      @RequestParam("sortingIds") String sortingIds,
+                                      @RequestParam("sortingNames") String sortingNames,
                                       @RequestParam("areaId") String areaId,
                                       @RequestParam("baseTag") String baseTag) {
-        String result = iTerraceModuleService.insertTerraceModule(terraceData, tagIds, areaId, baseTag).toString();
+        String result = iTerraceModuleService.insertTerraceModule(terraceData, tagIds, sortingIds, sortingNames, areaId, baseTag).toString();
         return result;
     }
 

@@ -2,10 +2,7 @@ package com.syx.yuqingmanage.utils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.alienlab.response.JSONResponse;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -45,7 +42,6 @@ public class SqlEasy {
     }
 
     public static String updateObject(String objectData, String tableName, String chooseData) {
-        System.out.println(objectData);
         JSONObject jsonObject = JSON.parseObject(objectData);
         Set<String> set = jsonObject.keySet();
         Iterator<String> iterator = set.iterator();

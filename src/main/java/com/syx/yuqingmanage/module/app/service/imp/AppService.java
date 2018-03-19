@@ -153,7 +153,6 @@ public class AppService implements IAppService {
             qqAsyncMessagePost.insertData(jsonObject1, jsonArray1);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("程序运行时间：" + (endTime - startTime) + "ms");
     }
 
     @Override
@@ -167,84 +166,20 @@ public class AppService implements IAppService {
         String source = jsonObject.getString("source");
         String site = jsonObject.getString("site");
         String customerId = jsonObject.getString("dep_ids");
+        JSONObject jsonObjectInfo = new JSONObject();
+        jsonObjectInfo.put("infor_title", title);
+        jsonObjectInfo.put("infor_context", content);
+        jsonObjectInfo.put("infor_type", "0");
+        jsonObjectInfo.put("infor_grade", grade);
+        jsonObjectInfo.put("infor_link", link);
+        jsonObjectInfo.put("infor_site", site);
+        jsonObjectInfo.put("infor_status", "0");
+        jsonObjectInfo.put("infor_source", source);
+        jsonObjectInfo.put("infor_creater", "fenjianpingtai");
+        ExecResult execResult = inForService.insertInFor(jsonObjectInfo.toJSONString(), customerId);
+        int flag = execResult.getResult();
         JSONObject jsonObjectReturn = new JSONObject();
-        String insertSql = "INSERT INTO sys_terrace_infor (infor_title, infor_context, infor_grade, " +
-                "infor_link, infor_creater, " +
-                "infor_source, infor_site, infor_deps) VALUES " +
-                "('" + title + "','" + content + "','" + grade + "','" + link + "','" + creater + "','" + source + "','" + site + "','" + customerId + "')";
-        ExecResult execResult = jsonResponse.getExecInsertId(insertSql, null, "", "");
-        String[] customerIdS = customerId.split(",");
-        int customerIdSLen = customerIdS.length;
-        List list = new ArrayList();
-        list.add("SELECT a.*,b.scheme_status,b.scheme_imp,b.scheme_no_imp,b.scheme_link,b.scheme_no_link FROM sys_scheme_terrace_tag a ,sys_scheme b " +
-                "WHERE a.scheme_id = b.id AND b.scheme_grade LIKE '%" + grade + "%' AND (a.terrace_customer_id = " + customerIdS[0] + "");
-        String sql = "INSERT INTO sys_terrace_infor_tag (infor_id, infor_tag_id) VALUES ('" + execResult.getMessage() + "','" + customerIdS[0] + "')";
-        jsonResponse.getExecResult(sql, null);
-        for (int i = 1; i < customerIdSLen; i++) {
-            list.add(" OR a.terrace_customer_id = " + customerIdS[i] + " ");
-            sql = "INSERT INTO sys_terrace_infor_tag (infor_id, infor_tag_id) VALUES ('" + execResult.getMessage() + "','" + customerIdS[i] + "')";
-            jsonResponse.getExecResult(sql, null);
-        }
-        list.add(" )  GROUP BY a.scheme_id ");
-        ExecResult execResultScheme = jsonResponse.getSelectResult(StringUtils.join(list, ""), null, "");
-        JSONArray jsonArrayScheme = (JSONArray) execResultScheme.getData();
-        List<String> schemeIdList = new ArrayList<>();
-        List<String> schemeIdListLate = new ArrayList<>();
-        System.out.println(StringUtils.join(list, ""));
-        System.out.println("值");
-        System.out.println(jsonArrayScheme);
-        if (jsonArrayScheme != null) {
-            int jsonArraySchemeLen = jsonArrayScheme.size();
-            for (int i = 0; i < jsonArraySchemeLen; i++) {
-                JSONObject jsonObjectScheme = jsonArrayScheme.getJSONObject(i);
-                String schemeId = jsonObjectScheme.getString("scheme_id");
-                String schemeStatus = jsonObjectScheme.getString("scheme_status");
-                int flag = 1;
-                if ("0".equals(schemeStatus)) {
-                    String intervalTime = inForService.getPostTime(schemeId, new Date());
-                    flag = DifTimeGet.judgeTimeInterval(intervalTime, new Date());
-                }
-                String impWord = jsonObjectScheme.getString("scheme_imp");
-                String noImpWord = jsonObjectScheme.getString("scheme_no_imp");
-                String impLink = jsonObjectScheme.getString("scheme_link");
-                String noImpLink = jsonObjectScheme.getString("scheme_no_link");
-                boolean noWordJudgeFlag = !MessagePost.judgeWord(noImpWord, content, title) || noImpWord.equals("")
-                        && (!MessagePost.judgeLink(noImpLink, link) || noImpLink.equals(""));
-                if (noWordJudgeFlag) {
-                    //不包含排除关键词，如果包含
-                    boolean wordJudgeFlag = (impWord.equals("") || MessagePost.judgeWord(impWord, content, title)) &&
-                            ("".equals(impLink) || MessagePost.judgeLink(impLink, link));
-                    if (wordJudgeFlag) {
-                        //执行发标
-                        if (flag == 1) {
-                            schemeIdList.add(schemeId);
-                        } else {
-                            schemeIdListLate.add(schemeId);
-                        }
-                    }
-                }
-            }
-        }
-        if (schemeIdListLate.size() > 0) {
-            //延迟发送
-            JSONArray allCustomerLate = inForService.getAllCustomerByScheme(schemeIdListLate);
-            System.out.println(allCustomerLate);
-            if (allCustomerLate == null) {
-                //没有需要延迟发送的人
-                System.out.println("客户为空");
-            } else {
-                qqAsyncMessagePost.postCustomerLate(allCustomerLate, content, title, link, source, creater, site);
-            }
-        }
-        JSONArray allCustomer = inForService.getAllCustomerByScheme(schemeIdList);
-        System.out.println(allCustomer);
-        if (allCustomer == null) {
-            jsonObjectReturn.put("flag", true);
-        } else {
-            System.out.println(allCustomer);
-            qqAsyncMessagePost.postCustomerMessage(allCustomer, content, title, link, source, creater, site);
-        }
-        if (execResult.getResult() == 1) {
+        if (flag == 1) {
             jsonObjectReturn.put("flag", true);
         } else {
             jsonObjectReturn.put("flag", false);
@@ -256,6 +191,19 @@ public class AppService implements IAppService {
     public JSONObject getTerraceCustomerTag() {
         Map<String, String> map = new HashMap<>(16);
         JSONObject jsonObject = HttpClientUtil.postJsonData(TERRACE_URL, map);
+        JSONArray jsonArray = jsonObject.getJSONArray("value");
+        for (int i = 0; i < jsonArray.size(); i++) {
+            JSONObject jsonObject1 = jsonArray.getJSONObject(i);
+            String sql = "INSERT INTO sys_tag (id,NAME,tag_parent) VALUES('" + jsonObject1.getString("id") + "','" + jsonObject1.getString("name") + "','482')";
+            JSONResponse jsonResponse = new JSONResponse();
+            jsonResponse.getExecResult(sql, null);
+        }
+
         return jsonObject;
+    }
+
+    public static void main(String[] args) {
+        AppService appService = new AppService();
+        appService.getTerraceCustomerTag();
     }
 }

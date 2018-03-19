@@ -1,7 +1,7 @@
 <component name="ArtifactManager">
-  <artifact type="exploded-war" name="yuqingmanage:Web exploded">
+  <artifact type="war" name="yuqingmanage:Web exploded">
     <output-path>$PROJECT_DIR$/out/artifacts/yuqingmanage_Web_exploded</output-path>
-    <root id="root">
+    <root id="archive" name="yuqingmanage_Web exploded.war">
       <element id="javaee-facet-resources" facet="yuqingmanage/web/Web" />
       <element id="directory" name="WEB-INF">
         <element id="directory" name="classes">

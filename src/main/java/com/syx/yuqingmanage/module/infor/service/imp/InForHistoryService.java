@@ -54,6 +54,7 @@ public class InForHistoryService implements IInForHistoryService {
 
     @Override
     public JSONObject getChoiceHistory(String pageNumber, String pageSize, String tableChoiceData) {
+        System.out.println(tableChoiceData);
         JSONObject jsonObject = JSON.parseObject(tableChoiceData);
         String finishTime = jsonObject.getString("infor_finish_time");
         jsonObject.remove("infor_finish_time");

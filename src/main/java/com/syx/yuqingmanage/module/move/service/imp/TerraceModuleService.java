@@ -22,7 +22,7 @@ public class TerraceModuleService implements ITerraceModuleService {
     private JSONResponse jsonResponse;
 
     @Override
-    public ExecResult insertTerraceModule(String terraceData, String tagIds, String areaId, String baseTag) {
+    public ExecResult insertTerraceModule(String terraceData, String tagIds, String sortingIds, String sortingNames, String areaId, String baseTag) {
         String sql = SqlEasy.insertObject(terraceData, "sys_terrace_module");
         ExecResult execResult = jsonResponse.getExecInsertId(sql, null, "", "");
         int terraceModuleId = Integer.parseInt(execResult.getMessage());

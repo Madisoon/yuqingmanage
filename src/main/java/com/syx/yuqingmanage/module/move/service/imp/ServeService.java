@@ -82,6 +82,7 @@ public class ServeService implements IServeService {
     @Override
     public ExecResult updateServeCustomer(String customerData, String getData, String schemeCustomerId) {
         String sql = SqlEasy.updateObject(customerData, "sys_post_customer", "id = " + schemeCustomerId);
+        String sqlTime = "UPDATE sys_post_customer a SET customer_create_time = NOW() WHERE a.id = '" + schemeCustomerId + "'";
         List<String> sqlList = new ArrayList<>();
         sqlList.add(sql);
         sqlList.add("DELETE FROM sys_customer_get WHERE post_customer_id = " + schemeCustomerId);
@@ -92,6 +93,7 @@ public class ServeService implements IServeService {
             sqlList.add("INSERT INTO sys_customer_get (post_customer_id,get_number,get_remark,get_type) " +
                     "VALUES(" + schemeCustomerId + ",'" + jsonObject.getString("get_number") + "','" + jsonObject.getString("get_remark") + "','" + jsonObject.getString("get_type") + "')");
         }
+        sqlList.add(sqlTime);
         ExecResult execResult = jsonResponse.getExecResult(sqlList, "", "");
         return execResult;
     }
