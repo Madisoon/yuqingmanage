@@ -11,6 +11,7 @@ import com.alienlab.db.ExecResult;
 import com.alienlab.response.JSONResponse;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import cn.jiguang.common.resp.APIConnectionException;
@@ -37,6 +38,7 @@ public class JpushServer {
     // 极光的推送Client
     private JPushClient jpushClient;
 
+    @Async
     public void pushNotification(List<JpushBean> JpushBeanList) {
 
         List<PushPayload> payloads = buildPushObjects(JpushBeanList);

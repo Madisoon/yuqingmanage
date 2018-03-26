@@ -29,4 +29,8 @@ public interface IAppService {
     public JSONObject insertInformation(String data);
 
     public JSONObject getTerraceCustomerTag();
+
+    public JSONObject insertSortingTag(String tagName, String tagId);
+
+    public JSONObject deleteSortingTag(String tagId);
 }

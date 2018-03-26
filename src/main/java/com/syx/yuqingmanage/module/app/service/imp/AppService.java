@@ -191,19 +191,37 @@ public class AppService implements IAppService {
     public JSONObject getTerraceCustomerTag() {
         Map<String, String> map = new HashMap<>(16);
         JSONObject jsonObject = HttpClientUtil.postJsonData(TERRACE_URL, map);
-        JSONArray jsonArray = jsonObject.getJSONArray("value");
-        for (int i = 0; i < jsonArray.size(); i++) {
-            JSONObject jsonObject1 = jsonArray.getJSONObject(i);
-            String sql = "INSERT INTO sys_tag (id,NAME,tag_parent) VALUES('" + jsonObject1.getString("id") + "','" + jsonObject1.getString("name") + "','482')";
-            JSONResponse jsonResponse = new JSONResponse();
-            jsonResponse.getExecResult(sql, null);
-        }
-
         return jsonObject;
     }
 
     public static void main(String[] args) {
         AppService appService = new AppService();
         appService.getTerraceCustomerTag();
+    }
+
+    @Override
+    public JSONObject insertSortingTag(String tagName, String tagId) {
+        String sql = "INSERT INTO sys_tag (id,NAME,tag_parent) VALUES('" + tagId + "','" + tagName + "','495')";
+        ExecResult execResult = jsonResponse.getExecResult(sql, null);
+        JSONObject jsonObject = new JSONObject();
+        if (execResult.getResult() == 1) {
+            jsonObject.put("flag", true);
+        } else {
+            jsonObject.put("flag", false);
+        }
+        return jsonObject;
+    }
+
+    @Override
+    public JSONObject deleteSortingTag(String tagId) {
+        String sql = "DELETE FROM sys_tag WHERE id = " + tagId + "";
+        ExecResult execResult = jsonResponse.getExecResult(sql, null);
+        JSONObject jsonObject = new JSONObject();
+        if (execResult.getResult() == 1) {
+            jsonObject.put("flag", true);
+        } else {
+            jsonObject.put("flag", false);
+        }
+        return jsonObject;
     }
 }

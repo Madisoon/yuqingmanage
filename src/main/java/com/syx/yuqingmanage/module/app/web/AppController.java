@@ -77,4 +77,16 @@ public class AppController {
     public String getTerraceCustomerTag() {
         return iAppService.getTerraceCustomerTag().toString();
     }
+
+    @ApiOperation(value = "插入标签", notes = "无")
+    @RequestMapping(value = "/insertSortingTag", method = RequestMethod.POST)
+    public String insertSortingTag(@RequestParam("id") String id, @RequestParam("name") String name) {
+        return iAppService.insertSortingTag(name, id).toString();
+    }
+
+    @ApiOperation(value = "删除标签", notes = "无")
+    @RequestMapping(value = "/deleteSortingTag", method = RequestMethod.POST)
+    public String deleteSortingTag(@RequestParam("id") String id) {
+        return iAppService.deleteSortingTag(id).toString();
+    }
 }

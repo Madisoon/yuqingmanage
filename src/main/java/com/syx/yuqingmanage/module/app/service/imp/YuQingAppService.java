@@ -203,9 +203,9 @@ public class YuQingAppService implements IYuQingService {
                     " ELSE ''8'' END AS source_id FROM (SELECT a.id AS program_id, b.id , b.infor_type AS level_id,b.infor_title    " +
                     " AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
                     " AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM     " +
-                    " (SELECT a.*,b.app_module_id FROM  app_user_program a   LEFT JOIN app_user_program_module b   ON a.id = b.app_program_id   " +
-                    " WHERE a.app_user_loginname = ''" + loginName + "'' ) a LEFT JOIN app_module_tag_dep b   ON a.app_module_id = b.app_module_id) a   " +
-                    " LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id  AND  b.infor_createtime < ''" + date + "''  ORDER BY b.infor_createtime DESC) a) a   " +
+                    " (SELECT a.*,b.app_module_id FROM  app_user_program a   , app_user_program_module b   where a.id = b.app_program_id   " +
+                    " AND a.app_user_loginname = ''" + loginName + "'' ) a , app_module_tag_dep b   where a.app_module_id = b.app_module_id) a   " +
+                    " , infor_tag b where a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id  AND  b.infor_createtime < ''" + date + "''  ORDER BY b.infor_createtime DESC) a) a   " +
                     " " + sqlWhere + "  LIMIT 0, " + limit + ") a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
         } else {
             getSql = " SELECT a.*,CASE WHEN (b.app_read_id IS NULL) THEN ''0''  " +
@@ -219,9 +219,9 @@ public class YuQingAppService implements IYuQingService {
                     " ELSE ''8'' END AS source_id FROM (SELECT a.id AS program_id, b.id , b.infor_type AS level_id,b.infor_title    " +
                     " AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
                     " AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM     " +
-                    " (SELECT a.*,b.app_module_id FROM  app_user_program a   LEFT JOIN app_user_program_module b   ON a.id = b.app_program_id   " +
-                    " WHERE a.app_user_loginname = ''" + loginName + "'' ) a LEFT JOIN app_module_tag_dep b   ON a.app_module_id = b.app_module_id) a   " +
-                    " LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id   ORDER BY b.infor_createtime DESC) a) a   " +
+                    " (SELECT a.*,b.app_module_id FROM  app_user_program a   , app_user_program_module b   where a.id = b.app_program_id   " +
+                    " AND a.app_user_loginname = ''" + loginName + "'' ) a , app_module_tag_dep b   where a.app_module_id = b.app_module_id) a   " +
+                    " , infor_tag b where a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id   ORDER BY b.infor_createtime DESC) a) a   " +
                     " " + sqlWhere + "  LIMIT 0, " + limit + ") a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
         }
         ExecResult execResult = jsonResponse.getSelectResult(getSql, sqlWhereValue, "");
@@ -263,9 +263,9 @@ public class YuQingAppService implements IYuQingService {
                             " ELSE ''8'' END AS source_id FROM (SELECT a.id AS program_id, b.id , b.infor_type AS level_id,b.infor_title    " +
                             " AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
                             " AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM     " +
-                            " (SELECT a.*,b.app_module_id FROM  app_user_program a   LEFT JOIN app_user_program_module b   ON a.id = b.app_program_id   " +
-                            " WHERE a.app_user_loginname = ''" + loginName + "'' ) a LEFT JOIN app_module_tag_dep b   ON a.app_module_id = b.app_module_id) a   " +
-                            " LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id  AND  b.infor_createtime < ''" + date + "''  ORDER BY b.infor_createtime DESC) a) a   " +
+                            " (SELECT a.*,b.app_module_id FROM  app_user_program a   , app_user_program_module b   where a.id = b.app_program_id   " +
+                            " and a.app_user_loginname = ''" + loginName + "'' ) a , app_module_tag_dep b   where a.app_module_id = b.app_module_id) a   " +
+                            " , infor_tag b where a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id  AND  b.infor_createtime < ''" + date + "''  ORDER BY b.infor_createtime DESC) a) a   " +
                             " " + sqlWhere + " ) a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
                 } else {
                     getSqlImp = " SELECT a.*,CASE WHEN (b.app_read_id IS NULL) THEN ''0''  " +
@@ -279,9 +279,9 @@ public class YuQingAppService implements IYuQingService {
                             " ELSE ''8'' END AS source_id FROM (SELECT a.id AS program_id, b.id , b.infor_type AS level_id,b.infor_title    " +
                             " AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
                             " AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM     " +
-                            " (SELECT a.*,b.app_module_id FROM  app_user_program a   LEFT JOIN app_user_program_module b   ON a.id = b.app_program_id   " +
-                            " WHERE a.app_user_loginname = ''" + loginName + "'' ) a LEFT JOIN app_module_tag_dep b   ON a.app_module_id = b.app_module_id) a   " +
-                            " LEFT JOIN infor_tag b ON a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id   ORDER BY b.infor_createtime DESC) a) a   " +
+                            " (SELECT a.*,b.app_module_id FROM  app_user_program a   , app_user_program_module b   where a.id = b.app_program_id   " +
+                            " and a.app_user_loginname = ''" + loginName + "'' ) a , app_module_tag_dep b   where a.app_module_id = b.app_module_id) a   " +
+                            " , infor_tag b where a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id   ORDER BY b.infor_createtime DESC) a) a   " +
                             " " + sqlWhere + " ) a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
                 }
 
