@@ -206,7 +206,7 @@ public class YuQingAppService implements IYuQingService {
                     " (SELECT a.*,b.app_module_id FROM  app_user_program a   , app_user_program_module b   where a.id = b.app_program_id   " +
                     " AND a.app_user_loginname = ''" + loginName + "'' ) a , app_module_tag_dep b   where a.app_module_id = b.app_module_id) a   " +
                     " , infor_tag b where a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id  AND  b.infor_createtime < ''" + date + "''  ORDER BY b.infor_createtime DESC) a) a   " +
-                    " " + sqlWhere + "  LIMIT 0, " + limit + ") a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
+                    " " + sqlWhere + "  LIMIT 0, " + limit + " ) a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
         } else {
             getSql = " SELECT a.*,CASE WHEN (b.app_read_id IS NULL) THEN ''0''  " +
                     "ELSE  ''1'' END AS info_read FROM (SELECT * FROM (SELECT *,CASE a.source    " +
@@ -222,7 +222,7 @@ public class YuQingAppService implements IYuQingService {
                     " (SELECT a.*,b.app_module_id FROM  app_user_program a   , app_user_program_module b   where a.id = b.app_program_id   " +
                     " AND a.app_user_loginname = ''" + loginName + "'' ) a , app_module_tag_dep b   where a.app_module_id = b.app_module_id) a   " +
                     " , infor_tag b where a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id   ORDER BY b.infor_createtime DESC) a) a   " +
-                    " " + sqlWhere + "  LIMIT 0, " + limit + ") a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
+                    " " + sqlWhere + "  LIMIT 0, " + limit + " ) a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
         }
         ExecResult execResult = jsonResponse.getSelectResult(getSql, sqlWhereValue, "");
         JSONObject jsonObject = new JSONObject();
@@ -266,7 +266,7 @@ public class YuQingAppService implements IYuQingService {
                             " (SELECT a.*,b.app_module_id FROM  app_user_program a   , app_user_program_module b   where a.id = b.app_program_id   " +
                             " and a.app_user_loginname = ''" + loginName + "'' ) a , app_module_tag_dep b   where a.app_module_id = b.app_module_id) a   " +
                             " , infor_tag b where a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id  AND  b.infor_createtime < ''" + date + "''  ORDER BY b.infor_createtime DESC) a) a   " +
-                            " " + sqlWhere + " ) a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
+                            " " + sqlWhere + "  LIMIT 0, " + limit + " ) a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
                 } else {
                     getSqlImp = " SELECT a.*,CASE WHEN (b.app_read_id IS NULL) THEN ''0''  " +
                             "ELSE  ''1'' END AS info_read FROM (SELECT * FROM (SELECT *,CASE a.source    " +
@@ -282,7 +282,7 @@ public class YuQingAppService implements IYuQingService {
                             " (SELECT a.*,b.app_module_id FROM  app_user_program a   , app_user_program_module b   where a.id = b.app_program_id   " +
                             " and a.app_user_loginname = ''" + loginName + "'' ) a , app_module_tag_dep b   where a.app_module_id = b.app_module_id) a   " +
                             " , infor_tag b where a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id   ORDER BY b.infor_createtime DESC) a) a   " +
-                            " " + sqlWhere + " ) a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
+                            " " + sqlWhere + "  LIMIT 0, " + limit + " ) a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
                 }
 
                 ExecResult execResultImp = jsonResponse.getSelectResult(getSqlImp, sqlWhereValue, "");
