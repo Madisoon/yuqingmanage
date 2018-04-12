@@ -72,7 +72,8 @@ public class SchemeService implements ISchemeService {
         List<String> sqlList = new ArrayList<>();
         sqlList.add("SELECT a.* ,GROUP_CONCAT(a.name) AS tag_names,GROUP_CONCAT(a.tag_id) AS tag_ids ");
         sqlList.add("FROM (SELECT c.*,d.name,d.id AS tag_id,e.user_loginname,e.user_name ,f.plan_name FROM sys_scheme_area_dep a , sys_scheme_tag_dep b ,sys_scheme c,sys_tag d,sys_user e, sys_plan f ");
-        sqlList.add("WHERE a.scheme_id = c.id AND b.scheme_id = c.id  AND b.tag_id = d.id AND c.scheme_creater=e.user_loginname AND c.scheme_plan_id = f.id  AND (a.area_id = " + StringUtils.join(idList, "") + ")) a GROUP BY a.id");
+        sqlList.add("WHERE a.scheme_id = c.id AND b.scheme_id = c.id  AND b.tag_id = d.id AND c.scheme_creater=e.user_loginname AND c.scheme_plan_id = f.id  AND (a.area_id = " + StringUtils.join(idList, "") + ")) a " +
+                "GROUP BY a.id ,a.user_name,a.get_number,a.get_remark,a.get_type");
         String sql = StringUtils.join(sqlList, "");
         ExecResult execResult = jsonResponse.getSelectResult(sql, null, "");
         JSONObject jsonObject = new JSONObject();

@@ -8,10 +8,6 @@ import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-/**
- * @author monee
- *         拦截器
- */
 public class SystemAuthInterceptor extends HandlerInterceptorAdapter {
 
     private Logger logger = LoggerFactory.getLogger(SystemAuthInterceptor.class);
@@ -25,7 +21,6 @@ public class SystemAuthInterceptor extends HandlerInterceptorAdapter {
 
     @Override
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
-        System.out.println("拦截器");
         super.postHandle(request, response, handler, modelAndView);
     }
 }

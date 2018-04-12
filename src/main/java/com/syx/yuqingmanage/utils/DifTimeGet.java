@@ -25,18 +25,17 @@ public class DifTimeGet {
         String[] times = timeInterval.split("-");
         if (timeInterval == "" || times[0].equals(times[1])) {
             flag = 0;
-            System.out.println("延长时间发信息");
         } else {
             SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
             String nowTimeHM = sdf.format(nowTime);
             int startResult = nowTimeHM.compareTo(times[0]);
             int endResult = nowTimeHM.compareTo(times[1]);
             if (startResult > 0 && endResult < 0) {
-                flag = 1;//立刻发
-                System.out.println("现在立刻发信息");
+                //立刻发
+                flag = 1;
             } else {
-                flag = 0;//过一段时间再发
-                System.out.println("延长时间发信息");
+                //定时发送
+                flag = 0;
             }
         }
         return flag;

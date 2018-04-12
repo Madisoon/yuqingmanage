@@ -268,13 +268,7 @@ public class YuQingAppController {
     @RequestMapping(value = "/release/check", method = RequestMethod.POST)
     public String checkVersion(@RequestParam("version") String version,
                                HttpServletRequest httpServletRequest) {
-        String loginName = judgeCookie(httpServletRequest);
-        String result = "";
-        if ("".equals(loginName)) {
-            result = returnStaticJsonObject();
-        } else {
-            result = iYuQingService.checkVersion(version).toString();
-        }
+        String result = iYuQingService.checkVersion(version).toString();
         return result;
     }
 

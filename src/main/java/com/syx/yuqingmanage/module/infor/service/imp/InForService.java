@@ -9,6 +9,7 @@ import com.syx.yuqingmanage.module.infor.service.IInForService;
 import com.syx.yuqingmanage.utils.*;
 import com.syx.yuqingmanage.utils.jpush.JpushBean;
 import com.syx.yuqingmanage.utils.jpush.JpushServer;
+import net.sf.ehcache.transaction.xa.EhcacheXAException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,10 +30,6 @@ public class InForService implements IInForService {
     @Autowired
     private NumberInfoPost numberInfoPost;
     @Autowired
-    private QqMessagePost qqMessagePost;
-    @Autowired
-    private FailData failData;
-    @Autowired
     private QqAsyncMessagePost qqAsyncMessagePost;
     private DataExport dataExport = new DataExport();
 
@@ -41,48 +38,64 @@ public class InForService implements IInForService {
 
     @Override
     public ExecResult insertInFor(String infoData, String infoTag) {
-
-        JSONObject jsonObject = JSONObject.parseObject(infoData);
-        // 信息的内容
-        String regEx = "[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】'；：”“’。，、？]";
-        Pattern p = Pattern.compile(regEx);
-        Matcher m = p.matcher(jsonObject.getString("infor_context"));
-        String infoContext = m.replaceAll("").trim();
-        // 信息的标题
-        String infoTitle = jsonObject.getString("infor_title");
-        // 信息的链接
-        String infoLink = jsonObject.getString("infor_link");
-        // 信息的来源
-        String infoSource = jsonObject.getString("infor_source");
-        // 信息的等级
-        String infoGrade = jsonObject.getString("infor_grade");
-        // 信息的正负面
-        String infoType = jsonObject.getString("infor_type");
-        // 信息的站点
-        String infoSite = jsonObject.getString("infor_site");
-        String inforCreater = jsonObject.getString("infor_creater");
-
-        String tagId = infoTag;
-        String inFoData = String.valueOf(jsonObject);
-        String sqlInsert = SqlEasy.insertObject(inFoData, "sys_infor");
+        // 插入信息没有问题
+        String sqlInsert = SqlEasy.insertObject(infoData, "sys_infor");
         ExecResult execResult = jsonResponse.getExecInsertId(sqlInsert, null, "", "");
-        //只有主表插入成功之后才会执行插入从表和发送逻辑
-        String infor_id = "";
+        String infoId;
         if (execResult.getResult() == 1) {
-            //所有的标签的id
-            infor_id = execResult.getMessage();
-            String[] tagIds = tagId.split(",");
-            //信息的等级
+            infoId = execResult.getMessage();
+            String[] tagIds = infoTag.split(",");
             int tagIdsLen = tagIds.length;
             List<String> tagSql = new ArrayList<>();
             for (int i = 0; i < tagIdsLen; i++) {
                 String tag_id = tagIds[i];
-                String sqlTag = "INSERT INTO infor_tag (infor_id,tag_id) VALUES('" + infor_id + "','" + tag_id + "')";
+                String sqlTag = "INSERT INTO infor_tag (infor_id,tag_id) VALUES('" + infoId + "','" + tag_id + "')";
                 tagSql.add(sqlTag);
             }
+            // 插入从表
             jsonResponse.getExecResult(tagSql, "", "");
+        }
+        return execResult;
+    }
 
-            // 发送给客户的逻辑
+    @Override
+    public ExecResult infoSure(String infoId, String infoData) {
+        String sqlUpdate = "";
+        if ("{}".equals(infoData)) {
+            sqlUpdate = "UPDATE sys_infor a SET a.is_status = 1 WHERE a.id = " + infoId;
+        } else {
+            sqlUpdate = SqlEasy.updateObject(infoData, "sys_infor", " id = " + infoId);
+        }
+        // 身份确认
+        ExecResult execResultReturn = jsonResponse.getExecResult(sqlUpdate, null);
+        String sql = "SELECT a.*, group_concat(b.tag_id) AS infor_tags FROM sys_infor a, infor_tag b " +
+                "WHERE a.id = b.infor_id AND a.id = '" + infoId + "' GROUP BY  a.id ";
+        ExecResult execResult = jsonResponse.getSelectResult(sql, null, "");
+        if (execResult.getResult() == 1) {
+            JSONArray jsonArray = (JSONArray) execResult.getData();
+            JSONObject jsonObject = jsonArray.getJSONObject(0);
+            // 信息的内容
+            String infoContent = jsonObject.getString("infor_context");
+            // 信息的标题
+            String infoTitle = jsonObject.getString("infor_title");
+            // 信息的链接
+            String infoLink = jsonObject.getString("infor_link");
+            // 信息的来源
+            String infoSource = jsonObject.getString("infor_source");
+            // 信息的等级
+            String infoGrade = jsonObject.getString("infor_grade");
+            // 信息的正负面
+            String infoType = jsonObject.getString("infor_type");
+            // 信息的站点
+            String infoSite = jsonObject.getString("infor_site");
+            // 信息的站点
+            String infoCreater = jsonObject.getString("infor_creater");
+            // 信息的标签
+            String infoTag = jsonObject.getString("infor_tags");
+
+            // 拼接好标签
+            String[] tagIds = infoTag.split(",");
+            int tagIdsLen = tagIds.length;
             List<String> sqlList = new ArrayList<>();
             for (int i = 0; i < tagIdsLen; i++) {
                 if (i == 0) {
@@ -91,21 +104,31 @@ public class InForService implements IInForService {
                     sqlList.add(" OR tag_id =  " + tagIds[i]);
                 }
             }
-            List<String> selectList = new ArrayList<>();
-            selectList.add(" SELECT * FROM (SELECT scheme_id FROM sys_scheme_tag_base ");
-            selectList.add(" WHERE " + StringUtils.join(sqlList, "") + " GROUP BY scheme_id) a , sys_scheme b ");
-            selectList.add(" WHERE a.scheme_id = b.id AND b.scheme_grade LIKE '%" + infoGrade + "%' ");
+            // 发送给客户的逻辑
+            List<String> seletSchemeList = new ArrayList<>();
+            seletSchemeList.add(" SELECT * FROM (SELECT scheme_id FROM sys_scheme_tag_base ");
+            seletSchemeList.add(" WHERE " + StringUtils.join(sqlList, "") + " GROUP BY scheme_id) a , sys_scheme b ");
+            seletSchemeList.add(" WHERE a.scheme_id = b.id AND b.scheme_grade LIKE '%" + infoGrade + "%' ");
             //获取到符合到条件的方案（去除重复+等级匹配）
-            String sqlScheme = StringUtils.join(selectList, "");
+            String sqlScheme = StringUtils.join(seletSchemeList, "");
+            // 发送给app
+            // 发送给大屏
+            // 发送给平台（需要考虑到定时推送）
             ExecResult allSqlScheme = jsonResponse.getSelectResult(sqlScheme, null, "");
             JSONArray jsonArrayScheme = (JSONArray) allSqlScheme.getData();
+
+            // 立刻发送的方案
             List<String> schemeIdList = new ArrayList<>();
+
+            // 延迟发送的方案
             List<String> schemeIdListLate = new ArrayList<>();
+
             if (jsonArrayScheme != null) {
                 int jsonArraySchemeLen = jsonArrayScheme.size();
                 for (int i = 0; i < jsonArraySchemeLen; i++) {
                     JSONObject jsonObjectScheme = jsonArrayScheme.getJSONObject(i);
                     String schemeId = jsonObjectScheme.getString("id");
+                    // 额外时间是否发送
                     String schemeStatus = jsonObjectScheme.getString("scheme_status");
                     int flag = 1;
                     if ("0".equals(schemeStatus)) {
@@ -116,11 +139,11 @@ public class InForService implements IInForService {
                     String noImpWord = jsonObjectScheme.getString("scheme_no_imp");
                     String impLink = jsonObjectScheme.getString("scheme_link");
                     String noImpLink = jsonObjectScheme.getString("scheme_no_link");
-                    boolean noWordJudgeFlag = !MessagePost.judgeWord(noImpWord, infoContext, infoTitle) || noImpWord.equals("")
+                    boolean noWordJudgeFlag = !MessagePost.judgeWord(noImpWord, infoContent, infoTitle) || noImpWord.equals("")
                             && (!MessagePost.judgeLink(noImpLink, infoLink) || noImpLink.equals(""));
                     if (noWordJudgeFlag) {
                         //不包含排除关键词，如果包含
-                        boolean wordJudgeFlag = (impWord.equals("") || MessagePost.judgeWord(impWord, infoContext, infoTitle)) &&
+                        boolean wordJudgeFlag = (impWord.equals("") || MessagePost.judgeWord(impWord, infoContent, infoTitle)) &&
                                 ("".equals(impLink) || MessagePost.judgeLink(impLink, infoLink));
                         if (wordJudgeFlag) {
                             //执行发标签 执行的事情是一样的
@@ -130,33 +153,26 @@ public class InForService implements IInForService {
                                 schemeIdListLate.add(schemeId);
                             }
                         }
-                    } else {
-                        System.out.println("包含了排除关键词，或者包含了匹配链接");
                     }
                 }
                 //所有需要发送信息的发送和信息
                 if (schemeIdList.size() > 0) {
                     //立刻发送
                     JSONArray allCustomer = getAllCustomerByScheme(schemeIdList);
-                    if (allCustomer == null) {
-                    } else {
-                        qqAsyncMessagePost.postCustomerMessage(allCustomer, infoContext, infoTitle, infoLink, infoSource, inforCreater, infoSite);
+                    if (allCustomer != null) {
+                        qqAsyncMessagePost.postCustomerMessage(allCustomer, infoLink, infoId);
                     }
-
                 }
                 if (schemeIdListLate.size() > 0) {
                     //延迟发送
                     JSONArray allCustomerLate = getAllCustomerByScheme(schemeIdListLate);
-                    if (allCustomerLate == null) {
-                        //没有需要延迟发送的人
-                        System.out.println("客户为空");
-                    } else {
-                        qqAsyncMessagePost.postCustomerLate(allCustomerLate, infoContext, infoTitle, infoLink, infoSource, inforCreater, infoSite);
+                    if (allCustomerLate != null) {
+                        qqAsyncMessagePost.postCustomerLate(allCustomerLate, infoLink, infoId);
                     }
                 }
             }
             // 发送给平台的逻辑
-            postTerraceCustomer(infoTag, infoGrade, infoContext, infoTitle, infoLink, infoSource, infoType, infoSite);
+            postTerraceCustomer(infoTag, infoGrade, infoContent, infoTitle, infoLink, infoSource, infoType, infoSite);
             // 推送模块 APP starter
             String infoProgram = "SELECT d.id FROM  app_module_tag_dep a ,app_module b , " +
                     "app_user_program_module c,app_user_program d " +
@@ -165,13 +181,13 @@ public class InForService implements IInForService {
                     "AND b.app_module_type = 0 GROUP BY d.id  ";
             ExecResult execResultProgram = jsonResponse.getSelectResult(infoProgram, null, "");
             if (execResultProgram.getResult() == 1) {
-                JSONArray jsonArray = (JSONArray) execResultProgram.getData();
-                int jsonArrayLen = jsonArray.size();
+                JSONArray jsonArrayAppUser = (JSONArray) execResultProgram.getData();
+                int jsonArrayLen = jsonArrayAppUser.size();
                 List<JpushBean> list = new ArrayList<>();
                 for (int i = 0; i < jsonArrayLen; i++) {
-                    JSONObject jsonObjectTag = jsonArray.getJSONObject(i);
+                    JSONObject jsonObjectTag = jsonArrayAppUser.getJSONObject(i);
                     JpushBean jpushBean = new JpushBean();
-                    jpushBean.setId(infor_id);
+                    jpushBean.setId(infoId);
                     jpushBean.setTagId(jsonObjectTag.getString("id"));
                     jpushBean.setTitle(infoTitle);
                     jpushBean.setContent("");
@@ -181,26 +197,36 @@ public class InForService implements IInForService {
                 }
                 jpushServer.pushNotification(list);
             }
-            // 推送模块 end
         }
-        return execResult;
+        return execResultReturn;
     }
 
     @Override
-    public JSONObject getAllInfor(String pageNumber, String pageSize) {
+    public JSONObject getAllInfor(String pageNumber, String pageSize, String type) {
         JSONObject returnData = new JSONObject();
+        String isStatus = "1";
         int pageNumberInt = Integer.parseInt(pageNumber, 10);
         int pageSizeInt = Integer.parseInt(pageSize, 10);
         String sqlLen = "SELECT COUNT(id) AS total FROM sys_infor";
         ExecResult execResult = jsonResponse.getSelectResult(sqlLen, null, "");
         JSONArray jsonArray = (JSONArray) execResult.getData();
         JSONObject jsonObjectLen = jsonArray.getJSONObject(0);
-
-        String sqlInFor = "SELECT a.*,GROUP_CONCAT(a.tag_id) AS tag_ids,GROUP_CONCAT(a.name) AS tag_names  " +
-                "FROM (SELECT a.*,b.name FROM (SELECT a.*,b.tag_id,c.user_name FROM (SELECT * FROM  sys_infor a  " +
-                "ORDER BY a.infor_createtime DESC  LIMIT " + ((pageNumberInt - 1) * pageSizeInt) + "," + pageSizeInt + " )  a LEFT JOIN infor_tag b " +
-                "ON a.id = b.infor_id LEFT JOIN sys_user c ON a.infor_creater = c.user_loginname) a  " +
-                "LEFT JOIN sys_tag b ON a.tag_id = b.id) a GROUP BY a.id";
+        String sqlInFor;
+        if (isStatus.equals(type)) {
+            sqlInFor = "SELECT a.*,c.user_name,GROUP_CONCAT(d.name) AS tag_names,GROUP_CONCAT(b.tag_id) AS tag_ids " +
+                    "FROM (SELECT * FROM  sys_infor a  " +
+                    "ORDER BY a.infor_createtime DESC  LIMIT " + ((pageNumberInt - 1) * pageSizeInt) + "," + pageSizeInt + " )  a " +
+                    ", infor_tag b,sys_user c, sys_tag d " +
+                    "WHERE a.id = b.infor_id  AND a.infor_creater = c.user_loginname " +
+                    "AND b.tag_id = d.id GROUP BY a.id,c.id";
+        } else {
+            sqlInFor = "SELECT a.*,c.user_name,GROUP_CONCAT(d.name) AS tag_names,GROUP_CONCAT(b.tag_id) AS tag_ids " +
+                    "FROM (SELECT * FROM  sys_infor a WHERE a.is_status = 0 " +
+                    "ORDER BY a.infor_createtime DESC  LIMIT " + ((pageNumberInt - 1) * pageSizeInt) + "," + pageSizeInt + " )  a " +
+                    ", infor_tag b,sys_user c, sys_tag d " +
+                    "WHERE a.id = b.infor_id  AND a.infor_creater = c.user_loginname " +
+                    "AND b.tag_id = d.id GROUP BY a.id,c.id";
+        }
         execResult = jsonResponse.getSelectResult(sqlInFor, null, "");
         JSONArray allData = (JSONArray) execResult.getData();
         returnData.put("data", allData);
@@ -244,8 +270,6 @@ public class InForService implements IInForService {
         sqlList.add(" FROM sys_post_customer a, sys_customer_get b ,sys_scheme c ");
         sqlList.add(" WHERE a.customer_status = 1 AND  a.customer_start_time <='" + dateFormat + "' AND  a.customer_end_time >='" + dateFormat + "'  AND (" + StringUtils.join(listWhere, "") + ")  ");
         sqlList.add(" AND a.id = b.post_customer_id AND a.customer_scheme = c.id ) a LEFT JOIN sys_qq b  ON a.customer_post_qq = b.id ");
-        System.out.println("sql++++++++++");
-        System.out.println(StringUtils.join(sqlList, ""));
         ExecResult execResult = jsonResponse.getSelectResult(StringUtils.join(sqlList, ""), null, "");
         JSONArray jsonArray = (JSONArray) execResult.getData();
         return jsonArray;
@@ -388,19 +412,17 @@ public class InForService implements IInForService {
                     String dataImp = jsonObjectImp.getString("scheme_imp");
                     System.out.println(dataImp);
                     if (!"".equals(dataImp)) {
-                        System.out.println("执行那一步");
                         String[] impWords = dataImp.split("\\|");
                         int impWordsLen = impWords.length;
                         int i;
                         for (i = 0; i < impWordsLen; i++) {
                             if (title.indexOf(impWords[i]) != -1 || content.indexOf(impWords[i]) != -1) {
                                 jsonArrayData.add(jsonObjectImpData);
-                                System.out.println("满足条件");
+
                                 break;
                             }
                         }
                     } else {
-                        System.out.println("执行这一步");
                         jsonArrayData.add(jsonObjectImpData);
                     }
                 }
@@ -487,58 +509,6 @@ public class InForService implements IInForService {
     }
 
     @Override
-    public ExecResult manualPost(String infoId, String customerId) {
-        // 手共发送
-        List<String> customerInfo = new ArrayList<>();
-        customerInfo.add(" SELECT b.*,c.qq_number FROM sys_post_customer a ,sys_customer_get b,sys_qq c ");
-        customerInfo.add(" WHERE a.id = b.post_customer_id AND a.customer_post_qq = c.id AND a.id = " + customerId);
-        String customerSql = StringUtils.join(customerInfo, "");
-        ExecResult execResult = jsonResponse.getSelectResult(customerSql, null, "");
-
-        JSONArray jsonArray = (JSONArray) execResult.getData();
-
-        int customerLen = jsonArray.size();
-        String[] infoIdS = infoId.split(",");
-        int infoIdSLen = infoIdS.length;
-        for (int i = 0; i < infoIdSLen; i++) {
-            String infoData = " SELECT a.infor_title,a.infor_context,a.infor_link,a.infor_source FROM sys_infor a WHERE a.id =  " + infoIdS[i];
-            execResult = jsonResponse.getSelectResult(infoData, null, "");
-            JSONArray jsonArrayData = (JSONArray) execResult.getData();
-            // 一条信息
-            JSONObject jsonObject = jsonArrayData.getJSONObject(0);
-            String infoTitle = jsonObject.getString("infor_title");
-            String infoContext = jsonObject.getString("infor_context");
-            String infoLink = jsonObject.getString("infor_link");
-            String infoSource = jsonObject.getString("infor_source");
-            for (int j = 0; j < customerLen; j++) {
-                JSONObject jsonObjectData = jsonArray.getJSONObject(j);
-                String getType = jsonObjectData.getString("get_type");
-                String getNumber = jsonObjectData.getString("get_number");
-                String qqNumber = jsonObjectData.getString("qq_number");
-                if ("number".equals(getType)) {
-                    System.out.println("发送手机");
-                    numberInfoPost.sendMsgByYunPian(infoLink, getNumber);
-                } else {
-
-                    // 定时发qq消息
-                    int timeNumber = 5 + (int) Math.random() * 4;
-                    try {
-                        TimeUnit.SECONDS.sleep(timeNumber);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    boolean flag = qqMessagePost.postMessage(getNumber, qqNumber, getType, infoTitle, infoContext, infoLink, infoSource);
-                    if (!flag) {
-                        numberInfoPost.sendMsgByYunPian(qqNumber + "消息发送失败了!", "18752002129");
-                        failData.qqResend(getNumber, qqNumber, getType, infoTitle, infoContext, infoLink, infoSource);
-                    }
-                }
-            }
-        }
-        return execResult;
-    }
-
-    @Override
     public String exportData(String searchTagId, String searchInfoData, String customerName, String exportType) {
         JSONObject jsonObjectData = JSON.parseObject(searchInfoData);
         String chooseTime = jsonObjectData.getString("infor_createtime");
@@ -621,6 +591,7 @@ public class InForService implements IInForService {
             list.add(" ) AND  a.customer_scheme = b.id ");
 
             ExecResult execResultImp = jsonResponse.getSelectResult(StringUtils.join(list, ""), null, "");
+            System.out.println(StringUtils.join(list, ""));
             JSONArray jsonArrayImp = (JSONArray) execResultImp.getData();
             for (int n = 0; n < jsonArray.size(); n++) {
                 JSONObject jsonObjectImpData = jsonArray.getJSONObject(n);
@@ -646,6 +617,64 @@ public class InForService implements IInForService {
                     } else {
                         if (schemeGrade.indexOf(grade) != -1) {
                             jsonArrayData.add(jsonObjectImpData);
+                        }
+                    }
+                }
+            }
+            List listTerraceTag = new ArrayList();
+            for (int m = 0; m < jsonArrayImp.size(); m++) {
+                JSONObject jsonObjectImp = jsonArrayImp.getJSONObject(m);
+                String id = jsonObjectImp.getString("id");
+                if (m == 0) {
+                    listTerraceTag.add("SELECT * FROM sys_scheme_terrace_tag a " +
+                            "WHERE a.scheme_id = " + id + " ");
+                } else {
+                    listTerraceTag.add(" OR a.scheme_id = " + id + " ");
+                }
+            }
+            ExecResult execResultTerrace = jsonResponse.getSelectResult(StringUtils.join(listTerraceTag, ""), null, "");
+            JSONArray jsonArrayTerrace = (JSONArray) execResultTerrace.getData();
+            if (jsonArrayTerrace != null) {
+                List listTerraceTagDetail = new ArrayList(16);
+                for (int m = 0; m < jsonArrayTerrace.size(); m++) {
+                    JSONObject jsonArrayTerraceJSONObject = jsonArrayTerrace.getJSONObject(m);
+                    String terraceTagId = jsonArrayTerraceJSONObject.getString("terrace_customer_id");
+                    if (m == 0) {
+                        listTerraceTagDetail.add("SELECT a.* FROM sys_terrace_infor a, sys_terrace_infor_tag b WHERE a.id = b.infor_id AND  ( b.infor_tag_id =  '" + terraceTagId + "'");
+                    } else {
+                        listTerraceTagDetail.add(" OR b.infor_tag_id = '" + terraceTagId + "'");
+                    }
+                }
+                listTerraceTagDetail.add(" ) ");
+                if ("".equals(chooseTime) || chooseTime == null) {
+                } else {
+                    String[] chooseTimes = chooseTime.split("&");
+                    listTerraceTagDetail.add(" AND a.infor_createtime > '" + chooseTimes[0] + "' AND  a.infor_createtime < '" + chooseTimes[1] + "'");
+                }
+                ExecResult execResultTerraceInfo = jsonResponse.getSelectResult(StringUtils.join(listTerraceTagDetail, ""), null, "");
+                JSONArray jsonArrayTerraceInfo = (JSONArray) execResultTerraceInfo.getData();
+                if (jsonArrayTerraceInfo != null) {
+                    // 已经取到了，需要导出的所有的信息，同时取到了相匹配的方案。
+                    for (int i = 0; i < jsonArrayTerraceInfo.size(); i++) {
+                        JSONObject jsonObjectImpData = jsonArrayTerraceInfo.getJSONObject(i);
+                        String title = jsonObjectImpData.getString("infor_title");
+                        String content = jsonObjectImpData.getString("infor_context");
+                        for (int m = 0; m < jsonArrayImp.size(); m++) {
+                            JSONObject jsonObjectImp = jsonArrayImp.getJSONObject(m);
+                            String dataImp = jsonObjectImp.getString("scheme_imp");
+                            if (!"".equals(dataImp)) {
+                                String[] impWords = dataImp.split("\\|");
+                                int impWordsLen = impWords.length;
+                                int n;
+                                for (n = 0; n < impWordsLen; n++) {
+                                    if (title.indexOf(impWords[n]) != -1 || content.indexOf(impWords[n]) != -1) {
+                                        jsonArrayData.add(jsonObjectImpData);
+                                        break;
+                                    }
+                                }
+                            } else {
+                                jsonArrayData.add(jsonObjectImpData);
+                            }
                         }
                     }
                 }

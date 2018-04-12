@@ -1,11 +1,17 @@
 package com.syx.yuqingmanage.utils;
 
 /**
- * Created by Msater Zg on 2017/2/16.
+ * @author zg
  */
 public class MessagePost {
+    /**
+     * 判断内容是否有包含关系
+     * @param impWord
+     * @param wordContext
+     * @param wordTitle
+     * @return
+     */
     public static Boolean judgeWord(String impWord, String wordContext, String wordTitle) {
-        //包含关键词返回true
         Boolean flagWord = true;
         //匹配关键词
         String[] impWords = impWord.split("\\|");
@@ -24,7 +30,12 @@ public class MessagePost {
         return flagWord;
     }
 
-    // 判断地址是否有包含的关系等
+    /**
+     * 判断地址是否有包含关系
+     * @param impLink
+     * @param wordLink
+     * @return
+     */
     public static Boolean judgeLink(String impLink, String wordLink) {
         Boolean flagLink = true;
         //需要判断的地址

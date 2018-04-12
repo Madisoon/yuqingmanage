@@ -10,7 +10,14 @@ import com.alienlab.db.ExecResult;
 public interface IInForService {
     public ExecResult insertInFor(String inForData, String inForTag);
 
-    public JSONObject getAllInfor(String pageNumber, String pageSize);
+    /**
+     * 确认信息（筛选的过程）
+     * @param infoId
+     * @return
+     */
+    public ExecResult infoSure(String infoId, String infoData);
+
+    public JSONObject getAllInfor(String pageNumber, String pageSize, String postType);
 
     public ExecResult updateInfoData(String infoData, String infoTagId, String infoId);
 
@@ -18,8 +25,6 @@ public interface IInForService {
                                        String searchTagId, String searchInfoData, String customerName);
 
     public ExecResult deleteInfoData(String infoId);
-
-    public ExecResult manualPost(String infoId, String customerId);
 
     public String exportData(String searchTagId, String searchInfoData, String customerName, String exportType);
 

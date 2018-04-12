@@ -9,14 +9,8 @@ import com.alienlab.utils.Md5Azdg;
 import com.syx.yuqingmanage.module.setting.service.IDepService;
 import com.syx.yuqingmanage.module.setting.service.IRoleService;
 import com.syx.yuqingmanage.module.setting.service.IUserService;
-import com.syx.yuqingmanage.utils.JwtUtils;
-import io.jsonwebtoken.Claims;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -34,9 +28,6 @@ public class UserService implements IUserService {
 
     @Autowired
     private IRoleService iRoleService;
-
-    @Autowired
-    private JwtUtils jwtUtils;
 
     @Override
     public ExecResult getUserInfo(String userLoginName) {

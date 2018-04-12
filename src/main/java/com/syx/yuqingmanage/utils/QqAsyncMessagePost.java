@@ -17,20 +17,19 @@ import java.util.concurrent.TimeUnit;
 public class QqAsyncMessagePost {
     @Autowired
     private NumberInfoPost numberInfoPost;
+
     @Autowired
-    private QqMessagePost qqMessagePost;
-    @Autowired
-    private FailData failData;
-    private JSONResponse jsonResponse = new JSONResponse();
+    private JSONResponse jsonResponse;
 
     @Async
-    public void postCustomerMessage(JSONArray jsonArray, String infoContext, String infoTitle, String infoLink, String source, String inforCreater, String infoSite) {
+    public void postCustomerMessage(JSONArray jsonArray, String infoLink, String informationId) {
         int allCustomerLen = jsonArray.size();
         List<String> list = new ArrayList<>();
-        list.add("链接：" + infoLink);
         List<String> numberList = new ArrayList<>();
         for (int i = 0; i < allCustomerLen; i++) {
             JSONObject allCustomerSingle = jsonArray.getJSONObject(i);
+            //接收的客户名称
+            String consumerName = allCustomerSingle.getString("customer_name");
             //发送的类型
             String postType = allCustomerSingle.getString("get_type");
             //接收号码（qq号，qq群，手机号）
@@ -39,29 +38,21 @@ public class QqAsyncMessagePost {
             String postNumber = allCustomerSingle.getString("qq_number");
             String weixinPostNumber = allCustomerSingle.getString("customer_post_weixin");
             String customerPriority = allCustomerSingle.getString("customer_priority");
-            List<String> listMsg = new ArrayList<>();
-            listMsg.add("标题 : " + infoTitle);
-            if (infoContext.length() > 130) {
-                listMsg.add("内容 : " + infoContext.substring(0, 130) + "……");
-            } else {
-                listMsg.add("内容 : " + infoContext);
-            }
-            listMsg.add("链接 : ");
-            listMsg.add(infoLink);
-            listMsg.add("来源 : " + source);
-            // 添加站点
-            listMsg.add("站点 : " + infoSite);
-            String messAgeWord = StringUtils.join(listMsg, "\n");
             if ("number".equals(postType)) {
                 numberList.add(getNumber);
+                list.add("链接:" + infoLink);
             } else {
                 String insertSql = "";
                 if ("qq".equals(postType) || "qqGroup".equals(postType)) {
-                    insertSql = "INSERT INTO sys_manual_post (infor_context,infor_post_type,infor_post_people," +
-                            "infor_get_people,infor_priority,infor_create_people) VALUES('" + messAgeWord + "','" + postType + "','" + postNumber + "','" + getNumber + "'," + customerPriority + ",'" + inforCreater + "') ";
+                    insertSql = "INSERT INTO sys_manual_post (infor_id,infor_post_type,infor_post_people," +
+                            "infor_get_people,infor_priority,infor_consumer) " +
+                            "VALUES('" + informationId + "','" + postType + "','" + postNumber + "'," +
+                            "'" + getNumber + "'," + customerPriority + ",'" + consumerName + "') ";
                 } else {
-                    insertSql = "INSERT INTO sys_manual_post (infor_context,infor_post_type,infor_post_people," +
-                            "infor_get_people,infor_priority,infor_create_people) VALUES('" + messAgeWord + "','" + postType + "','" + weixinPostNumber + "','" + getNumber + "'," + customerPriority + ",'" + inforCreater + "') ";
+                    insertSql = "INSERT INTO sys_manual_post (infor_id,infor_post_type,infor_post_people," +
+                            "infor_get_people,infor_priority,infor_consumer) " +
+                            "VALUES('" + informationId + "','" + postType + "','" + weixinPostNumber + "'," +
+                            "'" + getNumber + "'," + customerPriority + ",'" + consumerName + "') ";
                 }
                 jsonResponse.getExecResult(insertSql, null);
             }
@@ -71,11 +62,20 @@ public class QqAsyncMessagePost {
         }
     }
 
-    public void postCustomerLate(JSONArray jsonArray, String infoContext, String infoTitle, String infoLink, String infoSource, String inforCreater, String infoSite) {
+    /**
+     * 延迟推送
+     *
+     * @param jsonArray
+     * @param infoLink
+     * @param infoId
+     */
+    public void postCustomerLate(JSONArray jsonArray, String infoLink, String infoId) {
         int allCustomerLen = jsonArray.size();
         List<String> sqlList = new ArrayList<>();
         for (int i = 0; i < allCustomerLen; i++) {
             JSONObject allCustomerSingle = jsonArray.getJSONObject(i);
+            //接收的客户名称
+            String consumerName = allCustomerSingle.getString("customer_name");
             //发送的类型
             String postType = allCustomerSingle.getString("get_type");
             //接收号码（qq号，qq群，手机号）
@@ -89,14 +89,25 @@ public class QqAsyncMessagePost {
             }
             String customerPriority = allCustomerSingle.getString("customer_priority");
             String qqPlan = allCustomerSingle.getString("scheme_plan_id");
-            String sql = " INSERT INTO detention_post_info (info_title,info_content,info_link,info_source,info_site,info_priority,info_post_type,info_number,info_post_qq,info_plan_id,info_creater_people) " +
-                    " VALUES ('" + infoTitle + "','" + infoContext + "','" + infoLink + "','" + infoSource + "','" + infoSite + "'," + customerPriority + ",'" + postType + "'," +
-                    "'" + postNumber + "','" + qqNumber + "','" + qqPlan + "','" + inforCreater + "') ";
+            String sql = " INSERT INTO detention_post_info (info_id,info_link,info_priority,info_post_type,info_number,info_post_qq,info_plan_id,info_consumer) " +
+                    " VALUES ('" + infoId + "','" + infoLink + "'," + customerPriority + ",'" + postType + "'," +
+                    "'" + postNumber + "','" + qqNumber + "','" + qqPlan + "','" + consumerName + "') ";
             sqlList.add(sql);
         }
         jsonResponse.getExecResult(sqlList, "", "");
     }
 
+    /**
+     * 推送到平台的逻辑
+     *
+     * @param jsonArray
+     * @param infoContext
+     * @param infoTitle
+     * @param infoLink
+     * @param infoSource
+     * @param infoType
+     * @param infoSite
+     */
     public void postMessAgeTerrace(JSONArray jsonArray, String infoContext, String infoTitle, String infoLink, String infoSource, String infoType, String infoSite) {
         int allModuleLen = jsonArray.size();
         Date nowTime = new Date();
@@ -105,7 +116,6 @@ public class QqAsyncMessagePost {
         for (int i = 0; i < allModuleLen; i++) {
             // 获取到需要发送信息的平台
             JSONObject allModule = jsonArray.getJSONObject(i);
-            System.out.println(allModule.toString());
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("infoTime", nowTimeDate);
             jsonObject.put("infoSource", infoSource);
@@ -117,12 +127,12 @@ public class QqAsyncMessagePost {
             jsonObject.put("infoContext", infoContext);
             jsonObject.put("tagId", allModule.getString("module_id"));
             jsonObject.put("tagName", allModule.getString("terrace_module_name"));
-            Map<String, String> param = new HashMap<>();
+            Map<String, String> param = new HashMap<>(16);
             param.put("data", jsonObject.toString());
             try {
                 HttpClientUtil.sendPost(allModule.getString("terrace_link"), param).toString();
             } catch (Exception e) {
-                System.out.println("发送失败");
+
             }
         }
     }

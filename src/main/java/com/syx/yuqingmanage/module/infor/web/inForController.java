@@ -38,12 +38,13 @@ public class inForController {
             JSONObject params = JSONObject.parseObject(param);
             String pageNumber = params.getString("pageNumber");
             String pageSize = params.getString("pageSize");
+            String isStatus = params.getString("isStatus");
             String searchTagId = params.getString("searchTagId");
             String searchInfoData = params.getString("searchInfoData");
             String customerName = params.getString("customerName");
             String result = "";
             if ("".equals(searchTagId) && "".equals(customerName) && (searchInfoData == null || "{}".equals(searchInfoData))) {
-                result = iInForService.getAllInfor(pageNumber, pageSize).toString();
+                result = iInForService.getAllInfor(pageNumber, pageSize, isStatus).toString();
             } else {
                 result = iInForService.getAllInfoChoose(pageNumber, pageSize, searchTagId, searchInfoData, customerName).toString();
             }
@@ -67,14 +68,6 @@ public class inForController {
     @ApiOperation(value = "修改信息", notes = "信息id(多个用 , 隔开)")
     public String deleteInfoData(@RequestParam("infoId") String infoId) {
         String result = iInForService.deleteInfoData(infoId).toString();
-        return result;
-    }
-
-    @RequestMapping(value = "/manualPost", method = RequestMethod.POST)
-    @ApiOperation(value = "手工发送", notes = "信息的id，客户id")
-    public String manualPost(@RequestParam("infoId") String infoId,
-                             @RequestParam("customerId") String customerId) {
-        String result = iInForService.manualPost(infoId, customerId).toString();
         return result;
     }
 
@@ -137,5 +130,13 @@ public class inForController {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("result", result);
         return jsonObject.toString();
+    }
+
+    @RequestMapping(value = "/infoSure", method = RequestMethod.POST)
+    @ApiOperation(value = "修改信息", notes = "信息对象，信息标签，信息id")
+    public String updateInfoData(@RequestParam("infoId") String infoId,
+                                 @RequestParam("infoData") String infoData) {
+        String result = iInForService.infoSure(infoId, infoData).toString();
+        return result;
     }
 }

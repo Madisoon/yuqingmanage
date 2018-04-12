@@ -28,10 +28,6 @@ import java.util.concurrent.TimeUnit;
 public class UserController {
     @Autowired
     private IUserService iUserService;
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-    @Autowired
-    private StringRedisTemplate stringRedisTemplate;
 
     @RequestMapping(value = "/getUserAllInfo", method = RequestMethod.POST)
     @ApiOperation(value = "获取单个用户所有信息", notes = "账号，密码")
@@ -52,16 +48,6 @@ public class UserController {
     @RequestMapping(value = "/getAllUser", method = RequestMethod.POST)
     @ApiOperation(value = "获取所有用户", notes = "无")
     public String getAllUser(HttpServletRequest request) {
-        /*System.out.println(request.getHeader("apiWebToken"));
-        redisTemplate.opsForValue().set("gege", 11);
-        stringRedisTemplate.opsForValue().set("哈哈哈", "1", 10, TimeUnit.SECONDS);
-        System.out.print(redisTemplate.opsForValue().get("gege"));
-        //创建List条目，key是cart
-        BoundListOperations<String, Object> cart = redisTemplate.boundListOps("cart");
-        //删除最后的一条数据
-        cart.rightPop();
-        //在最后，添加一条数据
-        cart.rightPush("我笑了");*/
         String result = iUserService.getAllUser().toString();
         return result;
     }

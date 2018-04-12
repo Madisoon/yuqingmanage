@@ -135,93 +135,19 @@ public class AppService implements IAppService {
 
     @Override
     public void refreshData() {
-        long startTime = System.currentTimeMillis();//获取当前时间
-        JSONResponse jsonResponse = new JSONResponse();
-        HttpClientUtil httpClientUtil = new HttpClientUtil();
-        Map<String, String> map = new HashMap<>();
-        map.put("filters", "");
-        map.put("start", "0");
-        map.put("limit", "100000");
-        JSONObject jsonObject = httpClientUtil.sendPost("http://yq.yuwoyg.com:8080/yuqing-app-dict/dict/users", map);
-        JSONArray jsonArray = (JSONArray) JSON.toJSON(jsonObject.get("value"));
-        int jsonArrayLen = jsonArray.size();
-        String sql = "SELECT * FROM base_yuqing_user";
-        ExecResult execResult = jsonResponse.getSelectResult(sql, null, "");
-        JSONArray jsonArray1 = (JSONArray) execResult.getData();
-        for (int i = 0; i < jsonArrayLen; i++) {
-            JSONObject jsonObject1 = jsonArray.getJSONObject(i);
-            qqAsyncMessagePost.insertData(jsonObject1, jsonArray1);
-        }
-        long endTime = System.currentTimeMillis();
+
     }
 
     @Override
     public JSONObject insertInformation(String data) {
         JSONObject jsonObject = JSON.parseObject(data);
-        String title = jsonObject.getString("title");
-        String content = jsonObject.getString("content");
-        String grade = jsonObject.getString("alarm");
-        String link = jsonObject.getString("source_url");
-        String creater = jsonObject.getString("user_name");
-        String source = jsonObject.getString("source");
-        String site = jsonObject.getString("site");
-        String customerId = jsonObject.getString("dep_ids");
-        JSONObject jsonObjectInfo = new JSONObject();
-        jsonObjectInfo.put("infor_title", title);
-        jsonObjectInfo.put("infor_context", content);
-        jsonObjectInfo.put("infor_type", "0");
-        jsonObjectInfo.put("infor_grade", grade);
-        jsonObjectInfo.put("infor_link", link);
-        jsonObjectInfo.put("infor_site", site);
-        jsonObjectInfo.put("infor_status", "0");
-        jsonObjectInfo.put("infor_source", source);
-        jsonObjectInfo.put("infor_creater", "fenjianpingtai");
-        ExecResult execResult = inForService.insertInFor(jsonObjectInfo.toJSONString(), customerId);
-        int flag = execResult.getResult();
-        JSONObject jsonObjectReturn = new JSONObject();
-        if (flag == 1) {
-            jsonObjectReturn.put("flag", true);
-        } else {
-            jsonObjectReturn.put("flag", false);
-        }
-        return jsonObjectReturn;
+        return jsonObject;
     }
 
     @Override
     public JSONObject getTerraceCustomerTag() {
         Map<String, String> map = new HashMap<>(16);
         JSONObject jsonObject = HttpClientUtil.postJsonData(TERRACE_URL, map);
-        return jsonObject;
-    }
-
-    public static void main(String[] args) {
-        AppService appService = new AppService();
-        appService.getTerraceCustomerTag();
-    }
-
-    @Override
-    public JSONObject insertSortingTag(String tagName, String tagId) {
-        String sql = "INSERT INTO sys_tag (id,NAME,tag_parent) VALUES('" + tagId + "','" + tagName + "','495')";
-        ExecResult execResult = jsonResponse.getExecResult(sql, null);
-        JSONObject jsonObject = new JSONObject();
-        if (execResult.getResult() == 1) {
-            jsonObject.put("flag", true);
-        } else {
-            jsonObject.put("flag", false);
-        }
-        return jsonObject;
-    }
-
-    @Override
-    public JSONObject deleteSortingTag(String tagId) {
-        String sql = "DELETE FROM sys_tag WHERE id = " + tagId + "";
-        ExecResult execResult = jsonResponse.getExecResult(sql, null);
-        JSONObject jsonObject = new JSONObject();
-        if (execResult.getResult() == 1) {
-            jsonObject.put("flag", true);
-        } else {
-            jsonObject.put("flag", false);
-        }
         return jsonObject;
     }
 }
