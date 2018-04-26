@@ -23,25 +23,15 @@ public class SchemeService implements ISchemeService {
     private JSONResponse jsonResponse;
 
     @Override
-    public ExecResult insertScheme(String schemeData, String terraceTagIds, String terraceTagName, String tagIds, String areaId, String baseTag) {
+    public ExecResult insertScheme(String schemeData, String tagIds, String areaId, String baseTag) {
         String sql = SqlEasy.insertObject(schemeData, "sys_scheme");
         ExecResult execResult = jsonResponse.getExecInsertId(sql, null, "", "");
         int schemeId = Integer.parseInt(execResult.getMessage());
-        String[] terraceTagNameS = terraceTagName.split(",");
         List<String> sqlList = new ArrayList<>();
         String[] ids = tagIds.split(",");
         int idsLen = ids.length;
         for (int i = 0; i < idsLen; i++) {
             sqlList.add("INSERT INTO sys_scheme_tag_dep (scheme_id,tag_id) VALUES(" + schemeId + "," + ids[i] + ")");
-        }
-
-        String[] terraceIds = terraceTagIds.split(",");
-        int terraceIdsLen = terraceIds.length;
-        System.out.println("打印标签id" + terraceTagIds);
-        if (!"".equals(terraceTagIds)) {
-            for (int i = 0; i < terraceIdsLen; i++) {
-                sqlList.add("INSERT INTO sys_scheme_terrace_tag (scheme_id,terrace_customer_id,tag_name) VALUES(" + schemeId + "," + terraceIds[i] + ",'" + terraceTagNameS[i] + "')");
-            }
         }
         String[] baseTagS = baseTag.split(",");
         int baseTagSLen = baseTagS.length;
@@ -73,7 +63,7 @@ public class SchemeService implements ISchemeService {
         sqlList.add("SELECT a.* ,GROUP_CONCAT(a.name) AS tag_names,GROUP_CONCAT(a.tag_id) AS tag_ids ");
         sqlList.add("FROM (SELECT c.*,d.name,d.id AS tag_id,e.user_loginname,e.user_name ,f.plan_name FROM sys_scheme_area_dep a , sys_scheme_tag_dep b ,sys_scheme c,sys_tag d,sys_user e, sys_plan f ");
         sqlList.add("WHERE a.scheme_id = c.id AND b.scheme_id = c.id  AND b.tag_id = d.id AND c.scheme_creater=e.user_loginname AND c.scheme_plan_id = f.id  AND (a.area_id = " + StringUtils.join(idList, "") + ")) a " +
-                "GROUP BY a.id ,a.user_name,a.get_number,a.get_remark,a.get_type");
+                "GROUP BY a.id");
         String sql = StringUtils.join(sqlList, "");
         ExecResult execResult = jsonResponse.getSelectResult(sql, null, "");
         JSONObject jsonObject = new JSONObject();
@@ -103,25 +93,16 @@ public class SchemeService implements ISchemeService {
     }
 
     @Override
-    public ExecResult updateScheme(String schemeId, String tagId, String terraceTagId, String terraceTagName, String schemeData, String baseTag) {
+    public ExecResult updateScheme(String schemeId, String tagId, String schemeData, String baseTag) {
         List<String> list = new ArrayList<>();
         String sql = SqlEasy.updateObject(schemeData, "sys_scheme", "id = " + schemeId);
         String[] tagIds = tagId.split(",");
-        String[] terraceTagIdS = terraceTagId.split(",");
-        String[] terraceTagNameS = terraceTagName.split(",");
         list.add(sql);
         list.add("DELETE FROM sys_scheme_tag_dep WHERE scheme_id = " + schemeId);
         list.add("DELETE FROM sys_scheme_tag_base WHERE scheme_id = " + schemeId);
-        list.add("DELETE FROM sys_scheme_terrace_tag WHERE scheme_id = " + schemeId);
         int tagIdsLen = tagIds.length;
         for (int i = 0; i < tagIdsLen; i++) {
             list.add("INSERT INTO sys_scheme_tag_dep (scheme_id,tag_id) VALUES(" + schemeId + "," + tagIds[i] + ")");
-        }
-        int terraceTagIdSLen = terraceTagIdS.length;
-        if (!"".equals(terraceTagId)) {
-            for (int i = 0; i < terraceTagIdSLen; i++) {
-                list.add(" INSERT INTO  sys_scheme_terrace_tag (scheme_id,terrace_customer_id,tag_name) VALUES (" + schemeId + ", " + terraceTagIdS[i] + ",'" + terraceTagNameS[i] + "') ");
-            }
         }
         String[] baseTagS = baseTag.split(",");
         int baseTagSLen = baseTagS.length;
@@ -187,7 +168,6 @@ public class SchemeService implements ISchemeService {
         list.add(" WHERE a.id = b.id AND b.id = c.scheme_id AND c.tag_id = d.id AND a.id = e.scheme_id ");
         list.add(" AND b.scheme_creater = f.user_loginname AND b.scheme_plan_id = g.id ) a  ");
         list.add(" " + StringUtils.join(whereList, ""));
-        System.out.println();
         if (chooseSchemeData == null || "{}".equals(chooseSchemeData)) {
             list.add(" WHERE " + StringUtils.join(areaIdList, "") + " ");
         } else {
@@ -199,20 +179,5 @@ public class SchemeService implements ISchemeService {
         jsonObject.put("data", jsonArray);
         jsonObject.put("total", jsonArray.size());
         return jsonObject;
-    }
-
-    @Override
-    public ExecResult getTerraceTagBySchemeId(String schemeId) {
-        String sqlSelect = "SELECT * FROM sys_scheme_terrace_tag WHERE scheme_id = '" + schemeId + "'";
-        ExecResult execResult = jsonResponse.getSelectResult(sqlSelect, null, "");
-        return execResult;
-    }
-
-    @Override
-    public JSONArray getTerraceScheme() {
-        String sql = "SELECT a.*,GROUP_CONCAT(b.`tag_name`) AS tag_name FROM sys_scheme a ,sys_scheme_terrace_tag b WHERE a.id = b.scheme_id " +
-                "GROUP BY a.`id` ORDER BY a.`scheme_time` DESC ";
-        ExecResult execResult = jsonResponse.getSelectResult(sql, null, "");
-        return (JSONArray) execResult.getData();
     }
 }

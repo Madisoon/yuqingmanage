@@ -268,7 +268,7 @@ public class YuQingAppController {
     @RequestMapping(value = "/release/check", method = RequestMethod.POST)
     public String checkVersion(@RequestParam("version") String version,
                                HttpServletRequest httpServletRequest) {
-        String result = iYuQingService.checkVersion(version).toString();
+        String result = iYuQingService.checkVersion(version, "1").toString();
         return result;
     }
 
@@ -279,7 +279,7 @@ public class YuQingAppController {
     @RequestMapping(value = "/release/checkNoCus", method = RequestMethod.POST)
     public String checkNoCus(@RequestParam("version") String version,
                              HttpServletRequest httpServletRequest) {
-        String result = iYuQingService.checkVersionNoCustom(version).toString();
+        String result = iYuQingService.checkVersion(version, "0").toString();
         return result;
     }
 

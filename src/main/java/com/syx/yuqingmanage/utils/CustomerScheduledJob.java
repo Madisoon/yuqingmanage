@@ -21,7 +21,6 @@ public class CustomerScheduledJob extends QuartzJobBean {
     protected void executeInternal(JobExecutionContext arg0)
             throws JobExecutionException {
         judgeCustomer();
-        getDataUser();
     }
 
     public void judgeCustomer() {
@@ -30,9 +29,5 @@ public class CustomerScheduledJob extends QuartzJobBean {
         String updateTime = simpleDateFormat.format(nowTime);
         String sql = "UPDATE sys_post_customer a SET customer_status = '0', ,customer_create_time = NOW()  WHERE a.customer_end_time < '" + updateTime + "'";
         jsonResponse.getExecResult(sql, null);
-    }
-
-    public void getDataUser() {
-        appService.refreshData();
     }
 }

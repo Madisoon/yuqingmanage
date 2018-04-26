@@ -10,22 +10,6 @@ import org.dozer.loader.xml.ExpressionElementReader;
  */
 public interface IAppService {
 
-    public ExecResult addUser(String userInfo);
-
-    public ExecResult deleteUser(String id);
-
-    public ExecResult updateUser(String userInfo);
-
-    public ExecResult getAllCustomer();
-
-    public ExecResult getCustomerById(String id);
-
-    public JSONObject deleteCustomerInfo(String id);
-
-    public JSONObject insertCutomerId(String id);
-
-    public void refreshData();
-
     public JSONObject insertInformation(String data);
 
     public JSONObject getTerraceCustomerTag();

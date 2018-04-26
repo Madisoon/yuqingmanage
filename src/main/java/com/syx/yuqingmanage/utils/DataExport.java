@@ -58,7 +58,8 @@ public class DataExport {
             /*String xmlTemplate = "word.xml";*/
             //设置docx的模板路径 和文件名
             String docxTemplate = "template/word.docx";
-            String toFilePath = "C:/dummyPath/" + fileName; // 导出的路径
+            // 导出的路径
+            String toFilePath = "C:/dummyPath/" + fileName;
             //填充完数据的临时xml
             XmlToDocx xtd = new XmlToDocx();
             try {
@@ -78,7 +79,7 @@ public class DataExport {
         return fileName;
     }
 
-    public String exeportHistoryInfor(JSONArray jsonArray) {
+    public String exeportHistoryInfor(JSONArray jsonArray, String customerName) {
         List list = new ArrayList();
         DocumentHandler documentHandler = new DocumentHandler();
         int jsonArrayLen = jsonArray.size();
@@ -99,10 +100,12 @@ public class DataExport {
         }
         Map maps = new HashMap();
         maps.put("inforList", list);
+        maps.put("reportName", customerName);
+        maps.put("reportTime", DateTimeUtils.getNowTime("yyyy 年 MM 月 dd 日"));
         String longTime = String.valueOf(System.currentTimeMillis());
         String fileName = "";
         String fileFtl = "";
-        fileFtl = "word.ftl";
+        fileFtl = "newWord.ftl";
         String xmlTemp = "C:/dummyPath/freemarkTest.xml";
         try {
             documentHandler.createDoc(maps, xmlTemp, fileFtl);
@@ -111,7 +114,7 @@ public class DataExport {
         }
         fileName = longTime + ".docx";
         //设置docx的模板路径 和文件名
-        String docxTemplate = "template/word.docx";
+        String docxTemplate = "template/newword.docx";
         String toFilePath = "C:/dummyPath/" + fileName;
         //填充完数据的临时xml
         XmlToDocx xtd = new XmlToDocx();

@@ -46,6 +46,4 @@
         <property name="maxUploadSize" value="40000000"/>
 
     </bean>
-    <!--<bean class="com.syx.yuqingmanage.utils.SwaggerConfig"/>-->
-
 </beans>

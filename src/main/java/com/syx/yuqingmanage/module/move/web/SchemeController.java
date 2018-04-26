@@ -27,12 +27,10 @@ public class SchemeController {
     @RequestMapping(value = "/insertScheme", method = RequestMethod.POST)
     @ApiOperation(value = "添加方案", notes = "方案对象，标签数组，地区数组，所选标签的基础标签")
     public String insertScheme(@RequestParam("schemeData") String schemeData,
-                               @RequestParam("terraceTagIds") String terraceTagIds,
-                               @RequestParam("terraceTagName") String terraceTagName,
                                @RequestParam("tagIds") String tagIds,
                                @RequestParam("areaId") String areaId,
                                @RequestParam("baseTag") String baseTag) {
-        String result = iSchemeService.insertScheme(schemeData, terraceTagIds, terraceTagName, tagIds, areaId, baseTag).toString();
+        String result = iSchemeService.insertScheme(schemeData, tagIds, areaId, baseTag).toString();
         return result;
     }
 
@@ -62,11 +60,9 @@ public class SchemeController {
     @ApiOperation(value = "修改方案", notes = "方案id,标签id数组，方案对象，基础标签")
     public String updateScheme(@RequestParam("schemeId") String schemeId,
                                @RequestParam("tagIds") String tagIds,
-                               @RequestParam("terraceTagId") String terraceTagId,
-                               @RequestParam("terraceTagName") String terraceTagName,
                                @RequestParam("schemeData") String schemeData,
                                @RequestParam("baseTag") String baseTag) {
-        String result = iSchemeService.updateScheme(schemeId, tagIds, terraceTagId, terraceTagName, schemeData, baseTag).toString();
+        String result = iSchemeService.updateScheme(schemeId, tagIds, schemeData, baseTag).toString();
         return result;
     }
 
@@ -97,19 +93,5 @@ public class SchemeController {
             ex.printStackTrace();
             return new ExecResult(false, "获取数据异常。").toString();
         }
-    }
-
-    @RequestMapping(value = "/getTerraceTagBySchemeId", method = RequestMethod.POST)
-    @ApiOperation(value = "根据方案获取平台标签", notes = "方案id")
-    public String getTerraceTagBySchemeId(@RequestParam("schemeId") String schemeId) {
-        String result = iSchemeService.getTerraceTagBySchemeId(schemeId).toString();
-        return result;
-    }
-
-    @RequestMapping(value = "/getTerraceScheme", method = RequestMethod.POST)
-    @ApiOperation(value = "根据方案获取平台标签", notes = "方案id")
-    public String getTerraceScheme() {
-        String result = iSchemeService.getTerraceScheme().toString();
-        return result;
     }
 }

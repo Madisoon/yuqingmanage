@@ -47,7 +47,6 @@ public class InForHistoryService implements IInForHistoryService {
 
     @Override
     public JSONObject getChoiceHistory(String pageNumber, String pageSize, String tableChoiceData) {
-        System.out.println(tableChoiceData);
         JSONObject jsonObject = JSON.parseObject(tableChoiceData);
         String finishTime = jsonObject.getString("infor_finish_time");
         jsonObject.remove("infor_finish_time");
@@ -95,7 +94,7 @@ public class InForHistoryService implements IInForHistoryService {
         if (total == null) {
             jsonObjectReturn.put("total", 0);
         } else {
-            jsonObjectReturn.put("total", jsonArray.size());
+            jsonObjectReturn.put("total", total.size());
         }
         jsonObjectReturn.put("data", jsonArray);
         return jsonObjectReturn;
@@ -103,15 +102,17 @@ public class InForHistoryService implements IInForHistoryService {
 
     @Override
     public JSONObject exportHistoryInfor(String searchData) {
+        JSONObject jsonObjectData = JSON.parseObject(searchData);
+        String customerName = jsonObjectData.getString("infor_consumer");
         JSONObject jsonObject = getChoiceHistory("1", "2000", searchData);
         JSONObject returnJsonObject = new JSONObject();
         JSONArray jsonArray = jsonObject.getJSONArray("data");
         if (jsonArray == null) {
             returnJsonObject.put("result", "");
         } else {
-            String url = dataExport.exeportHistoryInfor(jsonArray);
+            String url = dataExport.exeportHistoryInfor(jsonArray, customerName);
             returnJsonObject.put("result", url);
         }
-        return jsonObject;
+        return returnJsonObject;
     }
 }

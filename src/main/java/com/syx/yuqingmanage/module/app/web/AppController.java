@@ -21,51 +21,6 @@ public class AppController {
     @Autowired
     private IAppService iAppService;
 
-    @RequestMapping(value = "/appAddUser", method = RequestMethod.POST)
-    public String appAddUser(@RequestParam("userInfo") String userInfo) {
-        String result = iAppService.addUser(userInfo).toString();
-        return result;
-    }
-
-    @RequestMapping(value = "/appDeleteUser", method = RequestMethod.POST)
-    public String appDeleteUser(@RequestParam("userId") String userId) {
-        String result = iAppService.deleteUser(userId).toString();
-        return result;
-    }
-
-    @RequestMapping(value = "/appUpdateUser", method = RequestMethod.POST)
-    public String appUpdateUser(@RequestParam("userInfo") String userInfo) {
-        String result = iAppService.updateUser(userInfo).toString();
-        return result;
-    }
-
-    @RequestMapping(value = "/appGetAllCustomer", method = RequestMethod.POST)
-    public String appGetAllCustomer(HttpServletRequest request) {
-        String result = iAppService.getAllCustomer().toString();
-        return result;
-    }
-
-    @ApiOperation(value = "插入自定义标签的id", notes = "客户信息的id")
-    @RequestMapping(value = "/appGetCustomerById", method = RequestMethod.POST)
-    public String appGetCustomerById(@RequestParam("id") String id) {
-        String result = iAppService.insertCutomerId(id).toString();
-        return result;
-    }
-
-    @ApiOperation(value = "删除自定义标签的id", notes = "客户信息id")
-    @RequestMapping(value = "/deleteCustomerInfo", method = RequestMethod.POST)
-    public String deleteCustomerInfo(@RequestParam("ids") String ids) {
-        System.out.println(ids);
-        String result = iAppService.deleteCustomerInfo(ids).toString();
-        return result;
-    }
-
-    @ApiOperation(value = "更新服务平台基础数据", notes = "无")
-    @RequestMapping(value = "/refreshData", method = RequestMethod.POST)
-    public void refreshData() {
-        iAppService.refreshData();
-    }
-
     @ApiOperation(value = "插入人工发送的信息", notes = "无")
     @RequestMapping(value = "/insertInformation", method = RequestMethod.POST)
     public String insertInformation(@RequestParam("data") String data) {

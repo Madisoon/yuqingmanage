@@ -207,14 +207,19 @@ public class InForService implements IInForService {
         String isStatus = "1";
         int pageNumberInt = Integer.parseInt(pageNumber, 10);
         int pageSizeInt = Integer.parseInt(pageSize, 10);
-        String sqlLen = "SELECT COUNT(id) AS total FROM sys_infor";
+        String sqlLen;
+        if (isStatus.equals(type)) {
+            sqlLen = "SELECT COUNT(id) AS total FROM sys_infor WHERE is_status = 1 ";
+        } else {
+            sqlLen = "SELECT COUNT(id) AS total FROM sys_infor WHERE is_status = 0 ";
+        }
         ExecResult execResult = jsonResponse.getSelectResult(sqlLen, null, "");
         JSONArray jsonArray = (JSONArray) execResult.getData();
         JSONObject jsonObjectLen = jsonArray.getJSONObject(0);
         String sqlInFor;
         if (isStatus.equals(type)) {
             sqlInFor = "SELECT a.*,c.user_name,GROUP_CONCAT(d.name) AS tag_names,GROUP_CONCAT(b.tag_id) AS tag_ids " +
-                    "FROM (SELECT * FROM  sys_infor a  " +
+                    "FROM (SELECT * FROM  sys_infor a WHERE a.is_status = 1  " +
                     "ORDER BY a.infor_createtime DESC  LIMIT " + ((pageNumberInt - 1) * pageSizeInt) + "," + pageSizeInt + " )  a " +
                     ", infor_tag b,sys_user c, sys_tag d " +
                     "WHERE a.id = b.infor_id  AND a.infor_creater = c.user_loginname " +

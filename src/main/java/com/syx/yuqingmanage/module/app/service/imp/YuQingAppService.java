@@ -1,15 +1,13 @@
 package com.syx.yuqingmanage.module.app.service.imp;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSONArray;
 import com.alienlab.db.ExecResult;
 import com.alienlab.response.JSONResponse;
 import com.alienlab.utils.Md5Azdg;
 import com.syx.yuqingmanage.module.app.service.IYuQingService;
 import com.syx.yuqingmanage.utils.DateTimeUtils;
-import com.syx.yuqingmanage.utils.MessagePost;
-import com.syx.yuqingmanage.utils.NumberInfoPost;
 import com.syx.yuqingmanage.utils.jdbcfilters.Filter;
 import com.syx.yuqingmanage.utils.jdbcfilters.SelectParam;
 import org.apache.commons.lang3.StringUtils;
@@ -30,7 +28,6 @@ public class YuQingAppService implements IYuQingService {
     @Autowired
     AppNoteServiceImpl appNoteService;
 
-    // 测试成功
     @Override
     public JSONObject judgerAppUser(String loginName, String password, long timestamp) {
         String sqlGetUser = "SELECT * FROM app_user WHERE app_user_loginname = '" + loginName + "'";
@@ -71,7 +68,6 @@ public class YuQingAppService implements IYuQingService {
         return returnData;
     }
 
-    // 测试成功
     @Override
     public JSONObject checkToken(String token) {
         String getUserByCheckToken = "SELECT * FROM app_user WHERE app_user_token = '" + token + "'";
@@ -97,7 +93,6 @@ public class YuQingAppService implements IYuQingService {
         return jsonObject;
     }
 
-    // 测试成功
     @Override
     public JSONObject searchMenus(String loginName) {
         String getSMenus = "SELECT a.id AS tag_id,a.app_program_name AS NAME,b.app_module_type AS TYPE  " +
@@ -121,7 +116,6 @@ public class YuQingAppService implements IYuQingService {
         return jsonObjectReturn;
     }
 
-    // 测试成功
     @Override
     public JSONObject searchFocus(int tag_id, int limit, String date, String loginName) {
         JSONObject jsonObject = new JSONObject();
@@ -176,10 +170,10 @@ public class YuQingAppService implements IYuQingService {
         return jsonObject;
     }
 
-    // 测试普通信息的获取
+
     @Override
     public JSONObject searchTagInfo(String filters, int limit, String date, String loginName) {
-        // 普通数据的获取
+        // 普通数据的获取:先获取它的关键词，然后取出关键词去匹配相关的数据，因为需要分页，所以不能先取出数据，然后再筛选
         SelectParam selectParam = getSelectParam(filters);
         String sqlWhere = selectParam.getWhereClause();
         // 所有的值
@@ -190,6 +184,7 @@ public class YuQingAppService implements IYuQingService {
             list.add(sqlWhereValue[i]);
         }
         appNoteService.insertAppNote(StringUtils.join(list, "|"), "2", "", loginName);
+        // 先获取相关的模块
         String getSql = "";
         if (!"".equals(date)) {
             getSql = " SELECT a.*,CASE WHEN (b.app_read_id IS NULL) THEN ''0''  " +
@@ -224,94 +219,96 @@ public class YuQingAppService implements IYuQingService {
                     " , infor_tag b where a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id   ORDER BY b.infor_createtime DESC) a) a   " +
                     " " + sqlWhere + "  LIMIT 0, " + limit + " ) a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
         }
+
         ExecResult execResult = jsonResponse.getSelectResult(getSql, sqlWhereValue, "");
         JSONObject jsonObject = new JSONObject();
         if (execResult.getResult() == 1) {
             // 有数据
-            JSONArray jsonArrayImpReturn = new JSONArray();
             JSONArray jsonArray = (JSONArray) execResult.getData();
             JSONObject jsonObjectOne = jsonArray.getJSONObject(0);
             String imp = "SELECT * FROM  app_user_program a ,app_user_program_module b ,app_module c " +
-                    "WHERE a.id = b.`app_program_id` AND a.`id` = '" + jsonObjectOne.getString("program_id") + "' " +
-                    "AND b.`app_module_id` = c.id AND a.`app_user_loginname` = '" + loginName + "'";
+                    "WHERE a.id = b.app_program_id AND a.id = '" + jsonObjectOne.getString("program_id") + "' " +
+                    "AND b.app_module_id = c.id AND a.app_user_loginname = '" + loginName + "'";
             ExecResult execResult1 = jsonResponse.getSelectResult(imp, null, "");
             JSONArray jsonArrayImp = (JSONArray) execResult1.getData();
-            boolean flag = false;
+            List listImp = new ArrayList();
+            List listNoImp = new ArrayList();
             // 需要先判断是否有关键词
+            boolean flag = false;
             for (int i = 0; i < jsonArrayImp.size(); i++) {
                 JSONObject jsonObjectImp = jsonArrayImp.getJSONObject(i);
                 String impContent = jsonObjectImp.getString("app_module_imp_word");
+                String[] impContentArray = impContent.split("\\|");
+                if (!"".equals(impContent)) {
+                    for (int j = 0, length = impContentArray.length; j < length; j++) {
+                        flag = true;
+                        if (i == 0 && j == 0) {
+                            listImp.add(" infor_context LIKE ''%" + impContentArray[j] + "%'' OR infor_title LIKE ''%" + impContentArray[j] + "%'' ");
+                        } else {
+                            listImp.add(" OR infor_context LIKE ''%" + impContentArray[j] + "%'' OR infor_title LIKE ''%" + impContentArray[j] + "%'' ");
+                        }
+                    }
+                }
                 String noImpContent = jsonObjectImp.getString("app_module_noimp_word");
-                if (impContent != "" || noImpContent != "") {
-                    flag = true;
-                    break;
+                String[] noImpContentArray = noImpContent.split("\\|");
+                if (!"".equals(noImpContent)) {
+                    for (int j = 0, length = noImpContentArray.length; j < length; j++) {
+                        flag = true;
+                        if (i == 0 && j == 0) {
+                            listNoImp.add(" infor_context not LIKE ''%" + noImpContentArray[j] + "%'' AND infor_title not LIKE ''%" + noImpContentArray[j] + "%''  ");
+                        } else {
+                            listNoImp.add(" OR infor_context not LIKE ''%" + noImpContentArray[j] + "%'' AND infor_title not LIKE ''%" + noImpContentArray[j] + "%''  ");
+                        }
+                    }
                 }
             }
             JSONObject jsonObjectValue = new JSONObject();
             if (flag) {
                 // 有关键词，需要重新筛选匹配
-                String getSqlImp = "";
-                if (!"".equals(date)) {
-                    getSqlImp = " SELECT a.*,CASE WHEN (b.app_read_id IS NULL) THEN ''0''  " +
-                            "ELSE  ''1'' END AS info_read FROM (SELECT * FROM (SELECT *,CASE a.source    " +
-                            " WHEN ''新闻'' THEN ''1''    " +
-                            " WHEN ''论坛'' THEN ''2''    " +
-                            " WHEN ''博客'' THEN ''3''    " +
-                            " WHEN ''微博'' THEN ''5''    " +
-                            " WHEN ''微信'' THEN ''6''    " +
-                            " WHEN ''移动咨询'' THEN ''7''    " +
-                            " ELSE ''8'' END AS source_id FROM (SELECT a.id AS program_id, b.id , b.infor_type AS level_id,b.infor_title    " +
-                            " AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
-                            " AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM     " +
-                            " (SELECT a.*,b.app_module_id FROM  app_user_program a   , app_user_program_module b   where a.id = b.app_program_id   " +
-                            " and a.app_user_loginname = ''" + loginName + "'' ) a , app_module_tag_dep b   where a.app_module_id = b.app_module_id) a   " +
-                            " , infor_tag b where a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id  AND  b.infor_createtime < ''" + date + "''  ORDER BY b.infor_createtime DESC) a) a   " +
-                            " " + sqlWhere + "  LIMIT 0, " + limit + " ) a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
-                } else {
-                    getSqlImp = " SELECT a.*,CASE WHEN (b.app_read_id IS NULL) THEN ''0''  " +
-                            "ELSE  ''1'' END AS info_read FROM (SELECT * FROM (SELECT *,CASE a.source    " +
-                            " WHEN ''新闻'' THEN ''1''    " +
-                            " WHEN ''论坛'' THEN ''2''    " +
-                            " WHEN ''博客'' THEN ''3''    " +
-                            " WHEN ''微博'' THEN ''5''    " +
-                            " WHEN ''微信'' THEN ''6''    " +
-                            " WHEN ''移动咨询'' THEN ''7''    " +
-                            " ELSE ''8'' END AS source_id FROM (SELECT a.id AS program_id, b.id , b.infor_type AS level_id,b.infor_title    " +
-                            " AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
-                            " AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM     " +
-                            " (SELECT a.*,b.app_module_id FROM  app_user_program a   , app_user_program_module b   where a.id = b.app_program_id   " +
-                            " and a.app_user_loginname = ''" + loginName + "'' ) a , app_module_tag_dep b   where a.app_module_id = b.app_module_id) a   " +
-                            " , infor_tag b where a.tag_id = b.tag_id) a,sys_infor b   WHERE a.infor_id = b.id   ORDER BY b.infor_createtime DESC) a) a   " +
-                            " " + sqlWhere + "  LIMIT 0, " + limit + " ) a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id";
+                StringBuilder getSqlImp = new StringBuilder();
+                getSqlImp.append(" SELECT a.*,CASE WHEN (b.app_read_id IS NULL) THEN ''0''  " +
+                        "ELSE  ''1'' END AS info_read FROM (SELECT * FROM (SELECT *,CASE a.source    " +
+                        " WHEN ''新闻'' THEN ''1''    " +
+                        " WHEN ''论坛'' THEN ''2''    " +
+                        " WHEN ''博客'' THEN ''3''    " +
+                        " WHEN ''微博'' THEN ''5''    " +
+                        " WHEN ''微信'' THEN ''6''    " +
+                        " WHEN ''移动咨询'' THEN ''7''    " +
+                        " ELSE ''8'' END AS source_id FROM (SELECT a.id AS program_id, b.id , b.infor_type AS level_id,b.infor_title    " +
+                        " AS title,b.infor_context AS content,b.infor_link   AS source_url,b.infor_createtime AS pub_time,b.infor_source    " +
+                        " AS source, b.infor_site AS site,a.id AS tag_id  FROM (SELECT a.*,b.infor_id FROM (SELECT a.*,b.tag_id FROM     " +
+                        " (SELECT a.*,b.app_module_id FROM  app_user_program a   , app_user_program_module b   where a.id = b.app_program_id   " +
+                        " and a.app_user_loginname = ''" + loginName + "'' ) a , app_module_tag_dep b   where a.app_module_id = b.app_module_id) a   " +
+                        " , infor_tag b where a.tag_id = b.tag_id) a, ");
+                // 直接先筛选出
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append("(select * from sys_infor where is_status = 1 ");
+                if (listImp.size() != 0) {
+                    stringBuilder.append("AND (" + StringUtils.join(listImp, "") + ") ");
                 }
 
-                ExecResult execResultImp = jsonResponse.getSelectResult(getSqlImp, sqlWhereValue, "");
-                JSONArray jsonArray1 = (JSONArray) execResultImp.getData();
-                for (int j = 0, jsonArrayLen = jsonArray1.size(); j < jsonArrayLen; j++) {
-                    JSONObject jsonObjectInfo = jsonArray1.getJSONObject(j);
-                    String title = jsonObjectInfo.getString("title");
-                    String content = jsonObjectInfo.getString("content");
-                    for (int i = 0; i < jsonArrayImp.size(); i++) {
-                        JSONObject jsonObjectImp = jsonArrayImp.getJSONObject(i);
-                        String impContent = jsonObjectImp.getString("app_module_imp_word");
-                        String noImpContent = jsonObjectImp.getString("app_module_noimp_word");
-                        boolean noWordJudgeFlag = !MessagePost.judgeWord(noImpContent, content, title) || noImpContent.equals("");
-                        if (noWordJudgeFlag) {
-                            //不包含排除关键词。
-                            boolean wordJudgeFlag = (impContent.equals("") || MessagePost.judgeWord(impContent, content, title));
-                            if (wordJudgeFlag) {
-                                jsonArrayImpReturn.add(jsonObjectInfo);
-                            }
-                        }
-                    }
+                if (listNoImp.size() != 0) {
+                    stringBuilder.append("AND " + StringUtils.join(listNoImp, "") + " ");
                 }
-                if (jsonArrayImpReturn.size() == 0) {
+                stringBuilder.append(") b ");
+                getSqlImp.append(stringBuilder.toString());
+                if (!"".equals(date)) {
+                    getSqlImp.append("WHERE a.infor_id = b.id  AND  b.infor_createtime < ''" + date + "''  ");
+                } else {
+                    getSqlImp.append("WHERE a.infor_id = b.id ");
+                }
+                getSqlImp.append("  ORDER BY b.infor_createtime DESC) a) a   " +
+                        " " + sqlWhere + "  LIMIT 0, " + limit + " ) a LEFT JOIN (SELECT * FROM app_user_read WHERE app_read_type = ''0'' " +
+                        "AND app_user_loginName = ''" + loginName + "'') b ON a.id = b.app_read_id");
+                ExecResult execResultImp = jsonResponse.getSelectResult(getSqlImp.toString(), sqlWhereValue, "");
+                JSONArray jsonArrayImpData = (JSONArray) execResultImp.getData();
+                if (jsonArrayImpData.size() == 0) {
                     jsonObject.put("success", false);
                     jsonObject.put("value", 23001);
                 } else {
-                    JSONObject jsonObjectReturn = jsonArrayImpReturn.getJSONObject(jsonArrayImpReturn.size() - 1);
+                    JSONObject jsonObjectReturn = jsonArrayImpData.getJSONObject(jsonArrayImpData.size() - 1);
                     jsonObjectValue.put("time", jsonObjectReturn.getString("pub_time"));
-                    jsonObjectValue.put("data", jsonArrayImpReturn);
+                    jsonObjectValue.put("data", jsonArrayImpData);
                     jsonObject.put("success", true);
                     jsonObject.put("value", jsonObjectValue);
                 }
@@ -330,7 +327,6 @@ public class YuQingAppService implements IYuQingService {
         return jsonObject;
     }
 
-    // 测试完成
     @Override
     public JSONObject getInfodetail(String id, String loginName) {
         String sqlGetDeatil = "SELECT b.id, b.infor_type AS level_id,b.infor_title  " +
@@ -354,7 +350,6 @@ public class YuQingAppService implements IYuQingService {
         return jsonObject;
     }
 
-    // 测试成功
     @Override
     public JSONObject searchFavor(int limit, String date, String loginName) {
         JSONObject jsonObject = new JSONObject();
@@ -408,7 +403,6 @@ public class YuQingAppService implements IYuQingService {
         return jsonObject;
     }
 
-    // 测试完成
     @Override
     public JSONObject removeFavor(String id, String loginName) {
         String removeFavorSql = "";
@@ -437,7 +431,6 @@ public class YuQingAppService implements IYuQingService {
         return jsonObject;
     }
 
-    // 测试完成
     @Override
     public JSONObject addFavor(String id, String loginName) {
         String insertSql = "INSERT INTO  app_user_favor (app_user_loginname, app_favor_infor_id) VALUES ('" + loginName + "','" + id + "')";
@@ -453,7 +446,6 @@ public class YuQingAppService implements IYuQingService {
         return jsonObject;
     }
 
-    // 测试完成
     @Override
     public JSONObject checkFavor(String id, String loginName) {
         String checkSql = "SELECT * FROM app_user_favor a WHERE a.app_user_loginname = '" + loginName + "' AND a.app_favor_infor_id = '" + id + "'";
@@ -469,7 +461,6 @@ public class YuQingAppService implements IYuQingService {
         return jsonObject;
     }
 
-    // 测试完成
     @Override
     public JSONObject updatePwd(String oldPwd, String newPwd, String loginName) {
         String sqlPwd = "UPDATE app_user a SET a.app_user_pwd = '" + Md5Azdg.md5s(newPwd) + "' " +
@@ -559,27 +550,16 @@ public class YuQingAppService implements IYuQingService {
         return returnSourceId;
     }
 
-    public SelectParam getSelectParam(String filters) {
-        JSONArray jsonArray = JSON.parseArray(filters);
-        List<Filter> list = new ArrayList<>();
-        for (int i = 0; i < jsonArray.size(); i++) {
-            JSONObject jsonObject = jsonArray.getJSONObject(i);
-            Filter filter = JSON.parseObject(jsonObject.toString(), Filter.class);
-            list.add(filter);
-        }
-        SelectParam selectParam = Filter.getFilterParams(list);
-        return selectParam;
-    }
-
     @Override
-    public JSONObject checkVersion(String appVersion) {
-        String selectApp = "SELECT * FROM app_version where app_type = 1 ORDER BY app_time DESC  LIMIT 0,1";
+    public JSONObject checkVersion(String appVersion, String type) {
+        String selectApp = "SELECT * FROM app_version where app_type = " + type + " ORDER BY app_time DESC  LIMIT 0,1";
         ExecResult execResult = jsonResponse.getSelectResult(selectApp, null, "");
         JSONArray jsonArray = (JSONArray) execResult.getData();
         JSONObject jsonObject = jsonArray.getJSONObject(0);
-        JSONObject returnJsonObject = new JSONObject();
         String appVs = jsonObject.getString("app_version");
+        JSONObject returnJsonObject = new JSONObject();
         if (appVersion.equals(appVs)) {
+            // 不需要更新
             returnJsonObject.put("success", false);
             returnJsonObject.put("value", "");
         } else {
@@ -588,29 +568,7 @@ public class YuQingAppService implements IYuQingService {
             jsonObjectApp.put("version", appVs);
             jsonObjectApp.put("url", jsonObject.getString("app_url"));
             jsonObjectApp.put("info", jsonObject.getString("app_info"));
-            returnJsonObject.put("value", jsonObjectApp);
-        }
-        return returnJsonObject;
-    }
-
-    @Override
-    public JSONObject checkVersionNoCustom(String appVersion) {
-        String selectApp = "SELECT * FROM app_version where app_type = 0 ORDER BY app_time DESC  LIMIT 0,1";
-        ExecResult execResult = jsonResponse.getSelectResult(selectApp, null, "");
-        JSONArray jsonArray = (JSONArray) execResult.getData();
-        JSONObject jsonObject = jsonArray.getJSONObject(0);
-        JSONObject returnJsonObject = new JSONObject();
-        String appVs = jsonObject.getString("app_version");
-        if (appVersion.equals(appVs)) {
-            returnJsonObject.put("success", false);
-            returnJsonObject.put("value", "");
-        } else {
-            returnJsonObject.put("success", true);
-            JSONObject jsonObjectApp = new JSONObject();
-            jsonObjectApp.put("version", appVs);
-            jsonObjectApp.put("url", jsonObject.getString("app_url"));
-            jsonObjectApp.put("info", jsonObject.getString("app_info"));
-            returnJsonObject.put("value", jsonObjectApp);
+            returnJsonObject.put("value", jsonObjectApp.toString());
         }
         return returnJsonObject;
     }
@@ -625,27 +583,23 @@ public class YuQingAppService implements IYuQingService {
         JSONArray jsonArray = (JSONArray) execResultData.getData();
         JSONObject jsonObjectData = jsonArray.getJSONObject(0);
         appNoteService.insertAppNote(jsonObjectData.getString("infor_title"), "3", "", userName);
-        JSONObject returnJsonObject = new JSONObject();
+        JSONObject returnJsonObject;
         if (selectSqlInfoResult.getResult() != 1) {
             String insertSql = "INSERT INTO app_user_read (app_user_loginName, app_read_id, app_read_type) VALUES (''{0}'',''{1}'',''{2}'')";
             ExecResult execResult = jsonResponse.getExecResult(insertSql, new String[]{userName, infoId, infoType});
             if (execResult.getResult() == 1) {
-                returnJsonObject.put("success", true);
-                returnJsonObject.put("value", "");
+                returnJsonObject = getDataReturn("1");
             } else {
-                returnJsonObject.put("success", false);
-                returnJsonObject.put("value", "");
+                returnJsonObject = getDataReturn("0");
             }
         } else {
-            returnJsonObject.put("success", false);
-            returnJsonObject.put("value", "");
+            returnJsonObject = getDataReturn("0");
         }
         return returnJsonObject;
     }
 
     @Override
     public JSONObject clickFavor(String favorId) {
-
         String selectSql = "SELECT * FROM app_user_favor_read a WHERE a.app_favor_id = " + favorId + "";
         ExecResult execResultFavor = jsonResponse.getSelectResult(selectSql, null, "");
         JSONObject returnJsonObject = new JSONObject();
@@ -653,16 +607,44 @@ public class YuQingAppService implements IYuQingService {
             String insertSql = "INSERT INTO app_user_favor_read (app_favor_id) VALUES (" + favorId + ")";
             ExecResult execResult = jsonResponse.getExecResult(insertSql, null);
             if (execResult.getResult() == 1) {
-                returnJsonObject.put("success", true);
-                returnJsonObject.put("value", "");
+                returnJsonObject = getDataReturn("1");
             } else {
-                returnJsonObject.put("success", false);
-                returnJsonObject.put("value", "");
+                returnJsonObject = getDataReturn("0");
             }
         } else {
-            returnJsonObject.put("success", false);
-            returnJsonObject.put("value", "");
+            returnJsonObject = getDataReturn("0");
         }
         return returnJsonObject;
+    }
+
+    public SelectParam getSelectParam(String filters) {
+        JSONArray jsonArray = JSON.parseArray(filters);
+        List<Filter> list = new ArrayList<>();
+        for (int i = 0; i < jsonArray.size(); i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+            Filter filter = JSON.parseObject(jsonObject.toString(), Filter.class);
+            list.add(filter);
+        }
+        SelectParam selectParam = Filter.getFilterParams(list);
+        return selectParam;
+    }
+
+    public JSONObject getDataReturn(String type) {
+        JSONObject jsonObject = new JSONObject();
+        String successTrue = "1";
+        if (successTrue.equals(type)) {
+            jsonObject.put("success", true);
+            jsonObject.put("value", "");
+        } else {
+            jsonObject.put("success", false);
+            jsonObject.put("value", "");
+        }
+        return jsonObject;
+    }
+
+    public static void main(String[] args) {
+        String sql = "123";
+        String[] sqls = sql.split("\\|");
+        System.out.println(sqls.length);
     }
 }
