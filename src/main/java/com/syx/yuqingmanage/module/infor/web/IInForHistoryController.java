@@ -24,6 +24,8 @@ public class IInForHistoryController {
     @Autowired
     private IInForHistoryService iInForHistoryService;
 
+    private final String OBJECT_NULL = "{}";
+
     @RequestMapping(value = "/getAllHistory", method = RequestMethod.POST)
     @ApiOperation(value = "获取已发送的消息", notes = "")
     public String getAllHistory(HttpServletRequest request) {
@@ -34,10 +36,10 @@ public class IInForHistoryController {
             String pageSize = params.getString("pageSize");
             String tableChoiceData = params.getString("tableChoiceData");
             String result = "";
-            if ("{}".equals(tableChoiceData)) {
+            if (OBJECT_NULL.equals(tableChoiceData)) {
                 result = iInForHistoryService.getAllHistory(pageNumber, pageSize).toString();
             } else {
-                result = iInForHistoryService.getChoiceHistory(pageNumber, pageSize, tableChoiceData).toString();
+                result = iInForHistoryService.getChoiceHistory(pageNumber, pageSize, tableChoiceData, "1").toString();
 
             }
             return result;
@@ -48,9 +50,10 @@ public class IInForHistoryController {
     }
 
     @RequestMapping(value = "/exportHistoryInfor", method = RequestMethod.POST)
-    @ApiOperation(value = "插入信息", notes = "信息的对象，信息所属标签")
-    public String exportHistoryInfor(@RequestParam("searchData") String searchData) {
-        String result = iInForHistoryService.exportHistoryInfor(searchData).toString();
+    @ApiOperation(value = "导出历史心态", notes = "筛选条件，导出类型")
+    public String exportHistoryInfor(@RequestParam("searchData") String searchData,
+                                     @RequestParam("exportType") String exportType) {
+        String result = iInForHistoryService.exportHistoryInfor(searchData, exportType).toString();
         return result;
     }
 }

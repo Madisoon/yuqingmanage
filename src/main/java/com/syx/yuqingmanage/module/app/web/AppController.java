@@ -8,8 +8,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by Master  Zg on 2016/12/12.
@@ -43,5 +48,19 @@ public class AppController {
     @RequestMapping(value = "/deleteSortingTag", method = RequestMethod.POST)
     public String deleteSortingTag(@RequestParam("id") String id) {
         return iAppService.deleteSortingTag(id).toString();
+    }
+
+    @RequestMapping(value = "/uploadImageFile", method = RequestMethod.POST)
+    public String uploadImageFile(HttpServletRequest request, @RequestParam("file") MultipartFile file) throws IOException {
+        if (!file.isEmpty()) {
+            Date date = new Date();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+            String str = sdf.format(date);
+            String filePath = "C:/dummyPath/" + str + ""
+                    + file.getOriginalFilename();
+            file.transferTo(new File(filePath));
+            return str + file.getOriginalFilename();
+        }
+        return "";
     }
 }

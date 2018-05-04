@@ -104,4 +104,5 @@ public class AppService implements IAppService {
         Matcher m = p.matcher(str);
         return m.replaceAll("").trim();
     }
+
 }

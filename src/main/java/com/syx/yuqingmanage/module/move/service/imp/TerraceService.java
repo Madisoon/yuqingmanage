@@ -48,8 +48,6 @@ public class TerraceService implements ITerraceService {
             postOneWeekData(jsonObjectData.getString("terrace_link"),
                     jsonObject.getString("id"),
                     jsonObject.getString("terrace_module_name"));
-            System.out.println(jsonObject.getString("id"));
-            System.out.println(jsonObject.getString("terrace_module_name"));
         }
         execResult = jsonResponse.getExecResult(list, "", "");
         return execResult;

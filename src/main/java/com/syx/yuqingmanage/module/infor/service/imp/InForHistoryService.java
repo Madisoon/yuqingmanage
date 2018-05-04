@@ -46,7 +46,8 @@ public class InForHistoryService implements IInForHistoryService {
     }
 
     @Override
-    public JSONObject getChoiceHistory(String pageNumber, String pageSize, String tableChoiceData) {
+    public JSONObject getChoiceHistory(String pageNumber, String pageSize, String tableChoiceData, String timeOrderType) {
+        String timeOrderTypeStr = "1";
         JSONObject jsonObject = JSON.parseObject(tableChoiceData);
         String finishTime = jsonObject.getString("infor_finish_time");
         jsonObject.remove("infor_finish_time");
@@ -56,35 +57,40 @@ public class InForHistoryService implements IInForHistoryService {
         if (jsonObject.isEmpty()) {
             String[] finishTimeS = finishTime.split("&");
             // 只有时间选择
-            sqlTotal = "SELECT  * FROM (SELECT a.infor_consumer,a.gmt_create,a.gmt_modified,b.infor_title,b.infor_context,b.infor_link,b.infor_site,c.user_name " +
+            sqlTotal = "SELECT a.infor_consumer,a.gmt_create,a.gmt_modified,b.infor_title,b.infor_context,b.infor_link,b.infor_site, b.infor_source,c.user_name " +
                     "FROM sys_manual_post a, sys_infor b, " +
-                    "sys_user c WHERE a.infor_status = 1 AND a.infor_id = b.id AND a.infor_people = c.user_loginname) d WHERE " +
-                    "d.gmt_modified>'" + finishTimeS[0] + "' AND d.gmt_modified < '" + finishTimeS[1] + "' ORDER BY d.gmt_modified DESC ";
+                    "sys_user c WHERE a.infor_status = 1 AND a.infor_id = b.id AND a.infor_people = c.user_loginname AND " +
+                    "a.gmt_modified>'" + finishTimeS[0] + "' AND a.gmt_modified < '" + finishTimeS[1] + "' ORDER BY a.gmt_modified DESC ";
             sqlData = sqlTotal + SqlEasy.limitPage(pageSize, pageNumber);
         } else {
             Set set = jsonObject.keySet();
             Iterator<String> iterator = set.iterator();
             StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append("SELECT  * FROM (SELECT a.infor_consumer,a.gmt_create,a.gmt_modified,b.infor_title,b.infor_context,b.infor_link,b.infor_site,c.user_name " +
+            stringBuilder.append("SELECT a.infor_consumer,a.gmt_create,a.gmt_modified,b.infor_title,b.infor_context,b.infor_link,b.infor_site, b.infor_source,c.user_name " +
                     "FROM sys_manual_post a, sys_infor b, " +
-                    "sys_user c WHERE a.infor_status = 1 AND a.infor_id = b.id AND a.infor_people = c.user_loginname) d " +
-                    "WHERE ");
+                    "sys_user c WHERE a.infor_status = 1 AND a.infor_id = b.id AND a.infor_people = c.user_loginname " +
+                    "AND ");
             int i = 0;
             while (iterator.hasNext()) {
                 String value = iterator.next();
                 if (i == 0) {
-                    stringBuilder.append(" d." + value + " LIKE '%" + jsonObject.getString(value) + "%' ");
+                    stringBuilder.append(" a." + value + " LIKE '%" + jsonObject.getString(value) + "%' ");
                 } else {
-                    stringBuilder.append("AND d." + value + " LIKE '%" + jsonObject.getString(value) + "%' ");
+                    stringBuilder.append("AND a." + value + " LIKE '%" + jsonObject.getString(value) + "%' ");
                 }
                 i++;
             }
             if (!"".equals(finishTime) && finishTime != null) {
                 String[] finishTimeS = finishTime.split("&");
-                stringBuilder.append("AND d.gmt_modified > '" + finishTimeS[0] + "' AND d.gmt_modified < '" + finishTimeS[1] + "' ");
+                stringBuilder.append("AND a.gmt_modified > '" + finishTimeS[0] + "' AND a.gmt_modified < '" + finishTimeS[1] + "' ");
             }
-            stringBuilder.append("ORDER BY d.gmt_modified DESC ");
+            if (timeOrderTypeStr.equals(timeOrderType)) {
+                stringBuilder.append("ORDER BY a.gmt_modified DESC ");
+            } else {
+                stringBuilder.append("ORDER BY a.gmt_modified ");
+            }
             sqlTotal = stringBuilder.toString();
+            System.out.println(sqlTotal);
             sqlData = sqlTotal + SqlEasy.limitPage(pageSize, pageNumber);
         }
         ExecResult execResult = jsonResponse.getSelectResult(sqlData, null, "");
@@ -101,16 +107,16 @@ public class InForHistoryService implements IInForHistoryService {
     }
 
     @Override
-    public JSONObject exportHistoryInfor(String searchData) {
+    public JSONObject exportHistoryInfor(String searchData, String exportType) {
+        JSONObject returnJsonObject = new JSONObject();
         JSONObject jsonObjectData = JSON.parseObject(searchData);
         String customerName = jsonObjectData.getString("infor_consumer");
-        JSONObject jsonObject = getChoiceHistory("1", "2000", searchData);
-        JSONObject returnJsonObject = new JSONObject();
+        JSONObject jsonObject = getChoiceHistory("1", "2000", searchData, "0");
         JSONArray jsonArray = jsonObject.getJSONArray("data");
         if (jsonArray == null) {
             returnJsonObject.put("result", "");
         } else {
-            String url = dataExport.exeportHistoryInfor(jsonArray, customerName);
+            String url = dataExport.exeportHistoryInfor(jsonArray, customerName, exportType);
             returnJsonObject.put("result", url);
         }
         return returnJsonObject;

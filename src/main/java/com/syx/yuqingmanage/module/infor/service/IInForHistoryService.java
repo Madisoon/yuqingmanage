@@ -9,7 +9,7 @@ import com.alienlab.db.ExecResult;
 public interface IInForHistoryService {
     public JSONObject getAllHistory(String pageNumber, String pageSize);
 
-    public JSONObject getChoiceHistory(String pageNumber, String pageSize, String tableChoiceData);
+    public JSONObject getChoiceHistory(String pageNumber, String pageSize, String tableChoiceData, String timeOrderType);
 
-    public JSONObject exportHistoryInfor(String searchData);
+    public JSONObject exportHistoryInfor(String searchData, String exportType);
 }

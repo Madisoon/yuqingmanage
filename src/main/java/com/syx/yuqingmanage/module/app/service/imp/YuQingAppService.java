@@ -257,7 +257,7 @@ public class YuQingAppService implements IYuQingService {
                         if (i == 0 && j == 0) {
                             listNoImp.add(" infor_context not LIKE ''%" + noImpContentArray[j] + "%'' AND infor_title not LIKE ''%" + noImpContentArray[j] + "%''  ");
                         } else {
-                            listNoImp.add(" OR infor_context not LIKE ''%" + noImpContentArray[j] + "%'' AND infor_title not LIKE ''%" + noImpContentArray[j] + "%''  ");
+                            listNoImp.add(" AND infor_context not LIKE ''%" + noImpContentArray[j] + "%'' AND infor_title not LIKE ''%" + noImpContentArray[j] + "%''  ");
                         }
                     }
                 }

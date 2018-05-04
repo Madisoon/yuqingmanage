@@ -31,11 +31,11 @@ public class DataExport {
             Map map = new HashedMap();
             String inforContext = jsonObject.getString("infor_context").replaceAll("<系统提示：因该条信息内容过长，为节省您的存储空间，本软件只存储并显示其部分内容，详细内容请到原网站浏览>", " ");
             map.put("index", i + 1);
-            map.put("title", jsonObject.getString("infor_title"));
+            map.put("title", jsonObject.getString("infor_title").trim());
             map.put("source", jsonObject.getString("infor_site"));
             map.put("time", jsonObject.getString("infor_createtime"));
             map.put("link", jsonObject.getString("infor_link").replaceAll("&", "&amp;"));
-            String regEx = "[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】'；：”“’。，、？]";
+            String regEx = "[`~@#$%^&*()+=|{}'',\\[\\].<>/?~@#￥%……&*（）——+|{}【】'”“’]";
             Pattern p = Pattern.compile(regEx);
             Matcher m = p.matcher(inforContext);
             map.put("context", m.replaceAll("").trim());
@@ -79,7 +79,7 @@ public class DataExport {
         return fileName;
     }
 
-    public String exeportHistoryInfor(JSONArray jsonArray, String customerName) {
+    public String exeportHistoryInfor(JSONArray jsonArray, String customerName, String type) {
         List list = new ArrayList();
         DocumentHandler documentHandler = new DocumentHandler();
         int jsonArrayLen = jsonArray.size();
@@ -88,14 +88,25 @@ public class DataExport {
             Map map = new HashedMap();
             String inforContext = jsonObject.getString("infor_context").replaceAll("<系统提示：因该条信息内容过长，为节省您的存储空间，本软件只存储并显示其部分内容，详细内容请到原网站浏览>", " ");
             map.put("index", i + 1);
-            map.put("title", jsonObject.getString("infor_title"));
-            map.put("source", jsonObject.getString("infor_site"));
-            map.put("time", jsonObject.getString("gmt_create"));
+            String inforTitle = jsonObject.getString("infor_title");
+            if (inforTitle.length() > 30) {
+                map.put("title", inforTitle.substring(0, 30).trim() + "......");
+            } else {
+                map.put("title", inforTitle.trim());
+            }
+            map.put("source", jsonObject.getString("infor_source"));
+            map.put("site", jsonObject.getString("infor_site"));
+            map.put("time", jsonObject.getString("gmt_create").substring(0, 16));
             map.put("link", jsonObject.getString("infor_link").replaceAll("&", "&amp;"));
-            String regEx = "[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】'；：”“’。，、？]";
+            String regEx = "[`~@#$%^&*()+=|{}'',\\[\\].<>/?~@#￥%……&*（）——+|{}【】'”“’]";
             Pattern p = Pattern.compile(regEx);
             Matcher m = p.matcher(inforContext);
-            map.put("context", m.replaceAll("").trim());
+            String tableContext = m.replaceAll("").trim();
+            if (tableContext.length() > 200) {
+                map.put("context", tableContext.substring(0, 200).trim() + "......");
+            } else {
+                map.put("context", tableContext.trim());
+            }
             list.add(map);
         }
         Map maps = new HashMap();
@@ -105,23 +116,35 @@ public class DataExport {
         String longTime = String.valueOf(System.currentTimeMillis());
         String fileName = "";
         String fileFtl = "";
-        fileFtl = "newWord.ftl";
-        String xmlTemp = "C:/dummyPath/freemarkTest.xml";
-        try {
-            documentHandler.createDoc(maps, xmlTemp, fileFtl);
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        fileName = longTime + ".docx";
-        //设置docx的模板路径 和文件名
-        String docxTemplate = "template/newword.docx";
-        String toFilePath = "C:/dummyPath/" + fileName;
-        //填充完数据的临时xml
-        XmlToDocx xtd = new XmlToDocx();
-        try {
-            xtd.outDocx(new File(xmlTemp), docxTemplate, toFilePath);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if ("word".equals(type)) {
+            fileFtl = "newWord.ftl";
+            /*String xmlTemp = "/Users/zg/htmlproject/freemarkTest.xml";*/
+            String xmlTemp = "C:/dummyPath/freemarkTest.xml";
+            try {
+                documentHandler.createDoc(maps, xmlTemp, fileFtl);
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            fileName = longTime + ".docx";
+            //设置docx的模板路径 和文件名
+            String docxTemplate = "template/newword.docx";
+            /*String toFilePath = "/Users/zg/htmlproject/" + fileName;*/
+            String toFilePath = "C:/dummyPath/" + fileName;
+            //填充完数据的临时xml
+            XmlToDocx xtd = new XmlToDocx();
+            try {
+                xtd.outDocx(new File(xmlTemp), docxTemplate, toFilePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            fileName = longTime + ".xls";
+            fileFtl = "inforexcel.ftl";
+            try {
+                documentHandler.createDoc(maps, "C:/dummyPath/" + fileName, fileFtl);
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
         }
         return fileName;
     }
