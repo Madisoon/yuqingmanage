@@ -41,11 +41,9 @@ public class AppNoteServiceImpl implements AppNoteService {
 
     @Override
     public JSONObject getAllAppNote(String pageNumber, String pageSize) {
-        // 获取日志的数量
         String sqlTotal = "SELECT * FROM sys_app_note a ORDER BY a.note_date DESC ";
         ExecResult execResult = jsonResponse.getSelectResult(sqlTotal, null, "");
         JSONArray jsonArray = (JSONArray) execResult.getData();
-
         int pageNumberInt = Integer.parseInt(pageNumber, 10);
         int pageSizeInt = Integer.parseInt(pageSize, 10);
         String sqlPage = "SELECT * FROM sys_app_note a ORDER BY a.note_date DESC  LIMIT " + ((pageNumberInt - 1) * pageSizeInt) + "," + pageSizeInt + "";

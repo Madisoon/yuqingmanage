@@ -505,8 +505,7 @@ public class InForService implements IInForService {
             if (listModule.size() > 0) {
                 //立刻发送
                 JSONArray allTerraceCustomer = getAllCustomerByModule(listModule);
-                if (allTerraceCustomer == null) {
-                } else {
+                if (allTerraceCustomer != null) {
                     qqAsyncMessagePost.postMessAgeTerrace(allTerraceCustomer, infoContext, infoTitle, infoLink, infoSource, infoType, infoSite);
                 }
             }
