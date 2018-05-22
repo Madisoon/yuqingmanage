@@ -94,8 +94,9 @@ public class DataExport {
             } else {
                 map.put("title", inforTitle.trim());
             }
-            map.put("source", jsonObject.getString("infor_source"));
             map.put("site", jsonObject.getString("infor_site"));
+            map.put("source", jsonObject.getString("infor_source"));
+            map.put("author", jsonObject.getString("infor_author"));
             map.put("time", jsonObject.getString("gmt_create").substring(0, 16));
             map.put("link", jsonObject.getString("infor_link").replaceAll("&", "&amp;"));
             String regEx = "[`~@#$%^&*()+=|{}'',\\[\\].<>/?~@#￥%……&*（）——+|{}【】'”“’]";

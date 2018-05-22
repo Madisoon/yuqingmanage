@@ -5,6 +5,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.alienlab.db.ExecResult;
 import com.alienlab.response.JSONResponse;
 import com.syx.yuqingmanage.module.email.service.IEmailService;
+import com.syx.yuqingmanage.utils.DateTimeUtils;
+import com.syx.yuqingmanage.utils.NumberInfoPost;
 import com.syx.yuqingmanage.utils.SqlEasy;
 import com.syx.yuqingmanage.utils.email.JavaMailWithAttachment;
 import org.apache.commons.lang3.StringUtils;
@@ -21,6 +23,11 @@ import java.util.List;
 public class EmailService implements IEmailService {
     @Autowired
     private JSONResponse jsonResponse;
+
+    @Autowired
+    private NumberInfoPost numberInfoPost;
+
+    JavaMailWithAttachment javaMailWithAttachment = new JavaMailWithAttachment();
 
     @Override
     public ExecResult insertEmailData(String id, String url, String tagIdS) {
@@ -40,8 +47,7 @@ public class EmailService implements IEmailService {
         for (int i = 0; i < tagIdsLen; i++) {
             list.add("INSERT INTO sys_email_tag (email_id, tag_id) VALUES (" + emailId + "," + tagId[i] + ")");
         }
-        execResult = jsonResponse.getExecResult(list, "", "");
-
+        jsonResponse.getExecResult(list, "", "");
         // 推送逻辑
         List<String> sqlList = new ArrayList<>();
         for (int i = 0; i < tagIdsLen; i++) {
@@ -55,7 +61,9 @@ public class EmailService implements IEmailService {
         List<String> seletSchemeList = new ArrayList<>();
         seletSchemeList.add(" SELECT * FROM (SELECT scheme_id FROM sys_scheme_tag_base ");
         seletSchemeList.add(" WHERE " + StringUtils.join(sqlList, "") + " GROUP BY scheme_id) a , sys_post_customer b ");
-        seletSchemeList.add(" WHERE a.scheme_id = b.customer_scheme  ");
+        seletSchemeList.add(" WHERE a.scheme_id = b.customer_scheme  AND b.email_status = 1  " +
+                "AND b.customer_end_time >='" + DateTimeUtils.getNowTime("yyyy-MM-dd") + "' " +
+                "AND b.customer_start_time <= '" + DateTimeUtils.getNowTime("yyyy-MM-dd") + "' ");
         String sqlScheme = StringUtils.join(seletSchemeList, "");
         execResult = jsonResponse.getSelectResult(sqlScheme, null, "");
         JSONArray jsonArrayCustomer = (JSONArray) execResult.getData();
@@ -68,15 +76,11 @@ public class EmailService implements IEmailService {
                 if ("1".equals(emailStatus)) {
                     // 通过邮箱发送
                     try {
-                        System.out.println(emailNumber);
-                        System.out.println(templateTitle);
-                        System.out.println(templateContent);
-                        System.out.println(url);
-                        JavaMailWithAttachment.postEmail("597254678@qq.com", "ces", "ces", "/Users/zg/htmlproject/plief.jpg");
-                        /*JavaMailWithAttachment.postEmail(emailNumber, templateTitle, templateContent, url);*/
+                        javaMailWithAttachment.postEmail(emailNumber, templateTitle, templateContent, "C:/dummyPath/" + url);
                     } catch (Exception e) {
                         // 发送失败的异常
-                        System.out.println("发送异常");
+                        numberInfoPost.sendMsgByYunPian("邮箱发送失败！" + emailNumber, "18914704429");
+                        numberInfoPost.sendMsgByYunPian("邮箱发送失败！" + emailNumber, "15951924102");
                     }
                 } else {
                     String manualPost = "INSERT INTO sys_email_manual " +
@@ -85,7 +89,8 @@ public class EmailService implements IEmailService {
                     execResult = jsonResponse.getExecResult(manualPost, null);
                 }
             } else {
-                System.out.println("无账号");
+                numberInfoPost.sendMsgByYunPian("此客户没有配置邮箱" + customerName, "18914704429");
+                numberInfoPost.sendMsgByYunPian("此客户没有配置邮箱" + customerName, "15951924102");
             }
         }
         return execResult;
@@ -105,11 +110,11 @@ public class EmailService implements IEmailService {
 
     @Override
     public JSONObject getAllPostEmail(String pageNumber, String pageSize) {
-        String sql = "SELECT a.*,b.template_title,b.template_content,group_concat(d.name) as tag_name " +
+        String sqlTotal = "SELECT a.*,b.template_name,b.template_title,b.template_content,group_concat(d.name) as tag_name " +
                 "FROM sys_email a ,sys_email_template b, sys_email_tag c ,sys_tag d " +
                 "WHERE  a.template_id = b.id AND a.id = c.email_id AND c.tag_id = d.id group by a.id " +
                 "ORDER BY a.gmt_create DESC ";
-        String sqlTotal = "SELECT a.*,b.template_title,b.template_content,group_concat(d.name) as tag_name " +
+        String sql = "SELECT a.*,b.template_name,b.template_title,b.template_content,group_concat(d.name) as tag_name " +
                 "FROM sys_email a ,sys_email_template b, sys_email_tag c ,sys_tag d " +
                 "WHERE  a.template_id = b.id AND a.id = c.email_id AND c.tag_id = d.id group by a.id " +
                 "ORDER BY a.gmt_create DESC  " + SqlEasy.limitPage(pageSize, pageNumber) + "";
@@ -195,14 +200,5 @@ public class EmailService implements IEmailService {
         }
         ExecResult execResult = jsonResponse.getExecResult(list, "", "");
         return execResult;
-    }
-
-
-    public static void main(String[] args) {
-        try {
-            JavaMailWithAttachment.postEmail("597254678@qq.com", "ces", "ces", "/Users/zg/htmlproject/plief.jpg");
-        } catch (Exception e) {
-
-        }
     }
 }

@@ -30,21 +30,19 @@ public class JavaMailWithAttachment {
     /**
      * 发件人的 邮箱 和 密码（替换为自己的邮箱和密码）
      */
-    public static String myEmailAccount = "report@yuwoyg.com";
-    public static String myEmailPassword = "199518wa!";
+    public final String myEmailAccount = "report@yuwoyg.com";
+    public final String myEmailPassword = "sytc123456!";
 
     /**
      * 发件人邮箱的 SMTP 服务器地址, 必须准确, 不同邮件服务器地址不同, 一般格式为: smtp.xxx.com
      * 网易163邮箱的 SMTP 服务器地址为: smtp.163.com
      */
-    public static String myEmailSMTPHost = "smtp.yuwoyg.com";
+    public final String myEmailSMTPHost = "smtp.yuwoyg.com";
 
     /**
      * // 收件人邮箱（替换为自己知道的有效邮箱）
      */
-    public static String receiveMailAccount = "1104361681@qq.com";
-
-    public static void postEmail(String receiveMailAccount, String title, String content, String url) throws Exception {
+    public void postEmail(String receiveMailAccount, String title, String content, String url) throws Exception {
 
         Thread.sleep(3000);
 // 1. 创建参数配置, 用于连接邮件服务器的参数配置
@@ -79,7 +77,8 @@ public class JavaMailWithAttachment {
     }
 
     public static void main(String[] args) throws Exception {
-        JavaMailWithAttachment.postEmail("597254678@qq.com", "ces", "ces", "/Users/zg/htmlproject/plief.jpg");
+        JavaMailWithAttachment javaMailWithAttachment = new JavaMailWithAttachment();
+        javaMailWithAttachment.postEmail("597254678@qq.com", "ces", "ces", "/Users/zg/htmlproject/plief.jpg");
     }
 
     /**
@@ -127,7 +126,7 @@ public class JavaMailWithAttachment {
 
         // 9. 创建附件“节点”
         MimeBodyPart attachment = new MimeBodyPart();
-        DataHandler dh2 = new DataHandler(new FileDataSource("/Users/zg/htmlproject/plief.jpg"));  // 读取本地文件
+        DataHandler dh2 = new DataHandler(new FileDataSource(url));  // 读取本地文件
         attachment.setDataHandler(dh2);                                             // 将附件数据添加到“节点”
         attachment.setFileName(MimeUtility.encodeText(dh2.getName()));              // 设置附件的文件名（需要编码）
 

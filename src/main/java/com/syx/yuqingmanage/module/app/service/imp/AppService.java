@@ -41,11 +41,13 @@ public class AppService implements IAppService {
         String source = jsonObject.getString("source");
         String site = jsonObject.getString("site");
         String customerId = jsonObject.getString("dep_ids");
+        String putTime = jsonObject.getString("pub_time");
+        String author = jsonObject.getString("author");
         JSONObject jsonObjectReturn = new JSONObject();
         String insertSql = "INSERT INTO sys_infor (infor_title, infor_context, infor_grade, " +
-                "infor_link, infor_creater, " +
-                "infor_source, infor_site) VALUES " +
-                "('" + title + "','" + content + "','" + grade + "','" + link + "','" + people + "','" + source + "','" + site + "')";
+                "infor_link, infor_creater, infor_createtime," +
+                "infor_source, infor_site, infor_author) VALUES " +
+                "('" + title + "','" + content + "','" + grade + "','" + link + "','" + people + "','" + putTime + "','" + source + "','" + site + "', '" + author + "')";
         ExecResult execResult = jsonResponse.getExecInsertId(insertSql, null, "", "");
         if (execResult.getResult() == 1) {
             jsonObjectReturn.put("flag", true);
