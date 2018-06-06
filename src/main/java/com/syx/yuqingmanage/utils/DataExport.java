@@ -97,7 +97,7 @@ public class DataExport {
             map.put("site", jsonObject.getString("infor_site"));
             map.put("source", jsonObject.getString("infor_source"));
             map.put("author", jsonObject.getString("infor_author"));
-            map.put("time", jsonObject.getString("gmt_create").substring(0, 16));
+            map.put("time", jsonObject.getString("infor_createtime").substring(0, 16));
             map.put("link", jsonObject.getString("infor_link").replaceAll("&", "&amp;"));
             String regEx = "[`~@#$%^&*()+=|{}'',\\[\\].<>/?~@#￥%……&*（）——+|{}【】'”“’]";
             Pattern p = Pattern.compile(regEx);
@@ -119,8 +119,8 @@ public class DataExport {
         String fileFtl = "";
         if ("word".equals(type)) {
             fileFtl = "newWord.ftl";
-            /*String xmlTemp = "/Users/zg/htmlproject/freemarkTest.xml";*/
-            String xmlTemp = "C:/dummyPath/freemarkTest.xml";
+            String xmlTemp = "/Users/zg/htmlproject/freemarkTest.xml";
+            /*String xmlTemp = "C:/dummyPath/freemarkTest.xml";*/
             try {
                 documentHandler.createDoc(maps, xmlTemp, fileFtl);
             } catch (UnsupportedEncodingException e) {
@@ -129,8 +129,8 @@ public class DataExport {
             fileName = longTime + ".docx";
             //设置docx的模板路径 和文件名
             String docxTemplate = "template/newword.docx";
-            /*String toFilePath = "/Users/zg/htmlproject/" + fileName;*/
-            String toFilePath = "C:/dummyPath/" + fileName;
+            String toFilePath = "/Users/zg/htmlproject/" + fileName;
+            /*String toFilePath = "C:/dummyPath/" + fileName;*/
             //填充完数据的临时xml
             XmlToDocx xtd = new XmlToDocx();
             try {

@@ -35,7 +35,7 @@ public class InForHistoryService implements IInForHistoryService {
         JSONArray dataAll = (JSONArray) execResult.getData();
         JSONObject jsonObject1 = dataAll.getJSONObject(0);
         StringBuilder dataSql = new StringBuilder();
-        dataSql.append(" SELECT a.infor_consumer,a.gmt_create,a.gmt_modified,b.infor_title,b.infor_author,b.infor_context,c.user_name FROM sys_manual_post a, sys_infor b," +
+        dataSql.append(" SELECT a.infor_consumer,a.gmt_create,a.gmt_modified,b.infor_title,b.infor_author,b.infor_context,b.infor_createtime,c.user_name FROM sys_manual_post a, sys_infor b," +
                 "sys_user c WHERE a.infor_status = 1 AND a.infor_id = b.id AND a.infor_people = c.user_loginname ORDER BY  a.gmt_modified DESC LIMIT  " + ((pageNumberInt - 1) * pageSizeInt) + "," + pageSizeInt + "");
         ExecResult execResult1 = jsonResponse.getSelectResult(dataSql.toString(), null, "");
         JSONArray jsonArray = (JSONArray) execResult1.getData();
@@ -57,7 +57,7 @@ public class InForHistoryService implements IInForHistoryService {
         if (jsonObject.isEmpty()) {
             String[] finishTimeS = finishTime.split("&");
             // 只有时间选择
-            sqlTotal = "SELECT a.infor_consumer,a.gmt_create,a.gmt_modified,b.infor_title,b.infor_context,b.infor_link,b.infor_author,b.infor_site, b.infor_source,c.user_name " +
+            sqlTotal = "SELECT a.infor_consumer,a.gmt_create,a.gmt_modified,b.infor_title,b.infor_context,b.infor_link,b.infor_author,b.infor_site, b.infor_source,b.infor_createtime,c.user_name " +
                     "FROM sys_manual_post a, sys_infor b, " +
                     "sys_user c WHERE a.infor_status = 1 AND a.infor_id = b.id AND a.infor_people = c.user_loginname AND " +
                     "a.gmt_modified>'" + finishTimeS[0] + "' AND a.gmt_modified < '" + finishTimeS[1] + "' ORDER BY a.gmt_modified DESC ";
@@ -66,7 +66,7 @@ public class InForHistoryService implements IInForHistoryService {
             Set set = jsonObject.keySet();
             Iterator<String> iterator = set.iterator();
             StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append("SELECT a.infor_consumer,a.gmt_create,a.gmt_modified,b.infor_title,b.infor_context,b.infor_author,b.infor_link,b.infor_site, b.infor_source,c.user_name " +
+            stringBuilder.append("SELECT a.infor_consumer,a.gmt_create,a.gmt_modified,b.infor_title,b.infor_context,b.infor_author,b.infor_link,b.infor_site, b.infor_source,b.infor_createtime ,c.user_name " +
                     "FROM sys_manual_post a, sys_infor b, " +
                     "sys_user c WHERE a.infor_status = 1 AND a.infor_id = b.id AND a.infor_people = c.user_loginname " +
                     "AND ");

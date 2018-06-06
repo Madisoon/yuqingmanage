@@ -27,7 +27,7 @@ public class CustomerScheduledJob extends QuartzJobBean {
         Date nowTime = new Date();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
         String updateTime = simpleDateFormat.format(nowTime);
-        String sql = "UPDATE sys_post_customer a SET customer_status = '0', ,customer_create_time = NOW()  WHERE a.customer_end_time < '" + updateTime + "'";
+        String sql = "UPDATE sys_post_customer a SET customer_status = '0',customer_create_time = NOW()  WHERE a.customer_end_time < '" + updateTime + "'";
         jsonResponse.getExecResult(sql, null);
     }
 }

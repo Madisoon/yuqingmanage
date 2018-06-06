@@ -75,7 +75,7 @@
     <Cell ss:StyleID="s112"><Data ss:Type="String">${infor.title}</Data></Cell>
     <Cell ss:StyleID="s112"><Data ss:Type="String">${infor.context}</Data></Cell>
     <Cell ss:StyleID="s112"><Data ss:Type="String">${infor.link}</Data></Cell>
-    <Cell ss:StyleID="s112"><Data ss:Type="String">${infor.source}</Data></Cell>
+    <Cell ss:StyleID="s112"><Data ss:Type="String">${infor.site}</Data></Cell>
     <Cell ss:StyleID="s112"><Data ss:Type="String">${infor.time}</Data></Cell>
    </Row>
       </#list>

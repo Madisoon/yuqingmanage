@@ -641,10 +641,4 @@ public class YuQingAppService implements IYuQingService {
         }
         return jsonObject;
     }
-
-    public static void main(String[] args) {
-        String sql = "123";
-        String[] sqls = sql.split("\\|");
-        System.out.println(sqls.length);
-    }
 }
