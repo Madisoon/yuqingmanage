@@ -60,14 +60,16 @@ public class InForService implements IInForService {
 
     @Override
     public ExecResult infoSure(String infoId, String infoData) {
+        // 信息确认，执行之后的所有的逻辑
         String sqlUpdate = "";
+        // 改变信息状态
         if ("{}".equals(infoData)) {
             sqlUpdate = "UPDATE sys_infor a SET a.is_status = 1 WHERE a.id = " + infoId;
         } else {
             sqlUpdate = SqlEasy.updateObject(infoData, "sys_infor", " id = " + infoId);
         }
-        // 身份确认
         ExecResult execResultReturn = jsonResponse.getExecResult(sqlUpdate, null);
+        // 查询此id信息的内容，包括相关的标签的信息
         String sql = "SELECT a.*, group_concat(b.tag_id) AS infor_tags FROM sys_infor a, infor_tag b " +
                 "WHERE a.id = b.infor_id AND a.id = '" + infoId + "' GROUP BY  a.id ";
         ExecResult execResult = jsonResponse.getSelectResult(sql, null, "");
@@ -92,7 +94,6 @@ public class InForService implements IInForService {
             String infoCreater = jsonObject.getString("infor_creater");
             // 信息的标签
             String infoTag = jsonObject.getString("infor_tags");
-
             // 拼接好标签
             String[] tagIds = infoTag.split(",");
             int tagIdsLen = tagIds.length;
@@ -171,6 +172,8 @@ public class InForService implements IInForService {
                     }
                 }
             }
+
+
             // 发送给平台的逻辑
             postTerraceCustomer(infoTag, infoGrade, infoContent, infoTitle, infoLink, infoSource, infoType, infoSite);
             // 推送模块 APP starter
@@ -180,7 +183,7 @@ public class InForService implements IInForService {
                     "AND c.app_program_id = d.id AND ( " + StringUtils.join(sqlList, "") + " ) " +
                     "AND b.app_module_type = 0 GROUP BY d.id  ";
             ExecResult execResultProgram = jsonResponse.getSelectResult(infoProgram, null, "");
-            if (execResultProgram.getResult() == 1) {
+            /*if (execResultProgram.getResult() == 1) {
                 JSONArray jsonArrayAppUser = (JSONArray) execResultProgram.getData();
                 int jsonArrayLen = jsonArrayAppUser.size();
                 List<JpushBean> list = new ArrayList<>();
@@ -196,7 +199,7 @@ public class InForService implements IInForService {
                     list.add(jpushBean);
                 }
                 jpushServer.pushNotification(list);
-            }
+            }*/
         }
         return execResultReturn;
     }
@@ -209,9 +212,9 @@ public class InForService implements IInForService {
         int pageSizeInt = Integer.parseInt(pageSize, 10);
         String sqlLen;
         if (isStatus.equals(type)) {
-            sqlLen = "SELECT COUNT(id) AS total FROM sys_infor WHERE is_status = 1 ";
+            sqlLen = "SELECT COUNT(a.id) AS total FROM sys_infor a, infor_tag b WHERE is_status = 1 AND a.id = b.infor_id";
         } else {
-            sqlLen = "SELECT COUNT(id) AS total FROM sys_infor WHERE is_status = 0 ";
+            sqlLen = "SELECT COUNT(a.id) AS total FROM sys_infor a, infor_tag b WHERE is_status = 0 AND a.id = b.infor_id";
         }
         ExecResult execResult = jsonResponse.getSelectResult(sqlLen, null, "");
         JSONArray jsonArray = (JSONArray) execResult.getData();
@@ -452,8 +455,20 @@ public class InForService implements IInForService {
         return execResult;
     }
 
-    //给平台客户发送信息
-    public void postTerraceCustomer(String tagId, String inforGrade, String infoContext, String infoTitle, String infoLink, String infoSource, String infoType, String infoSite) {
+
+    /**
+     * 给配置好的平台客户发送消息
+     *
+     * @param tagId
+     * @param infoGrade
+     * @param infoContext
+     * @param infoTitle
+     * @param infoLink
+     * @param infoSource
+     * @param infoType
+     * @param infoSite
+     */
+    public void postTerraceCustomer(String tagId, String infoGrade, String infoContext, String infoTitle, String infoLink, String infoSource, String infoType, String infoSite) {
         String[] tagIdS = tagId.split(",");
         int tagIdLen = tagIdS.length;
         List<String> tagIdWhere = new ArrayList<>();
@@ -467,7 +482,7 @@ public class InForService implements IInForService {
         List<String> sqlListModule = new ArrayList<>();
         sqlListModule.add(" SELECT b.* FROM (SELECT terrace_module_id FROM sys_terrace_module_tag_base ");
         sqlListModule.add(" WHERE ( " + StringUtils.join(tagIdWhere, "") + " )) a,sys_terrace_module b ");
-        sqlListModule.add(" WHERE a.terrace_module_id = b.id AND b.terrace_module_grade LIKE '%" + inforGrade + "%' ");
+        sqlListModule.add(" WHERE a.terrace_module_id = b.id AND b.terrace_module_grade LIKE '%" + infoGrade + "%' ");
         // 1：获取到符合标签和等级的模块
         ExecResult execResult = jsonResponse.getSelectResult(StringUtils.join(sqlListModule, ""), null, "");
         // 2：匹配排除关键词和匹配关键词是否合适
@@ -481,23 +496,16 @@ public class InForService implements IInForService {
                 String impWord = jsonObjectModule.getString("terrace_module_imp");
                 String noImpWord = jsonObjectModule.getString("terrace_module_no_imp");
                 if (!MessagePost.judgeWord(noImpWord, infoContext, infoTitle) || noImpWord.equals("")) {
-                    System.out.println("平台:不包含排除关键词");
                     //不包含排除关键词，如果包含
                     if (impWord.equals("")) {
                         //执行发标签 执行的事情是一样的
-                        System.out.println("平台:匹配关键词为空");
                         listModule.add(moduleId);
                     } else {
-                        System.out.println("平台:匹配关键词不为空");
                         if (MessagePost.judgeWord(impWord, infoContext, infoTitle)) {
                             //执行发标签 执行的事情是一样的
                             listModule.add(moduleId);
-                        } else {
-                            System.out.println("平台:不包含匹配关键词，不发送");
                         }
                     }
-                } else {
-                    System.out.println("平台:包含了排除关键词");
                 }
 
             }

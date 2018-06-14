@@ -71,6 +71,18 @@ public class TagService implements ITagService {
         List<String> list = new ArrayList<>();
         for (int i = 0; i < idSLen; i++) {
             list.add("DELETE FROM sys_tag WHERE id = '" + idS[i] + "' OR tag_parent = '" + idS[i] + "' ");
+            // 删除app相关的标签
+            list.add("DELETE FROM app_module_tag WHERE tag_id = '" + idS[i] + "' ");
+            list.add("DELETE FROM app_module_tag_dep WHERE app_module_tag_id = '" + idS[i] + "' ");
+            // 删除方案相关标签
+            list.add("DELETE FROM sys_scheme_tag_base WHERE tag_id = '" + idS[i] + "' ");
+            list.add("DELETE FROM sys_scheme_tag_dep WHERE tag_id = '" + idS[i] + "' ");
+            // 删除方案平台标签
+            list.add("DELETE FROM sys_terrace_module_tag WHERE tag_id = '" + idS[i] + "' ");
+            list.add("DELETE FROM sys_terrace_module_tag_base WHERE tag_id = '" + idS[i] + "' ");
+            // 删除信息和客户相关的
+            list.add("DELETE FROM sys_user_tag WHERE tag_id = '" + idS[i] + "' ");
+            list.add("DELETE FROM infor_tag WHERE tag_id = '" + idS[i] + "' ");
         }
         ExecResult execResult = jsonResponse.getExecResult(list, "", "");
         return execResult;

@@ -87,6 +87,13 @@ public class SchemeService implements ISchemeService {
             deleteList.add("DELETE FROM sys_scheme_area_dep WHERE scheme_id=" + idS[i]);
             deleteList.add("DELETE FROM sys_scheme_tag_dep WHERE scheme_id=" + idS[i]);
             deleteList.add("DELETE FROM sys_scheme_tag_base WHERE scheme_id=" + idS[i]);
+            // 删除客户相关信息
+            deleteList.add("DELETE FROM post_customer_area WHERE post_customer_id = DELETE  FROM sys_post_customer WHERE id = (SELECT b.id FROM (SELECT b.id FROM sys_scheme a, sys_post_customer b WHERE a.id = " + idS[i] + " " +
+                    "AND a.id = b.customer_scheme)b) ");
+            deleteList.add("DELETE FROM sys_customer_get WHERE post_customer_id = DELETE  FROM sys_post_customer WHERE id = (SELECT b.id FROM (SELECT b.id FROM sys_scheme a, sys_post_customer b WHERE a.id = " + idS[i] + " " +
+                    "AND a.id = b.customer_scheme)b) ");
+            deleteList.add("DELETE FROM sys_post_customer WHERE id = DELETE  FROM sys_post_customer WHERE id = (SELECT b.id FROM (SELECT b.id FROM sys_scheme a, sys_post_customer b WHERE a.id = " + idS[i] + " " +
+                    "AND a.id = b.customer_scheme)b) ");
         }
         ExecResult execResult = jsonResponse.getExecResult(deleteList, "", "");
         return execResult;
